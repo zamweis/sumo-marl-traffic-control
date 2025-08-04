@@ -19,8 +19,17 @@ from gym import Wrapper
 def custom_reward(traffic_signal):
     queue = traffic_signal.get_total_queued()
     waiting = sum(traffic_signal.get_accumulated_waiting_time_per_lane())
-    departed = traffic_signal.env.sumo.simulation.getArrivedNumber()
-    return -1.0 * queue - 0.1 * waiting + 0.5 * departed
+    arrived = traci.simulation.getArrivedNumber()
+    teleport = traci.simulation.getStartingTeleportNumber()
+    collisions = traci.simulation.getCollidingVehiclesNumber()
+    reward = (
+        -1.0 * queue
+        -0.1 * waiting
+        -5.0 * teleport
+        -20.0 * collisions
+        +0.5 * arrived
+    )
+    return reward
 
 # ==== Frühes Beenden wenn keine Fahrzeuge ====
 class AutoTerminateWrapper(Wrapper):
@@ -143,7 +152,7 @@ class TimeBasedCheckpointCallback(BaseCallback):
         return True
 
 checkpoint_callback = TimeBasedCheckpointCallback(
-    save_interval_sec=3600,  # 60 Minuten
+    save_interval_sec=1800,  # 30 Minuten
     save_path=log_dir,
     name_prefix="ppo_sumo_model",
     verbose=1,
