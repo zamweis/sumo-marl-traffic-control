@@ -1,0 +1,11 @@
+<!-- sumo_config.sumocfg -->
+<configuration>
+  <input>
+    <net-file value="network4.net.xml"/>
+    <route-files value="network4.rou.xml"/>
+  </input>
+  <time>
+    <begin value="0"/>
+    <end value="3600"/>
+  </time>
+</configuration>

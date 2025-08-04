@@ -1,0 +1,7 @@
+netgenerate --rand --rand.grid=true --rand.iterations=120 --rand.min-distance=30 --rand.max-distance=60 --rand.connectivity=0.85 --random-lanenumber=true --default.lanenumber=2 --rand.neighbor-dist2=10 --rand.neighbor-dist3=25 --rand.neighbor-dist4=15 --rand.neighbor-dist5=5 --tls.guess=true --tls.guess.threshold=90 --default-junction-type=priority -o net_smartgrid_tls_target5to8.net.xml
+
+python "%SUMO_HOME%\tools\randomTrips.py" -n synthetic.net.xml -o synthetic.trips.xml --seed 123 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 500 -p 0.5 --fringe-factor 2.0
+
+duarouter --net-file synthetic.net.xml --route-files synthetic.trips.xml --output-file synthetic.rou.xml
+
+
