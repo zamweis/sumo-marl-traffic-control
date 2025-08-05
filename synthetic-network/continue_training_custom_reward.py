@@ -39,21 +39,6 @@ def custom_reward(traffic_signal):
     )
     return reward
 
-# ==== Frühes Beenden wenn keine Fahrzeuge ====
-class AutoTerminateWrapper(Wrapper):
-    def __init__(self, env):
-        super().__init__(env)
-
-    def step(self, action):
-        obs, reward, done, info = self.env.step(action)
-        try:
-            if traci.simulation.getMinExpectedNumber() <= 0:
-                print("[AutoTerminate] Keine Fahrzeuge mehr → Episode terminiert.")
-                done = {agent: True for agent in done}
-        except Exception:
-            pass
-        return obs, reward, done, info
-
 # ==== Finde letzten vollständigen Run ====
 def find_latest_complete_run(base_dir="runs", prefix="ppo_sumo_"):
     subdirs = sorted(
@@ -91,6 +76,9 @@ class TimeBasedCheckpointCallback(BaseCallback):
         self.last_save_time = time.time()
 
     def _on_step(self) -> bool:
+        return True
+        
+    def _on_rollout_end(self) -> bool:
         current_time = time.time()
         if current_time - self.last_save_time >= self.save_interval_sec:
             timestep = self.num_timesteps
@@ -119,8 +107,8 @@ os.makedirs(log_dir, exist_ok=True)
 
 # ==== SUMO-RL Umgebung ====
 env = parallel_env(
-    net_file="synthetic.net.xml",
-    route_file="synthetic.rou.xml",
+    net_file="map.net.xml",
+    route_file="map.rou.xml",
     use_gui=False,
     num_seconds=1000,
     reward_fn=custom_reward,
