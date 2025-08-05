@@ -97,7 +97,7 @@ class TimeBasedCheckpointCallback(BaseCallback):
             filename = f"{self.name_prefix}_{timestep}_steps"
             self.model.save(os.path.join(self.save_path, filename + ".zip"))
             if hasattr(self.training_env, "save"):
-                self.training_env.save(os.path.join(self.save_path, "vecnormalize.pkl"))
+                self.training_env.save(os.path.join(self.save_path, f"{filename}_vecnormalize.pkl"))
             print(f"[Checkpoint] Modell gespeichert bei {timestep} Schritten ({filename})")
             self.last_save_time = current_time
         return True
@@ -188,15 +188,18 @@ class BestModelSaverCallback(BaseCallback):
         ep_info_buffer = self.model.ep_info_buffer
         if len(ep_info_buffer) > 0:
             mean_rew = np.mean([ep_info['r'] for ep_info in ep_info_buffer])
-            #print(f"[AUTOLOG] Aktueller ep_rew_mean: {mean_rew:.2f}", flush=True)
-
+            
             if mean_rew > self.best_mean_reward:
                 self.best_mean_reward = mean_rew
-                model_path = os.path.join(self.save_path, f"best_model_autosave_r{int(mean_rew)}.zip")
+
+                model_path = os.path.join(self.save_path, "best_model.zip")
                 self.model.save(model_path)
+
                 if hasattr(self.model.env, "save"):
-                    self.model.env.save(os.path.join(self.save_path, "vecnormalize.pkl"))
-                print(f"[AUTOLOG] Neuer Bestwert {mean_rew:.2f} → Modell gespeichert!", flush=True)
+                    norm_path = os.path.join(self.save_path, "best_model_vecnormalize.pkl")
+                    self.model.env.save(norm_path)
+
+                print(f"[AUTOLOG] Neuer Bestwert {mean_rew:.2f} → best_model gespeichert!", flush=True)
 
 # ==== Callbacks kombinieren ====
 callbacks = CallbackList([
