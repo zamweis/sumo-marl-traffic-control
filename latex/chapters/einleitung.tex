@@ -1,0 +1,60 @@
+
+\section{Einleitung}
+
+\subsection{Motivation und Problemstellung}
+
+Städte stehen zunehmend vor der Herausforderung, mit den wachsenden Anforderungen des urbanen Verkehrs zurechtzukommen. Die Zahl der Fahrzeuge im Individualverkehr steigt kontinuierlich, was zu einer Verdichtung des Verkehrsaufkommens, insbesondere in städtischen Knotenpunkten, führt. Die daraus resultierenden Konsequenzen sind vielfältig: Verkehrsüberlastungen führen zu erhöhten Reisezeiten, steigenden Emissionen und einer verminderten Lebensqualität für die Bevölkerung. Darüber hinaus verursacht ineffizienter Verkehr einen erheblichen wirtschaftlichen Schaden durch Zeitverluste und Ressourcenverschwendung.
+
+Ein zentraler Hebel zur Verbesserung dieser Situation liegt in der intelligenten Steuerung des Verkehrsflusses – insbesondere an Kreuzungen, an denen mehrere Verkehrsströme aufeinandertreffen. Die Lichtsignalanlagen, die dort zum Einsatz kommen, arbeiten vielerorts noch nach starren, zeitbasierten Schaltplänen, die selten in Echtzeit auf veränderte Verkehrssituationen reagieren. Auch adaptive Verfahren, wie verkehrsabhängige Steuerungen mittels Induktionsschleifen oder Kameras, sind in ihrer Reaktionsfähigkeit beschränkt und oft teuer in der Wartung. Damit bleibt ein enormes Potenzial zur Effizienzsteigerung ungenutzt.
+
+Vor diesem Hintergrund bietet die Kombination moderner Simulationstechniken mit Methoden der künstlichen Intelligenz – insbesondere dem \textit{Reinforcement Learning} – eine vielversprechende Alternative. Reinforcement Learning (RL) ist ein lernbasiertes Verfahren, bei dem ein Agent durch Interaktion mit einer Umgebung eine optimale Strategie zur Maximierung eines definierten Belohnungskriteriums erlernt. Die Anwendung dieses Konzepts auf Ampelsteuerungen erlaubt es, reaktive, datengestützte Systeme zu entwickeln, die dynamisch auf die aktuelle Verkehrssituation reagieren und dabei auf langfristige Effizienz optimiert sind.
+
+Zur Erprobung solcher Verfahren eignet sich die Verkehrssimulationsumgebung \textit{SUMO} (Simulation of Urban MObility)\cite{sumo-doc}, eine quelloffene, modular aufgebaute Plattform, die es ermöglicht, Verkehrsflüsse realitätsnah zu modellieren und zu analysieren. In Kombination mit dem Framework \texttt{sumo-rl}\cite{sumo-rl}, das eine Brücke zwischen SUMO und gängigen Machine-Learning-Frameworks wie TensorFlow oder PyTorch schlägt, lassen sich Reinforcement-Learning-Agenten direkt in die Simulationsumgebung einbetten. Diese können dann die Steuerung einzelner Ampelanlagen übernehmen und ihre Strategien durch wiederholte Simulation iterativ verbessern.
+
+\subsection{Zielsetzung der Arbeit}
+
+Ziel dieser Bachelorarbeit ist es, eine auf Reinforcement Learning basierende Steuerung von Ampelanlagen innerhalb eines realitätsnahen, simulierten städtischen Verkehrsnetzes zu entwickeln, umzusetzen und zu evaluieren. Als Modellregion dient ein ausgewählter, stark befahrener Bereich der Stadt Karlsruhe, dessen Straßennetz mithilfe von OpenStreetMap-Daten und Verkehrsdaten von Institutionen wie LUBW, MobiData BW und der Bundesanstalt für Straßenwesen realitätsnah abgebildet wird.
+
+Die Arbeit verfolgt einen anwendungsorientierten Ansatz: Es wird ein vollständiges System aufgebaut, in dem einzelne Ampelkreuzungen durch RL-Agenten gesteuert werden. Diese erhalten als Eingabe Informationen zur aktuellen Verkehrslage, etwa Fahrzeuganzahl, Wartezeiten oder Stauentwicklungen, und geben als Ausgabe Ampelschaltbefehle zurück. Ziel ist es, durch Training in der Simulation eine Steuerungsstrategie zu entwickeln, die relevante Zielgrößen wie die durchschnittliche Wartezeit, den Verkehrsfluss oder die Anzahl von Fahrzeugstopps optimiert.
+
+Ein positiver Untersuchungsverlauf könnte zeigen, dass bestehende Straßennetze effizienter genutzt werden können – ohne kostspielige Neubauten oder Erweiterungen. Die verbesserte Auslastung bestehender Infrastruktur spart Kosten, reduziert Flächenversiegelung und mindert Umweltbelastung durch Verkehrsvermeidung. Außerdem wäre ein solches adaptive System klimafreundlicher als starre Ampelsteuerungen.
+
+Darüber hinaus soll die Arbeit systematisch untersuchen, wie sich unterschiedliche Modellierungsentscheidungen (z.B. Wahl der Belohnungsfunktion, Anzahl der gesteuerten Agenten, Parametrisierung der Umgebung) auf das Verhalten und die Leistungsfähigkeit der lernenden Agenten auswirken. Die gewonnenen Erkenntnisse sollen kritisch reflektiert und mit konventionellen, nicht-adaptiven Steuerungsstrategien verglichen werden.
+\subsection{Begrenzung des Projektumfangs}
+
+Trotz des Anspruchs auf Realitätsnähe handelt es sich bei der vorliegenden Arbeit um ein simulationsbasiertes Projekt mit bewusst gewähltem Fokus. Die Umsetzung erfolgt ausschließlich in der Simulationsumgebung SUMO und basiert auf öffentlich zugänglichen Geodaten (OpenStreetMap) sowie begrenzt verfügbaren Verkehrsdaten von staatlichen und kommunalen Institutionen. Eine vollständige Abbildung aller Aspekte des realen Straßenverkehrs ist damit weder angestrebt noch möglich.\cite{sumo-doc}
+
+Insbesondere ergeben sich folgende Einschränkungen:
+
+\begin{itemize}
+    \item \textbf{Eingeschränkte Datenverfügbarkeit:} Nicht alle für eine realitätsnahe Verkehrsmodellierung relevanten Daten liegen in ausreichender Qualität oder Auflösung vor. Exakte Ampelschaltzeiten, Fußgängerfrequenzen oder dynamische Verkehrsdaten zu Stoßzeiten sind teilweise nicht öffentlich zugänglich oder nur unvollständig. Dazu kommt, dass Kommunen teilweise bewusst den Verkehr lenken – etwa durch Zufahrtsbeschränkungen oder Verkehrsberuhigungszonen –, was oft nicht öffentlich kommuniziert wird.
+    
+    \item \textbf{Vereinfachte Modellierung der Umgebung:} In der Simulation wird angenommen, dass alle Verkehrsteilnehmer (Fahrzeuge, Fußgänger, Radfahrer) durch die Agenten präzise erfasst werden können – eine Annahme, die in der Realität durch technische und datenschutzrechtliche Hürden nicht haltbar ist. Moderne Systeme arbeiten hier mit Datenschutz‑mechanismen, aber eine flächendeckende, genaue Erfassung ist unerlässlich, aber derzeit technisch und rechtlich nicht umsetzbar.
+    
+    \item \textbf{Städtebauliche Verkehrslenkung:} In der Realität regeln Städte Verkehrsflüsse z.B. durch Low‑Traffic‑Neighbourhoods, Zufahrtsbeschränkungen oder geregelte Zuflusssteuerung, um bestimmte Stadtbereiche zu entlasten. Solche Maßnahmen sind jedoch in der Simulationsumgebung nicht dynamisch abbildbar, da nur externe Ampelagenten kontrollieren und keine zonale Steuerungslogik abgebildet wird.
+    
+    \item \textbf{Begrenzter räumlicher und zeitlicher Umfang:} Simuliert wird lediglich ein ausgewählter Ausschnitt des Karlsruher Straßennetzes und nur für definierte Zeitabschnitte. Eine vollständige Tag‑Nacht‑Modellierung oder eine Darstellung saisonaler sowie städtischer Ereigniszeiten liegt außerhalb des Umfangs.
+    
+    \item \textbf{Trainings- und Evaluierungsgrenzen:} Reinforcement‑Learning‑Agenten benötigen viele Trainingszyklen. Die in dieser Arbeit verwendete Hardware limitiert Trainingsdauer und Modellkomplexität.
+\end{itemize}
+
+Diese bewusste Eingrenzung ermöglicht es, sich auf die technische Umsetzbarkeit und das methodische Vorgehen zu konzentrieren. Dennoch sind die gewonnenen Erkenntnisse relevant – sie liefern zentrale Einsichten in die Wirksamkeit von KI‑basierten Verkehrssteuerungssystemen und können als Grundlage für weiterführende Forschung dienen.
+
+\subsection{Wissenschaftliche und gesellschaftliche Relevanz}
+
+Die Kombination von KI und Verkehrssteuerung ist nicht nur ein hochaktuelles Forschungsthema, sondern besitzt auch ein erhebliches Potenzial für den realweltlichen Einsatz. Durch die Integration lernfähiger Steuerungssysteme in bestehende Verkehrsmanagementlösungen könnten Städte künftig dynamischer, effizienter und umweltfreundlicher agieren. Die hier behandelte Arbeit leistet einen Beitrag zur Untersuchung der technischen Machbarkeit sowie der Leistungsfähigkeit solcher Systeme unter realitätsnahen Bedingungen.
+
+Gleichzeitig dient die Arbeit als Beispiel für den Einsatz moderner Methoden der Informatik in einem interdisziplinären Anwendungsfeld. Sie schlägt die Brücke zwischen Verkehrsingenieurwesen, Datenanalyse und maschinellem Lernen und eröffnet damit Perspektiven für eine zukunftsweisende Gestaltung urbaner Infrastrukturen.
+
+\subsection{Aufbau der Arbeit}
+
+Die Arbeit ist in sieben Kapitel unterteilt:
+
+\begin{itemize}
+    \item Kapitel 2 stellt die theoretischen Grundlagen der Arbeit dar. Es werden die Funktionsweise von SUMO, die Prinzipien des Reinforcement Learning sowie die zugrundeliegenden technischen Komponenten erläutert. Auch verwandte Arbeiten werden kritisch betrachtet.
+    \item Kapitel 3 widmet sich den Datenquellen und der Modellierungsgrundlage. Es werden sowohl die verwendeten Geodaten als auch Verkehrszählungen, Ampelschaltpläne und Annahmen beschrieben.
+    \item Kapitel 4 beschreibt die methodische Vorgehensweise bei der Erstellung des Simulationsmodells, der Formulierung des Lernproblems, der Wahl der Trainingsstrategie und der technischen Umsetzung.
+    \item Kapitel 5 präsentiert die Ergebnisse der Simulationen und stellt sie in Bezug zur gewählten Zielsetzung. Es erfolgt eine quantitative und qualitative Auswertung der Agentenleistung.
+    \item Kapitel 6 diskutiert zentrale Herausforderungen und Limitationen der Arbeit, sowohl methodisch als auch datenbezogen.
+    \item Kapitel 7 fasst die wesentlichen Erkenntnisse zusammen und gibt einen Ausblick auf weiterführende Forschungsansätze und Anwendungsoptionen.
+\end{itemize}

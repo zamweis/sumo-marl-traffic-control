@@ -1,0 +1,120 @@
+
+\section{Datenquellen und Modellierungsgrundlage}
+
+\subsection{OpenStreetMap als Grundlage für das Verkehrsmodell}
+
+Das Verkehrsnetz für die Simulation basiert auf öffentlich verfügbaren Geodaten der Plattform OpenStreetMap (OSM). OSM bietet eine frei zugängliche, kollaborativ gepflegte Datenbank, die detaillierte Informationen zu Straßenverläufen, Kreuzungen, Fahrspuren, Tempolimits und teilweise zu Ampelanlagen enthält. Diese Eigenschaften machen OSM zu einer geeigneten Grundlage für mikroskopische Verkehrssimulationen mit SUMO.
+
+Zur Erstellung des Netzes wurde ein Ausschnitt des Straßennetzes der Stadt Karlsruhe exportiert, der einen stark frequentierten urbanen Bereich mit mehreren signalgesteuerten Kreuzungen umfasst. Der betrachtete Bereich liegt zwischen 49{,}00738,\textdegree{}N und 49{,}01523,\textdegree{}N sowie 8{,}38589,\textdegree{}E und 8{,}40050,\textdegree{}E und deckt unter anderem die Reinhold-Frank-Straße, das Mühlburger Tor und angrenzende Hauptverkehrsachsen ab. Der Export erfolgte als \texttt{.osm}-Datei über den Geofabrik-Downloaddienst bzw. mit dem Tool JOSM. Die anschließende Konvertierung in das SUMO-Format erfolgte mit dem Programm \texttt{netconvert} (Version 1.19.0), einem Teil der SUMO-Toolchain. Hierbei wurden relevante Parameter wie Straßentypen, Fahrspuren, Prioritäten und erlaubte Abbiegevorgänge berücksichtigt. Als Typemap kam \texttt{osmNetconvert.typ.xml} zum Einsatz, um realitätsnahe Geschwindigkeiten und Fahrspuren zuzuweisen.
+
+Das resultierende Verkehrsnetz umfasst 1.379 definierte Knotenpunkte (\textit{junctions}), 1.919 Straßenkanten (\textit{edges}) sowie insgesamt 5.310 modellierte Fahrstreifen (\textit{lanes}). Darüber hinaus konnten 17 signalgesteuerte Kreuzungen mit Lichtsignalanlagen (\textit{traffic lights}) identifiziert werden, die als Steuerungspunkte für das spätere Training der Reinforcement-Learning-Agenten dienen.
+
+Optional wurden zusätzliche Informationen wie Ampeldefinitionen und Vorfahrtsregeln manuell über das Tool \texttt{netedit} ergänzt oder angepasst, um die Netzrealität weiter zu verfeinern. Dabei wurden insbesondere fehlerhafte Knotenbeziehungen bereinigt sowie isolierte Netzteile entfernt. Die finale \texttt{.net.xml}-Datei bildet die topologische und funktionale Grundlage für alle weiteren Simulationsschritte.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/karlsruhe_net.png}
+\caption{Visualisierung des aus OSM generierten SUMO-Netzes (eigene Darstellung).}
+\label{fig:sumo_network}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/karlsruhe_osm.png}
+\caption{Screenshot des ursprünglichen OpenStreetMap-Ausschnitts (eigene Darstellung).}
+\label{fig:osm_screenshot}
+\end{figure}
+
+Die Wahl von OpenStreetMap als Datenquelle gewährleistet eine offene, reproduzierbare und erweiterbare Modellierungsbasis. Jedoch bringt die Nutzung von OSM-Daten auch einige Einschränkungen mit sich, die bei der Modellierung berücksichtigt werden müssen:\cite{osm-export}
+
+\begin{itemize}
+\item \textbf{Uneinheitlicher Detaillierungsgrad:} Die Erfassungstiefe variiert regional stark, was dazu führt, dass z.\,B. Tempolimits, Fahrspuren oder Abbiegebeschränkungen an vielen Stellen fehlen oder unvollständig sind.
+\item \textbf{Fehlende Ampel- und Signalsteuerungsdaten:} OSM enthält in der Regel keine vollständigen Angaben zu Ampelphasen, Umlaufzeiten oder koordinierter Schaltung. SUMO kann zwar aus heuristischen Annahmen Standardampeln generieren, diese weichen jedoch potenziell stark von der realen Steuerung ab.
+\item \textbf{Keine garantierte Netzvollständigkeit:} Besonders kleinere Straßen, private Zufahrten oder temporäre Baustellen sind häufig nicht oder nur unzureichend erfasst. Zudem treten beim Zuschnitt von Kartenausschnitten an den Netzrändern regelmäßig unvollständige Knoten oder isolierte Kanten auf.
+\item \textbf{Abweichende Modellierungskonzepte:} In OSM werden parallele Fahrbahnen oder getrennte Richtungsfahrbahnen oft als unabhängige Wege modelliert. Ohne geeignete Nachbearbeitung kann dies zu unnötigen Knoten und ineffizientem Verkehrsverhalten führen.
+\item \textbf{Abhängig von Typemap- und Importoptionen:} Die Interpretation der OSM-Tags erfolgt in SUMO durch sogenannte Typemaps, die z.\,B. Tempolimits und Spuranzahl je nach Straßentyp zuweisen. Ohne geeignete Typemap kann das Verhalten nicht der Realität entsprechen.
+\end{itemize}
+
+\textbf{Fazit:} Insgesamt erlaubt OSM trotz dieser Limitationen den Aufbau eines funktionalen Verkehrsnetzes für mikroskopische Simulationen, sofern der Import sorgfältig konfiguriert und die resultierenden Daten kritisch hinterfragt und gegebenenfalls manuell nachbearbeitet werden.
+
+\subsection{Verfügbare Verkehrsdaten}
+Zur Kalibrierung und Validierung der Simulation sind verlässliche Verkehrsdaten unerlässlich. In Baden-Württemberg stehen hierfür mehrere öffentliche sowie kommerzielle Quellen zur Verfügung. Diese umfassen Informationen über Verkehrsstärken, Fahrzeugzusammensetzung, Reisezeiten und Störungen im Straßenverkehr. Im Folgenden werden die wichtigsten Quellen sowie die für das vorliegende Projekt relevanten Verkehrszählungen zusammengefasst.
+
+\subsubsection{Öffentliche Datenquellen: LUBW, MobiData BW, Straßenverkehrszentrale, BASt}\cite{bast}
+Die Landesanstalt für Umwelt Baden-Württemberg (LUBW) stellt aggregierte Verkehrszählungen im Rahmen automatischer Straßenverkehrszählungen bereit. Diese umfassen Tagesmittelwerte sowie jahreszeitliche Schwankungen für verschiedene Fahrzeugkategorien. Die Daten der Straßenverkehrszentrale Baden-Württemberg (SVZ-BW) liefern zudem Echtzeitinformationen zu Störungen, Baustellen und Verkehrsfluss.
+
+Über die Plattform MobiData BW werden offene Mobilitätsdaten gebündelt bereitgestellt, darunter auch historische Detektordaten und OpenTraffic-Feeds. Die Bundesanstalt für Straßenwesen (BASt)\cite{bast} wiederum veröffentlicht bundesweite Zähldaten, insbesondere für überörtliche Straßen.
+
+Diese öffentlichen Quellen bilden eine solide Grundlage für die realitätsnahe Modellierung des Verkehrsaufkommens, sind jedoch teilweise nur in aggregierter Form oder mit begrenzter räumlicher Auflösung verfügbar.
+
+\subsubsection{Stationäre Zählstellen in Karlsruhe und Umgebung}
+\label{sec:zaehlstellen-karlsruhe}
+Eine besonders wertvolle Datenquelle zur realitätsnahen Modellierung des Verkehrsaufkommens stellen die stationären Zählstellen des Landes Baden-Württemberg dar. Diese liefern standardisierte Tagesverkehrswerte (DTV\footnote{DTV steht für \textit{Durchschnittlicher Tagesverkehr} und bezeichnet die mittlere Anzahl an Fahrzeugen, die einen bestimmten Straßenabschnitt pro Tag passieren – typischerweise gemittelt über einen längeren Zeitraum.}), getrennt nach Fahrzeugklassen.
+
+\newpage
+Im direkten Untersuchungsgebiet, der Reinhold-Frank-Straße in Karlsruhe, befindet sich eine automatische Dauerzählstelle. Die dort erfassten Werte für den Zeitraum vom 1.1. bis 20.6.2025 lauten:
+
+\begin{itemize}
+    \item \textbf{Kraftfahrzeuge (KFZ):} 21.300 Fahrzeuge/Tag
+    \item \textbf{Personenkraftwagen (PKW):} 20.500 Fahrzeuge/Tag
+    \item \textbf{Schwere Nutzfahrzeuge (sNfz):} 120 Fahrzeuge/Tag
+\end{itemize}
+
+Diese Messwerte stimmen gut mit den aus den äußeren Zufahrtsachsen abgeleiteten Schätzungen überein. Um das Verkehrsaufkommen plausibel zu quantifizieren, wurden zusätzlich acht zentrale Zählstellen aus dem Jahr 2023 entlang wichtiger Ein- und Ausfallstraßen berücksichtigt. Sie bilden die Grundlage für die Annahmen über den täglichen Verkehr, der potenziell durch das untersuchte innerstädtische Netz fließt:
+
+\begin{table}[H]
+\centering
+\caption{Verkehrszählungen in und um Karlsruhe (DTV, Jahr 2023)}
+\begin{tabular}{|l|l|r|r|r|}
+\hline
+\textbf{Zufahrt} & \textbf{Zählstellenbeschreibung} & \textbf{KFZ/Tag} & \textbf{SV/Tag} & \textbf{Gesamt} \\
+\hline
+B10 West & Rheinbrücke / Entenfang & 62.102 & 6.159 & 68.261 \\
+B36 Neureut & Neureuter Str. / Ausfahrt Neureut Süd & 35.165 & 1.712 & 36.877 \\
+B36 Nord & Eggenstein / Neureut & 28.595 & 1.361 & 29.956 \\
+L605 Nord & Weißes Haus / Eggenstein & 14.563 & 220 & 14.783 \\
+B36 Süd & Rheinstetten / Innenstadt & 24.239 & 1.487 & 25.726 \\
+B36 Mörsch & Mörsch / Forchheim & 26.841 & 1.531 & 28.372 \\
+L605 Süd & Ettlingen / Bulacher Kreuz & 65.816 & 3.474 & 69.290 \\
+B10 Ost & Durlach (A5) / Innenstadt & 28.555 & 913 & 29.468 \\
+\hline
+\end{tabular}
+\label{tab:zaehlstellen}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/zaehlstellenkarte.png}
+\caption{Lage der Dauerzählstellen im Raum Karlsruhe (Quelle: MobiData BW \cite{mobidata_karte}).}
+\label{fig:zaehlstellenkarte}
+\end{figure}
+
+Diese externen Zuflüsse liefern eine verlässliche Grundlage zur Generierung plausibler Eingangsrouten für Fahrzeuge in der Simulation. Das betrachtete Gebiet wird von mehreren dieser Hauptachsen direkt gespeist, wodurch sich ein realitätsnahes Verkehrsaufkommen im Bereich von 20.000–40.000 Fahrzeugen/Tag ergibt – im Einklang mit der Messung in der Reinhold-Frank-Straße.
+
+Die Verwendung dieser Zähldaten ermöglicht es, Fahrzeugströme in SUMO proportional zu real beobachteten Verkehrsverhältnissen zu modellieren. Zudem erleichtert sie die spätere Kalibrierung und Validierung der simulierten Szenarien.
+
+\subsubsection{Kommerzielle APIs: TomTom, Google Maps}\cite{googlemaps, tomtom}
+
+Ergänzend zu den öffentlichen Datenquellen bieten kommerzielle Anbieter wie TomTom und Google über Programmierschnittstellen (APIs) hochaufgelöste Echtzeit- und Historikdaten an. Diese umfassen unter anderem:
+
+\begin{itemize}
+    \item Durchschnittliche Fahrgeschwindigkeiten nach Wochentag und Uhrzeit,
+    \item Verkehrsdichte- und Stauinformationen,
+    \item Prognosen basierend auf anonymisierten Bewegungsdaten.
+\end{itemize}
+
+Der Zugriff auf diese APIs ist in der Regel kostenpflichtig oder durch Nutzungsbeschränkungen limitiert, ermöglicht jedoch eine deutlich feinere zeitliche und räumliche Auflösung, was für die Modellierung und spätere Optimierung des Verkehrsflusses mittels KI von Vorteil ist.
+
+\subsection{Modellierung der Ampelschaltungen}
+
+Für eine realitätsnahe mikroskopische Simulation spielt die Modellierung der Lichtsignalsteuerung eine zentrale Rolle. Ampelanlagen beeinflussen maßgeblich den Verkehrsfluss an Knotenpunkten und sind daher ein zentraler Bestandteil der Simulationslogik.
+
+\subsubsection{Verfügbare Daten und Herausforderungen}
+
+In den öffentlich zugänglichen OSM-Daten sind Ampelanlagen in der Regel lediglich als Punktobjekte an Kreuzungen vermerkt. Informationen zu Phasenplänen, Umlaufzeiten oder koordinierter Schaltung fehlen vollständig. Auch von Seiten der Stadt Karlsruhe oder anderer kommunaler Stellen liegen keine detaillierten Steuerungsdaten vor, da diese in der Regel nicht öffentlich zugänglich sind.
+
+Eine eigene systematische Erfassung der Schaltzeiten wäre zwar prinzipiell möglich, hätte jedoch einen erheblichen Zeitaufwand bedeutet und wäre aufgrund der dynamischen, nicht-statischen Signalsteuerungen (z.\,B. verkehrsabhängige Phasen) methodisch schwer zuverlässig umzusetzen gewesen.
+
+\subsubsection{Vereinfachte Modellierung}
+
+Aus diesen Gründen wurde auf eine synthetische Modellierung zurückgegriffen. SUMO bietet hierfür die Möglichkeit, sogenannte \texttt{tlLogic}-Blöcke manuell oder automatisch zu definieren, die verschiedene Phasenfolgen und Zeitparameter enthalten. In der vorliegenden Arbeit wurde auf Standardampelprogramme zurückgegriffen, wie sie in SUMO generisch verwendet werden, um zumindest eine vereinfachte Lichtsignalsteuerung zu modellieren. Diese erlaubt die spätere Untersuchung von Optimierungsstrategien mittels Reinforcement Learning, stellt jedoch keine Repräsentation der realen Signalprogramme dar.

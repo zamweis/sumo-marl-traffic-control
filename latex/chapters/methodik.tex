@@ -1,0 +1,952 @@
+
+\section{Methodik}
+
+\subsection{Untersuchungsregion und Datenbasis}
+
+\subsubsection{Auswahl der Untersuchungsregion}
+
+Für die Anwendung und Evaluation der KI-basierten Verkehrssteuerung wurde ein Ausschnitt des innerstädtischen Straßennetzes von Karlsruhe gewählt. Die Auswahl fiel auf ein Gebiet rund um die Reinhold-Frank-Straße und das Mühlburger Tor, das durch hohe Verkehrsdichte, komplexe Knotenpunkte und mehrere signalgesteuerte Kreuzungen gekennzeichnet ist. Der gewählte Bereich liegt geografisch zwischen 49{,}006947\,\textdegree{}N und 49{,}015602\,\textdegree{}N sowie 8{,}380176\,\textdegree{}E und 8{,}403887\,\textdegree{}E und deckt mehrere stark frequentierte Hauptachsen ab.
+
+Die Entscheidung für diese Region basiert auf folgenden Kriterien:
+
+\begin{itemize}
+    \item \textbf{Hohe Verkehrsbedeutung:} Das Gebiet stellt einen wichtigen innerstädtischen Verkehrsraum dar, der sowohl Pendlerverkehr als auch lokalen Individualverkehr aufnimmt.
+    \item \textbf{Bekanntes Stauaufkommen:} Die Reinhold-Frank-Straße ist in der Stadtbevölkerung für regelmäßige Verkehrsstaus bekannt, insbesondere zu Stoßzeiten.
+    \item \textbf{Verfügbarkeit realer Verkehrszähldaten:} Eine automatische Dauerzählstelle erhebt dort täglich Verkehrsdaten. Für den Zeitraum vom 1.1. bis 20.6.2025 wurden durchschnittlich 21.300 Kfz/Tag erfasst.
+    \item \textbf{Zusätzliche Zähldaten angrenzender Hauptverkehrsstraßen:} Zählstellen an der B10, B36, L605 und in Durlach liefern ergänzende Werte zur Plausibilisierung des Gesamtverkehrsflusses.
+    \item \textbf{Vorhandensein mehrerer Ampelanlagen:} Im Netz befinden sich 17 signalgesteuerte Kreuzungen, geeignet für RL-gesteuerte Steuerungsexperimente.
+    \item \textbf{Gute Abgrenzbarkeit:} Das Gebiet ist topologisch geschlossen und in SUMO sauber simulierbar.
+    \item \textbf{Verfügbarkeit von Geodaten:} Die Region ist in OpenStreetMap detailliert kartiert.
+\end{itemize}
+
+\subsubsection{Verfügbare Verkehrszähldaten}
+
+Für die Kalibrierung und Validierung der Verkehrssimulation wurden verschiedene reale Zähldatenquellen aus dem Raum Karlsruhe herangezogen. Hauptquelle war dabei die offene Mobilitätsdatenplattform des Landes Baden-Württemberg (MobiData BW)\cite{mobidata_stunden}. Dort werden automatisiert erfasste Stundenwerte stationärer Dauerzählstellen veröffentlicht, die eine fein aufgelöste Analyse von Verkehrsverläufen ermöglichen.
+
+Konkret wurden folgende Datensätze ausgewertet:
+
+\begin{itemize}
+    \item \textbf{Dauerzählstelle Reinhold-Frank-Straße:} Erfasst täglich die Anzahl der Kraftfahrzeuge (Kfz), aufgeschlüsselt nach Fahrzeugklassen (PKW, lNfz, sNfz). Für den Zeitraum 01.01.–20.06.2025 lag der durchschnittliche Tagesverkehr (DTV\footnote{DTV = durchschnittlicher Tagesverkehr: Durchschnittliche Anzahl an Fahrzeugen pro Tag über einen bestimmten Zeitraum hinweg.}) bei ca. 21.300 Kfz/Tag.
+    
+    \item \textbf{Historische Jahresmittelwerte:} Langzeitdatenreihen von 2008–2024 aus MobiData BW ermöglichen eine Kontextualisierung der aktuellen Verkehrsbelastung.
+
+    \item \textbf{Zählstellen an äußeren Zufahrtsachsen:} Ergänzende Zähldaten aus dem Jahr 2023 an acht stark befahrenen Einfallstraßen (u.\,a. B10, B36, L605)\cite{mobidata_karte} liefern Anhaltspunkte zur Verkehrsstärke an den Netzrändern.
+\end{itemize}
+
+Die Kombination dieser Quellen ermöglicht eine robuste, datenbasierte Schätzung realistischer Flussverteilungen für die Simulation – sowohl zeitlich (z.\,B. Spitzenlasten) als auch räumlich (Zufahrtsverteilung).
+
+\subsection{Aufbau des Simulationsmodells in SUMO}
+
+\subsubsection{Netzgenerierung und Verkehrsflussmodellierung}
+
+Zur Modellierung des realen Straßennetzes wurde ein Kartenausschnitt des Untersuchungsgebiets über die Exportfunktion von OpenStreetMap\cite{osm-export} heruntergeladen und anschließend mit JOSM\cite{josm} bearbeitet. Die Auswahl des Ausschnitts orientierte sich an der geografischen Abgrenzung rund um die Reinhold-Frank-Straße sowie die angrenzenden Hauptverkehrsachsen im Bereich des Mühlburger Tors. Der bereinigte Kartenausschnitt wurde anschließend mit dem SUMO-Werkzeug \texttt{netconvert}\cite{sumo-tools} in ein netzwerkkompatibles XML-Format überführt. Dabei kamen zusätzliche Optionen zur Verbesserung der Ampelmodellierung und Fahrstreifenzuordnung zum Einsatz (z.\,B. \texttt{--tls.guess-signals} und \texttt{--junctions.join}).
+
+Die Erzeugung der Fahrzeugbewegungen erfolgte auf zwei Wegen: Zum einen wurden mit dem SUMO-Skript \texttt{randomTrips.py} initiale Testflüsse erzeugt, um die Simulation zu validieren. Zum anderen wurden auf Basis der analysierten Verkehrszähldaten realitätsnahe Flussprofile definiert, welche die beobachteten DTV-Werte auf die Randkanten des simulierten Netzes verteilen. Dabei wurde darauf geachtet, dass die Hauptverkehrsachsen wie die B10 oder B36 als primäre Zufahrtsrouten fungieren und mit einer höheren Fahrzeugdichte gewichtet werden.
+
+Die resultierenden Routendateien wurden anschließend mit \texttt{duarouter} verarbeitet, um konfliktfreie Fahrten über das simulierte Netz zu erzeugen. Um unterschiedliche Verkehrssituationen abzubilden, wurden Szenarien mit variierender Verkehrsdichte simuliert – beispielsweise für Morgen- und Abendspitzen sowie für gleichmäßige Durchfahrtsverteilung.
+
+Die erzeugten Flüsse orientieren sich dabei an der realen Kapazität der Knoten und Straßen und wurden mit Hilfe von Detektor-Ausgaben (u.\,a. \texttt{laneAreaDetector}) überprüft und bei Bedarf nachjustiert.
+
+\subsubsection{Identifikation relevanter Zufahrtskanten}
+
+Die Generierung realistischer Verkehrseinträge in das simulierte Netz basiert auf der systematischen Ermittlung geeigneter Zufahrtskanten. Diese stellen die äußeren Einfallstraßen dar, über die der Verkehr gemäß den Zähldaten in das Untersuchungsgebiet einfließt.
+
+Zur Auswahl wurden zunächst bekannte Hauptverkehrsachsen wie die B10, B36, L605 oder die Durlacher Allee herangezogen. Anschließend erfolgte eine semiautomatische Zuordnung der SUMO-Kanten (\texttt{<edge>}) auf Basis der in OpenStreetMap vergebenen Straßennamen. Hierzu wurde ein Python-Skript eingesetzt, das alle Kanten mit einem \texttt{name}-Attribut durchsuchte und auf relevante Teilstrings prüfte (z.\,B. \texttt{"B10"}, \texttt{"Reinhold-Frank-Straße"}). Die Ergebnisse wurden manuell geprüft und bei Bedarf durch visuelle Kontrolle in \texttt{netedit} ergänzt.
+
+Die so extrahierten Kanten wurden je Verkehrsachse gruppiert und bilden die Grundlage für die segmentierte Trip-Erzeugung.
+
+\subsubsection{Automatisierte Generierung von Trips auf Basis realer Zählerdaten}
+
+Zur Simulation realitätsnaher Verkehrsströme wurden die durchschnittlichen Tagesverkehre (DTV) aus Abschnitt~\ref{sec:zaehlstellen-karlsruhe} auf die jeweiligen Zufahrtsgruppen skaliert und anschließend auf die Simulationsdauer von 3600\,s verteilt. Ein eigens entwickeltes Python-Skript erzeugte aus diesen Daten Fahrzeugeinträge (\texttt{<trip>}), die mithilfe von \texttt{randomTrips.py} über die identifizierten Randkanten eingespielt wurden.
+
+Die erzeugten Trips wurden im XML-Format gespeichert und anschließend mit \texttt{duarouter} zu vollständigen, konfliktfreien Routen (\texttt{<route>}) konvertiert. Die Gesamtanzahl und Verteilung der Fahrzeuge orientierte sich dabei an den stündlich extrapolierten DTV-Werten. Es wurde darauf geachtet, dass insbesondere stark belastete Zufahrten (z.\,B. B10, L605) mit höherem Gewicht berücksichtigt wurden.
+
+\subsubsection{Visuelle und technische Validierung des Netzmodells}
+
+Vor dem eigentlichen Einsatz des Modells wurde das gesamte Netz sowohl strukturell als auch funktional validiert. Die Prüfung erfolgte in mehreren Stufen:
+
+\begin{itemize}
+    \item \textbf{Netzprüfung:} Einsatz von \texttt{netconvert --check-lane-geometry} und \texttt{netcheck} zur Überprüfung der topologischen Konsistenz.
+    \item \textbf{Visuelle Kontrolle:} Mit der SUMO-GUI sowie \texttt{netedit} wurden kritische Knoten visuell inspiziert, um Fehler wie unverbundene Spuren, widersprüchliche Geometrien oder falsche Richtungen zu identifizieren.
+    \item \textbf{Manuelle Überprüfung aller TLS:} Jede einzelne Lichtsignalanlage wurde manuell in \texttt{netedit} geöffnet. Die Phasenpläne, gesteuerten Verbindungen und Zustandslängen (\texttt{state}) wurden dabei geprüft und bei Bedarf korrigiert.
+\end{itemize}
+
+Diese manuelle Validierung war äußerst zeitaufwändig, da fehlerhafte TLS nicht automatisch von SUMO erkannt werden. Die Identifikation von Problemen wie unpassenden \texttt{linkIndex}-Werten oder inkonsistenten Zustandslängen erforderte intensives Testen und systematisches Debugging. In mehreren Fällen mussten TLS-Definitionen komplett neu erstellt oder aufgelöst werden, was ein hohes Maß an Modellierungsverständnis und Geduld erforderte.
+
+\subsubsection{Szenarien und Referenzsimulationen}
+
+Zur Validierung der Verkehrsflüsse wurden unterschiedliche Simulationsszenarien implementiert:
+
+\begin{itemize}
+    \item \textbf{Morgenspitze (Rush Hour):} Verstärkte Einträge an den Süd- und Westzufahrten mit hoher Verkehrsdichte.
+    \item \textbf{Abendliche Rückstaus:} Stärkere Belastung der Ausfallstraßen und des Innenstadtrings.
+    \item \textbf{Gleichmäßiger Tagesverlauf:} Homogene Einträge mit ca. 1000 Fahrzeugen/h pro Richtung.
+    \item \textbf{Zentrumsfokus:} Fokus auf Verkehrsströme über die Reinhold-Frank-Straße und das Mühlburger Tor.
+\end{itemize}
+
+Die resultierenden Simulationen dienten der Überprüfung der Netzdurchlässigkeit und der Validierung der physischen Kapazität der Kreuzungen. Dazu wurden Heatmaps, Fahrzeugzählungen sowie Detektor-Ausgaben (z.\,B. \texttt{laneAreaDetector}) ausgewertet. Die gewonnenen Erkenntnisse flossen in die finale Konfiguration der Flüsse und Phasenpläne ein.
+
+
+\subsubsection{Signalsteuerung und Simulationsparameter}
+
+Das untersuchte Verkehrsnetz umfasst insgesamt 17 signalgesteuerte Kreuzungen. Diese wurden aus dem OpenStreetMap-Datensatz automatisch erkannt und im Rahmen der Netzkonvertierung mit \texttt{netconvert} anhand der Option \texttt{--tls.guess-signals} initial als Lichtsignalanlagen (Traffic Light Systems, TLS) modelliert. Die generierten Ampelphasen wurden anschließend manuell überprüft und bei Bedarf über die mit SUMO mitgelieferte GUI \texttt{netedit} angepasst.
+
+Für die initiale Simulation wurde eine feste Phasenlogik (fixed-time control) verwendet, um ein Grundverhalten zu etablieren. Dabei erhielten alle Kreuzungen definierte Signalphasen mit festen Umlaufzeiten zwischen 30 und 60 Sekunden, abhängig von der Knotentopologie. Zur Vorbereitung des Reinforcement-Learning-Trainings wurden alle relevanten Kreuzungen so konfiguriert, dass sie in SUMO als „aktuiert“ geschaltet werden konnten. Dies ist erforderlich, damit die Steuerung durch externe Agenten via \texttt{TraCI} möglich ist.
+
+Die Simulation wurde mit folgenden Parametern durchgeführt:
+
+\begin{itemize}
+    \item \textbf{Simulationszeitraum:} 3600 Sekunden (entspricht 1 Stunde Echtzeit)
+    \item \textbf{Zeitschritt (step-length):} 1,0 s
+    \item \textbf{Routengenerierung:} deterministisch mit fixer seed zur Reproduzierbarkeit
+    \item \textbf{Simulationstyp:} \texttt{meso}-Modus zur Beschleunigung des Trainings (später auch \texttt{default}-Modus für Evaluation)
+    \item \textbf{Verkehrsverteilung:} über \texttt{flows.xml} definiert und über Randkanten eingeleitet
+\end{itemize}
+
+Die Definition und Verwaltung der TLS-Systeme erfolgt in separaten Dateien (\texttt{*.add.xml}), welche in der SUMO-Konfigurationsdatei eingebunden werden. Für die spätere Anbindung an das Reinforcement-Learning-Modul wurden alle zu steuernden Ampelanlagen mit eindeutigen IDs versehen und überprüft.
+
+\subsection{Reinforcement-Learning-Konzept}
+\subsubsection{Formulierung des RL-Problems}
+Das Problem der Verkehrssteuerung wird als sequentielles Entscheidungsproblem modelliert und mit Hilfe von Reinforcement Learning (RL) gelöst. Ziel ist es, einen Agenten zu trainieren, der durch geeignete Steuerung der Ampelphasen den Verkehrsfluss optimiert. Die Umgebung besteht aus dem simulierten Straßennetz, wie es in SUMO definiert ist. Die Interaktion erfolgt über das TraCI-Interface, das eine Laufzeitsteuerung der Ampelanlagen erlaubt.
+\paragraph{Zustände}
+
+Der Zustand \( s_t \) eines Reinforcement-Learning-Agenten beschreibt die Verkehrssituation an einer einzelnen Kreuzung zum Zeitpunkt \( t \). Ziel ist es, dem Agenten ausreichend Informationen über den lokalen Verkehrsfluss zur Verfügung zu stellen, damit er fundierte Entscheidungen über die Steuerung der Lichtsignalanlage treffen kann.
+
+Die Zustandsrepräsentation basiert auf den folgenden Komponenten:
+
+\begin{itemize}
+    \item \textbf{Fahrzeuganzahl pro Zufahrtsspur:} Für jede dem Knoten zuführende Fahrspur wird die aktuelle Anzahl an Fahrzeugen ermittelt. Dies geschieht über sogenannte \texttt{laneAreaDetector}, die für jede Spur individuell in SUMO definiert werden. Die Werte werden periodisch über \texttt{TraCI} abgefragt.
+    
+    \item \textbf{Warteschlangenlänge (queue length):} Gibt die Anzahl der Fahrzeuge an, die sich auf einer Spur mit Geschwindigkeit \texttt{< 0.1 m/s} befinden. Dies ist ein wichtiges Maß für Rückstaus an Kreuzungen.
+    
+    \item \textbf{Durchschnittliche Geschwindigkeit pro Spur:} Diese Kenngröße erlaubt Rückschlüsse auf den Verkehrsfluss pro Richtung und ergänzt die reine Anzahlinformation. 
+    
+    \item \textbf{Ampelphase (TLS state):} Die aktuell geschaltete Ampelphase wird als diskrete Phase kodiert (z.\,B. 0, 1, 2, ...). In SUMO entspricht dies der Index der aktiven Phase im Phasenplan der TLS.
+    
+    \item \textbf{Dauer der aktuellen Phase:} Die Anzahl der Zeitschritte seit Beginn der aktuellen Phase. Diese Information ist notwendig, um Phasenlängen sinnvoll zu steuern (z.\,B. Mindestgrünzeit).
+    
+    \item \textbf{Binärmasken zur Phasenwechselbarkeit:} Kodierung, ob ein Wechsel zur nächsten Phase gemäß Übergangsbedingungen (z.\,B. Mindestgrünzeit) aktuell möglich ist. Diese Information ist erforderlich, falls das Aktionsmodell auch direkte Sprünge zwischen nicht direkt benachbarten Phasen erlaubt.
+    
+    \item \textbf{Optional – Nachbarschaftszustand:} In Multi-Agent-Settings kann es sinnvoll sein, zusätzlich aggregierte Zustandsinformationen benachbarter Knoten einzubeziehen (z.\,B. Gesamtwarteschlange auf ausgehenden Spuren, die zu benachbarten TLS führen).
+\end{itemize}
+
+Die Zustände werden zu einem normierten Merkmalsvektor kombiniert und bilden damit die Eingabe für das neuronale Entscheidungsmodell des Agenten.
+
+\paragraph{Aktionen}
+
+Die Aktionsmenge \( A \) eines Agenten beschreibt die Eingriffsmöglichkeiten in den Steuerungsablauf der jeweiligen Ampelkreuzung. Dabei wird zwischen zwei gängigen Aktionsmodellen unterschieden:
+
+\begin{enumerate}
+    \item \textbf{Phasenwechsel-Modell:} Der Agent entscheidet, ob die aktuelle Phase fortgesetzt oder zur nächsten gewechselt werden soll. Es handelt sich um ein binäres Aktionsmodell:
+    \[
+    A = \{ \texttt{keep},\ \texttt{switch} \}
+    \]
+    Diese Variante wird häufig in klassischen SUMO-RL-Implementierungen verwendet (z.\,B. `sumo-rl`). Die Reihenfolge der Phasen ist dabei festgelegt (z.\,B. zyklischer Übergang).
+    
+    \item \textbf{Direktwahl-Modell:} Der Agent wählt direkt aus allen möglichen Phasen die nächste aus:
+    \[
+    A = \{ \texttt{phase}_0,\ \texttt{phase}_1,\ \ldots,\ \texttt{phase}_n \}
+    \]
+    Diese Variante erfordert eine eigene Definition der Übergangslogik in SUMO (z.\,B. über permissive TLS-Ketten), erlaubt aber größere Flexibilität und exploratives Verhalten.
+\end{enumerate}
+
+Unabhängig vom Modell gelten folgende Einschränkungen:
+
+\begin{itemize}
+    \item \textbf{Mindestgrünzeiten:} Ein Wechsel der Phase darf erst nach einer definierten Mindestgrünzeit erfolgen (z.\,B. 5 s), um realistische Signalisierung und Verkehrssicherheit zu gewährleisten.
+    
+    \item \textbf{Sicherheitsbedingte Zwischenphasen:} SUMO erzwingt automatisch Zwischenphasen wie Gelb- oder Räumzeiten. Der Agent gibt nur den Phasenwunsch an, die exakte Ablaufsteuerung erfolgt durch das TLS-Modell in SUMO.
+    
+    \item \textbf{Simultane Agentenentscheidung:} Bei mehreren Knoten wird jeder TLS-Agent unabhängig gesteuert, es sei denn, ein zentrales Multi-Agent-Training wird implementiert.
+\end{itemize}
+
+Zur Reduktion der Aktionsfrequenz wird häufig ein sogenanntes \textbf{Action Interval} festgelegt (z.\,B. alle 5 s), sodass Entscheidungen nur in bestimmten Zeitschritten getroffen werden können. Dies verhindert zu hektisches Umschalten der Ampeln.
+
+\paragraph{Belohnungsfunktion}
+
+Die Belohnungsfunktion ist zentrales Element des Lernprozesses und bestimmt das Optimierungsziel. Sie wurde so gestaltet, dass sie folgende Aspekte negativ gewichtet:
+
+\begin{itemize}
+    \item \textbf{Gesamte Wartezeit aller Fahrzeuge} (minimieren)
+    \item \textbf{Länge der Fahrzeugschlangen} (minimieren)
+    \item \textbf{Anzahl der Stopps} (minimieren)
+\end{itemize}
+
+Die konkrete Belohnung \( r_t \) zum Zeitpunkt \( t \) berechnet sich nach:
+
+\[
+r_t = -\alpha \cdot \sum_{\text{alle Spuren}} \text{queueLength}_i(t) - \beta \cdot \sum_{\text{alle Fahrzeuge}} \text{waitingTime}_j(t)
+\]
+
+wobei \( \alpha \) und \( \beta \) Gewichtungsfaktoren darstellen, die im Rahmen der Hyperparameteroptimierung bestimmt werden. In späteren Varianten kann die Belohnung durch zusätzliche Komponenten wie Emissionen oder Energieverbrauch ergänzt werden, um umweltfreundliche Steuerungsstrategien zu fördern.
+
+\subsection{Analyse und Herausforderungen bei der OSM-Netznutzung}
+
+
+\subsubsection{Grundstruktur von Lichtsignalanlagen (TLS) in SUMO}
+Bevor die Probleme beim OSM-Import analysiert werden, ist es hilfreich, den Aufbau und die Abhängigkeiten der relevanten XML-Elemente in SUMO zu verstehen, insbesondere im Zusammenhang mit der Steuerung von Lichtsignalanlagen (\textit{Traffic Light Systems, TLS}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/junktion.png}
+\caption{Visualisierung einer TLS-Kreuzung (eigene Darstellung).}
+\label{fig:sumo_karlsruhe}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{\texttt{<junction>}} – Definiert Knotenpunkte im Netz. Falls eine Ampel gesteuert wird, ist der Typ \texttt{type="traffic\_light"}. Die ID entspricht in der Regel der TLS-ID.
+    
+    \item \textbf{\texttt{<connection>}} – Verbindet zwei Fahrstreifen (von \texttt{from} nach \texttt{to}). Wenn diese Verbindung durch eine Ampel kontrolliert wird, enthält sie die Attribute \texttt{tl="<tls\_id>"} und \texttt{linkIndex}. Die Reihenfolge der \texttt{linkIndex}-Werte bestimmt die Position im Phasen-String.
+    
+    \item \textbf{Controlled Link} – Jede \texttt{<connection>} mit einem \texttt{tl}-Attribut zählt als „gesteuerte Verbindung“. Die Anzahl solcher Verbindungen bestimmt die Länge des Phasenstrings (\texttt{state}).
+    
+    \item \textbf{\texttt{<tlLogic>}} – Enthält die Steuerungslogik einer TLS. Jede \texttt{<tlLogic>} hat eine eindeutige ID (i.d.R. identisch zur \texttt{junction}-ID) und eine Liste von \texttt{<phase>}-Elementen.
+    
+    \item \textbf{\texttt{<phase>}} – Jede Phase ist ein String (z.B. \texttt{"Grgr"}), der den Zustand aller \texttt{linkIndex}-Verbindungen kodiert. Jeder Buchstabe (z.B. G = Grün, r = Rot) steht für den Status eines bestimmten kontrollierten Links.
+    
+    \item \textbf{\texttt{<request>}} – Optionale Anforderungen einzelner Signalgruppen, meist bei aktuierten oder adaptiven TLS. Jeder Eintrag verweist über \texttt{index=} auf einen gesteuerten Link.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  node distance=1.2cm and 3cm,
+  every node/.style={align=center},
+  box/.style={draw, rounded corners, minimum width=3.2cm, minimum height=1cm}
+]
+
+% Hauptknoten
+\node[box] (junction) {\texttt{<junction>}\\ID = J1};
+\node[box, right=4.5cm of junction] (tlLogic) {\texttt{<tlLogic>}\\ID = J1};
+
+% Verbindungen unterhalb
+\node[box, below left=1.7cm and 0.4cm of junction] (conn1) {\texttt{<connection>}\\\texttt{linkIndex=0}};
+\node[box, below right=1.7cm and 0.4cm of junction] (conn2) {\texttt{<connection>}\\\texttt{linkIndex=1}};
+
+% Phase
+\node[box, below right=1.7cm and 0.4cm of conn1] (phase) {\texttt{<phase>}\\\texttt{state="Gr"}};
+
+% Kanten
+\draw[->] (junction.east) -- node[above] {\texttt{tl="J1"}} (tlLogic.west);
+\draw[->] (junction.south west) -- (conn1.north);
+\draw[->] (junction.south east) -- (conn2.north);
+\draw[->] (conn1.south) -- ([xshift=-0.8cm]phase.north);
+\draw[->] (conn2.south) -- ([xshift=+0.8cm]phase.north);
+
+\end{tikzpicture}
+\caption{Zusammenspiel von Kreuzung, Verbindungen und Ampellogik in SUMO}
+\label{fig:tls_structure}
+\end{figure}
+
+
+\subsubsection{Typische Fehlerquellen nach OSM-Import}
+
+Die automatische Ableitung von Ampelsteuerungen aus OSM ist unvollständig und fehleranfällig. Im Zusammenspiel mit \texttt{sumo-rl} ergeben sich daraus mehrere konkrete Probleme:
+
+\begin{itemize}
+    \item \textbf{Fehlende oder unvollständige TLS-Definitionen:} In OSM sind Ampelanlagen in der Regel lediglich als Punktknoten mit dem Tag \texttt{highway=traffic\_signals} erfasst. Die genaue Schaltlogik (\texttt{tlLogic}) – inklusive Phasen und Zustände – fehlt vollständig. SUMO generiert daher beim Netzimport mit \texttt{--tls.guess-signals} heuristische Ampeldefinitionen, die jedoch oft lückenhaft oder unbrauchbar sind.
+    
+    \item \textbf{TLS mit nur einer Phase:} Viele der generierten Ampeln besitzen lediglich eine einzige definierte Phase. Dies entspricht keinem realen Verhalten und führt zu Fehlern beim Training mit \texttt{sumo-rl}, da das Framework mindestens zwei steuerbare Phasen voraussetzt. Die betroffenen Knoten müssen daher identifiziert und aus der Simulation ausgeschlossen oder manuell korrigiert werden.
+    
+    \item \textbf{Unstimmige Phasenlängen:} Jede Phase in SUMO ist ein Zeichenstring (\texttt{state}), dessen Länge der Anzahl der gesteuerten Verbindungen (sogenannte \textit{controlled links}) entsprechen muss. Bei fehlerhafter Generierung ist diese Bedingung oft verletzt – etwa wenn der \texttt{state} zu kurz oder zu lang ist. Dies führt in \texttt{sumo-rl} zu Indexfehlern oder undefiniertem Verhalten.
+    
+    \item \textbf{Fehlerhafte oder überzählige \texttt{<request>}-Einträge:} Jede TLS enthält in der Netzdatei zusätzliche Steuerinformationen über \texttt{request}-Elemente. Diese verweisen auf spezifische Signale mittels eines Index. Häufig verweisen diese Einträge jedoch auf nicht vorhandene Verbindungen, da \texttt{netconvert} Signalverknüpfungen nicht korrekt zuordnet. SUMO ignoriert solche Fehler teilweise still – \texttt{sumo-rl} hingegen bricht mit Ausnahmen ab.
+    
+    \item \textbf{Mehrdeutige oder verschachtelte Kreuzungen:} In komplexeren innerstädtischen Kreuzungen fasst SUMO mehrere OSM-Knoten zu einem „cluster“ zusammen, um den Verkehrsfluss abzubilden. Dies kann zu sehr großen TLS mit dutzenden Ein- und Ausfahrten führen, die übermäßig viele Phasen oder extrem lange Zustandsdefinitionen erzeugen. Solche TLS sind schwer zu debuggen und häufig inkompatibel mit den Erwartungen von \texttt{sumo-rl}.
+\end{itemize}
+
+\paragraph{Folgen für \texttt{sumo-rl}}
+
+Das Framework \texttt{sumo-rl} erwartet für jede zu steuernde TLS:
+
+\begin{itemize}
+    \item mindestens zwei valide Phasen,
+    \item konsistente Phasenzustände (\texttt{state}) mit korrekter Länge,
+    \item vollständige Verbindungen zu kontrollierten Links,
+    \item eindeutig identifizierbare TLS-IDs.
+\end{itemize}
+
+Sind diese Anforderungen nicht erfüllt, führt dies typischerweise zu einer der folgenden Fehlermeldungen:
+
+\begin{itemize}
+    \item \texttt{IndexError: string index out of range}
+    \item \texttt{ValueError: Invalid phase length}
+    \item \texttt{KeyError: TLS not found}
+\end{itemize}
+
+Da diese Probleme nicht durch SUMO selbst gemeldet, sondern erst zur Laufzeit in \texttt{sumo-rl} sichtbar werden, ist ein systematischer Debugging- und Reparaturprozess zwingend notwendig. Die Komplexität steigt dabei exponentiell mit der Anzahl der TLS im Netz.
+
+\paragraph{Erkenntnis}
+
+Der direkte Import von OSM-Daten in SUMO erzeugt ein formal nutzbares Netz – jedoch nicht automatisch ein für Reinforcement Learning geeignetes. Ohne zusätzliche Aufbereitung ist ein stabiler Trainingsbetrieb in \texttt{sumo-rl} nicht möglich. Deshalb wurden im Rahmen dieser Arbeit eigene Tools zur automatisierten Analyse und Reparatur des Netzes entwickelt, die im folgenden Abschnitt näher beschrieben werden.
+
+\subsubsection{Problematik nicht-motorisierter Verkehrswege im OSM-Modell}
+
+Ein besonders gravierendes Problem beim OSM-Import waren die Strukturen nicht-motorisierter Verkehrsträger – vor allem Fußwege, Überwege und Fahrradtrassen. Diese sind im OSM-Datenmodell oft detailliert, aber aus simulationslogischer Sicht problematisch integriert:
+
+\begin{itemize}
+    \item \textbf{Separate Fahrspuren für Radverkehr:} Diese führen zu zusätzlichen Fahrstreifen mit eigenen Abbiegebeziehungen, die SUMO automatisch als kontrollierungsbedürftig klassifiziert. Häufig entstehen dadurch extrem lange TLS-Zustände mit über 50 Signalgruppen.
+    
+    \item \textbf{Fußgängerüberwege mit Konfliktzonen:} Viele \texttt{highway=crossing}-Elemente erzeugen automatisierte Verbindungen in SUMO, die mit Ampelphasen abgesichert werden müssen – selbst wenn sie im Originalnetz rein logisch sind. Dies bläht die Netzstruktur zusätzlich auf.
+    
+    \item \textbf{Entfernung kaum möglich:} Ein gezieltes Entfernen nicht-motorisierter Wege führt zu inkonsistenten Junctions, zerrissenen Knotenverbindungen und Netzfragmentierung. Eine selektive Bereinigung dieser Elemente hätte manuell erfolgen müssen – mit hohem Fehlerpotenzial.
+\end{itemize}
+
+Diese Phänomene führten letztlich zu der Entscheidung, auf eine synthetische Umgebung umzusteigen, in der alle Verkehrsteilnehmer und Verkehrsbeziehungen explizit und gezielt modelliert werden können.
+
+
+\subsubsection{Eingesetzte \texttt{netconvert}-Optionen und deren Grenzen}
+
+Im Rahmen der Netzgenerierung wurden zahlreiche Optionen des SUMO-Tools \texttt{netconvert} genutzt, um die aus OSM exportierten Daten zu verbessern und automatisiert für die Simulation aufzubereiten. Dabei kamen insbesondere folgende Konvertierungsoptionen zum Einsatz:
+
+\begin{itemize}
+    \item \texttt{--tls.guess-signals}: Automatische Erkennung und Erzeugung von Ampelanlagen basierend auf der Netzstruktur und OSM-Tags. Zwar werden damit grundlegend steuerbare TLS erstellt, jedoch mit oft unrealistischen Phasenkombinationen oder lediglich einer einzigen Phase – was im Kontext von \texttt{sumo-rl} unbrauchbar ist.
+
+    \item \texttt{--tls.join}: Versucht, benachbarte Ampelanlagen zu einer gemeinsamen Steuerungseinheit zu verschmelzen. Dies führte in der Praxis zu unübersichtlichen und kaum nachvollziehbaren TLS-Clustern mit dutzenden Signalgruppen, die sich weder debuggen noch sinnvoll manuell reparieren ließen.
+
+    \item \texttt{--junctions.join}: Fügt benachbarte Knotenpunkte zusammen, um komplexe Kreuzungen zu vereinfachen. In der Umsetzung erzeugt diese Option allerdings häufig übermäßig große Junction-Cluster mit einer Vielzahl von Ein- und Ausfahrten. Die daraus resultierenden Junctions waren nicht mehr sinnvoll steuerbar.
+
+    \item \texttt{--ramps.guess}: Wird bei Autobahnimporten verwendet, um Ein- und Ausfahrten korrekt zu erkennen. In urbanen Netzen wie dem Karlsruher Modell zeigte diese Option jedoch keine spürbare Verbesserung oder sogar fehlerhafte Zuweisungen von Abbiegebeziehungen.
+
+    \item \texttt{--remove-edges.isolated} und \texttt{--keep-edges.by-vclass}: Weitere Optionen zur Bereinigung überflüssiger oder nicht-kfz-tauglicher Straßenabschnitte zeigten nur begrenzte Wirkung, da viele Fuß- und Radverbindungen dennoch als relevante Kanten im Netz verblieben.
+
+    \item \texttt{--discard-simple}: Entfernt automatisch alle einfachen Kreuzungen (d.\,h. Knoten mit nur zwei verbundenen Kanten) aus dem Netz. Ziel ist es, das Netz zu vereinfachen und unnötige Zwischenknoten zu reduzieren. In der Praxis zeigte sich jedoch, dass durch diese Option auch technisch relevante Einmündungen und Übergänge entfernt wurden, was zu fehlerhaften Verbindungen oder fehlenden Ampelanlagen führte. Darüber hinaus erschwert die Option eine saubere Reproduktion der realen Verkehrsführung, da sie die Netztopologie unkontrollierbar verändert.
+
+\end{itemize}
+
+Obwohl diese Optionen teilweise strukturelle Verbesserungen erzielen konnten, blieben die generierten Netze in ihrer Gesamtheit unzuverlässig: entweder zu komplex, unvollständig, inkonsistent oder inkompatibel mit dem Reinforcement-Learning-Framework. Auch die Kombination mehrerer Optionen führte oft zu unvorhersehbaren Seiteneffekten – etwa widersprüchlichen TLS-Zuständen oder unvollständig verbundenen Junctions. 
+
+Die automatisierten Heuristiken von \texttt{netconvert} sind auf generische OSM-Netze ausgelegt, nicht jedoch auf die hohen Anforderungen an Konsistenz, Steuerbarkeit und Reproduzierbarkeit, wie sie ein RL-basiertes Trainingsumfeld erfordert.
+
+\subsubsection{Grenzen der OSM-basierten Netzmodellierung}
+
+Trotz erheblicher Anstrengungen bei der Bereinigung und Validierung des OSM-basierten Karlsruher Verkehrsnetzes erwiesen sich einige strukturelle Einschränkungen als nicht zuverlässig behebbar. Insbesondere die starke Präsenz und topologische Einbindung von Fuß- und Radverkehrswegen führte zu nachhaltigen Problemen im Modell:
+
+\begin{itemize}
+    \item \textbf{Übermäßige Knotenvernetzung:} Fuß- und Radwege erzeugen eine Vielzahl zusätzlicher Knoten und Verbindungen, die beim Import aus OSM oft zu komplex verschachtelten Kreuzungsclustern führen. Diese lassen sich weder zuverlässig entwirren noch stabil mit funktionalen TLS versehen.
+    
+    \item \textbf{Unkontrollierbare Verbindungsstruktur:} Beim Versuch, Fuß- und Radverbindungen selektiv aus dem Netz zu entfernen, entstehen häufig inkonsistente oder gar fehlerhafte Verbindungen zwischen verbleibenden Fahrbahnen. Dies führt zu nicht steuerbaren Junctions, überzähligen Abbiegebeziehungen und unbrauchbaren Ampelschaltungen.
+
+    \item \textbf{Unvereinbarkeit mit RL-Steuerung:} Selbst nach umfangreicher Reparatur verbleiben viele Knoten, die strukturell oder logisch nicht mit \texttt{sumo-rl} kompatibel sind. Die dafür nötigen manuellen Eingriffe überschreiten den praktikablen Aufwand für ein robustes, reproduzierbares Modell.
+\end{itemize}
+
+\subsubsection{Übergang zu einem synthetischen Verkehrsnetz}
+
+Nach mehreren Iterationszyklen wurde daher entschieden, den Fokus dieser Arbeit auf ein \textbf{synthetisch generiertes Verkehrsnetz} zu verlagern. Dieses basiert nicht auf realen Geodaten, sondern wird gezielt so konstruiert, dass es die Anforderungen an eine kontrollierte Umgebung für das Training von Reinforcement-Learning-Agenten erfüllt:
+
+\begin{itemize}
+    \item \textbf{Reduzierte Komplexität bei hoher Steuerbarkeit:} Das generierte Netz vermeidet absichtlich komplexe Kreuzungstopologien und erlaubt gezielte Definition steuerbarer TLS.
+    
+    \item \textbf{Fehlerresistenz und Modularität:} Durch vollständige Kontrolle über Struktur, Phasenpläne und Verkehrsverteilung ist eine konsistente und wiederholbare Simulation möglich.
+    
+    \item \textbf{RL-geeignete Gestaltung:} Alle im Netz enthaltenen Kreuzungen sind mit mindestens zwei sinnvollen Ampelphasen modelliert, beinhalten konsistente Signaldefinitionen und erfüllen die technischen Anforderungen von \texttt{sumo-rl}.
+\end{itemize}
+
+Der Einsatz des synthetischen Netzes ermöglicht es, sich auf die eigentliche Forschungsfrage – die Optimierung von Ampelsteuerung durch RL – zu konzentrieren, ohne durch externe Störfaktoren behindert zu werden. Die im vorigen Abschnitt dokumentierten Schritte bleiben dennoch ein zentraler Bestandteil dieser Arbeit, da sie den praktischen Aufwand und die Limitationen realer OSM-Netze in SUMO transparent machen.
+
+\subsection{Netzprüfung, Reparatur und Toolchain}
+Aufgrund der oben beschriebenen strukturellen Schwächen im importierten OSM-Netz war eine manuelle Nachbearbeitung ineffizient und fehleranfällig. Daher wurden eigene Werkzeuge entwickelt, um eine systematische und automatisierte Reparatur zu ermöglichen.
+
+
+\subsubsection{Werkzeuge zur Netzprüfung und Reparatur}
+
+Um die Kompatibilität des aus OpenStreetMap abgeleiteten Verkehrsnetzes mit \texttt{sumo-rl} sicherzustellen, wurde eine Reihe eigenentwickelter Python-Skripte implementiert. Diese Werkzeuge automatisieren die Analyse, Validierung und Korrektur der Netzstruktur mit Fokus auf Lichtsignalanlagen (TLS). Der modulare Aufbau erlaubt es, problematische Netzbestandteile zu identifizieren und gezielt zu bereinigen.
+
+\paragraph{Prüfung der Signalverknüpfungen und Zustandslängen}
+
+Zwei zentrale Tools wurden entwickelt, um die Konsistenz zwischen kontrollierten Verbindungen (\textit{controlled links}) und Phasenzuständen (\texttt{state}) der TLS zu überprüfen:
+
+\begin{itemize}
+    \item \textbf{\texttt{check\_tls\_consistency.py}} prüft, ob die Länge jedes \texttt{state}-Strings in den \texttt{<phase>}-Elementen exakt der Anzahl der gesteuerten Signalindizes entspricht. Abweichungen werden detailliert gelistet, inklusive betroffener Phase und TLS-ID.
+        
+        \begin{algorithm}[H]
+        \caption{CheckTLSLengths – Prüfung inkonsistenter Phasenlängen}
+        \begin{algorithmic}[1]
+        \Function{CheckTLSLengths}{net.xml}
+          \State Lade XML-Baum und extrahiere \texttt{<connection>}-Elemente
+          \State Erstelle Dictionary \texttt{tls\_controlled\_links} mit Anzahl gesteuerter Links pro TLS
+          \ForAll{\texttt{tlLogic}-Elemente im Netz}
+            \State \texttt{expectedLen} $\gets$ Anzahl \texttt{controlledLinks} aus Dictionary
+            \If{\texttt{expectedLen} = 0}
+              \State Gib Warnung: TLS hat keine gesteuerten Verbindungen
+              \State \textbf{continue}
+            \EndIf
+            \ForAll{Phasen $i$ in \texttt{tlLogic}}
+              \State \texttt{actualLen} $\gets$ Länge des \texttt{state}-Strings
+              \If{\texttt{actualLen} $\neq$ \texttt{expectedLen}}
+                \State Gib Warnung mit TLS-ID, Phase und \texttt{state}-Inhalt aus
+              \EndIf
+            \EndFor
+          \EndFor
+          \If{keine Abweichungen gefunden}
+            \State Gib Erfolgsmeldung aus
+          \EndIf
+        \EndFunction
+        \end{algorithmic}
+        \end{algorithm}
+        
+        \newpage
+\noindent
+\textbf{Originalcode in Python (\texttt{check\_tls\_consistency.py}):}
+
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import xml.etree.ElementTree as ET
+
+# === Konfiguration ===
+net_file = "karlsruhe.net.xml"
+
+# === Einlesen ===
+tree = ET.parse(net_file)
+root = tree.getroot()
+
+# === Alle controlledLinks zählen ===
+tls_controlled_links = {}
+for connection in root.findall("connection"):
+    if "tl" in connection.attrib and "linkIndex" in connection.attrib:
+        tls_id = connection.attrib["tl"]
+        tls_controlled_links.setdefault(tls_id, set()).add(int(connection.attrib["linkIndex"]))
+
+# === Alle Phasen prüfen ===
+def check_tls_lengths():
+    print("Überprüfe alle TLS auf inkonsistente Phasenlängen...\n")
+    any_issues = False
+    for logic in root.findall("tlLogic"):
+        tls_id = logic.attrib["id"]
+        expected_len = len(tls_controlled_links.get(tls_id, []))
+
+        if expected_len == 0:
+            print(f" TLS '{tls_id}' hat keine controlledLinks (wird evtl. nicht gesteuert)")
+            continue
+
+        for i, phase in enumerate(logic.findall("phase")):
+            actual_len = len(phase.attrib["state"])
+            if actual_len != expected_len:
+                print(f" Phase {i} von TLS '{tls_id}' hat Länge {actual_len}, erwartet: {expected_len}")
+                print(f"    → state=\"{phase.attrib['state']}\"")
+                any_issues = True
+
+    if not any_issues:
+        print(" Alle TLS-Phasen stimmen mit ihren controlledLinks überein!")
+
+check_tls_lengths()
+\end{minted}
+
+    \newpage
+    \item \textbf{\texttt{check\_tls\_requests.py}} validiert, ob alle \texttt{<request>}-Indizes innerhalb zulässiger Grenzen liegen. Falsch verknüpfte Einträge – z.\,B. \texttt{index > max(signalIndex)} – werden gemeldet.
+
+    \begin{algorithm}[H]
+    \caption{CheckTLSRequests – Prüfung ungültiger \texttt{request}-Indizes}
+    \begin{algorithmic}[1]
+    \Function{CheckTLSRequests}{net.xml}
+      \State Lade XML-Datei und parse Wurzelknoten
+      \State Erzeuge Dictionary \texttt{tls\_signal\_indices} mit Signalindizes je TLS aus \texttt{<connection>}-Elementen
+      \ForAll{\texttt{junction}-Elemente im Netz}
+        \State \texttt{tls\_id} $\gets$ ID der Junction
+        \If{\texttt{tls\_id} in \texttt{tls\_signal\_indices}}
+          \State \texttt{expected\_max} $\gets$ Länge der Signalindizes für dieses TLS
+          \ForAll{\texttt{request}-Elemente in Junction}
+            \State \texttt{index} $\gets$ Wert des \texttt{index}-Attributs
+            \If{\texttt{index} $\geq$ \texttt{expected\_max}}
+              \State Gib Warnung mit \texttt{tls\_id} und \texttt{index} aus
+            \EndIf
+          \EndFor
+        \EndIf
+      \EndFor
+      \If{keine Warnungen ausgegeben}
+        \State Gib Erfolgsmeldung aus
+      \EndIf
+    \EndFunction
+    \end{algorithmic}
+    \end{algorithm}
+
+
+\newpage
+\noindent
+\textbf{Originalcode in Python (\texttt{check\_tls\_requests.py}):}
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import xml.etree.ElementTree as ET
+
+net_file = "karlsruhe.net.xml"
+tree = ET.parse(net_file)
+root = tree.getroot()
+
+# Zähle für jedes TLS wie viele signal indices es gibt (controlled links)
+tls_signal_indices = {}
+for conn in root.findall("connection"):
+    if "tl" in conn.attrib and "linkIndex" in conn.attrib:
+        tls_id = conn.attrib["tl"]
+        tls_signal_indices.setdefault(tls_id, set()).add(int(conn.attrib["linkIndex"]))
+
+# Vergleiche mit den request-Elementen
+print("Überprüfe request-Indizes gegen Signalindizes...\n")
+any_issues = False
+for junction in root.findall("junction"):
+    tls_id = junction.attrib.get("id")
+    requests = junction.findall("request")
+    if tls_id in tls_signal_indices:
+        expected_max = len(tls_signal_indices[tls_id])
+        for req in requests:
+            index = int(req.attrib["index"])
+            if index >= expected_max:
+                print(f"Junction '{tls_id}': request index {index} > max signal index {expected_max - 1}")
+                any_issues = True
+
+if not any_issues:
+    print("Alle request-Indizes passen zu den TLS-Signalindizes!")
+\end{minted}
+\end{itemize}
+
+\newpage
+\paragraph{Automatische Reparaturwerkzeuge}
+
+Die folgenden Programme wurden zur strukturellen Korrektur entwickelt:
+
+\begin{itemize}
+    \item \textbf{\texttt{fix\_requests.py}} entfernt überzählige \texttt{<request>}-Einträge und kürzt \texttt{state}-Strings in Phasen auf die zulässige Länge. Die Bereinigung erfolgt anhand der tatsächlichen Anzahl gesteuerter Signalverbindungen (\texttt{linkIndex}).
+
+    \begin{algorithm}[H]
+\caption{FixRequests – Bereinigung ungültiger \texttt{<request>}-Einträge und Anpassung der Phasen}
+\begin{algorithmic}[1]
+\Function{FixRequests}{net.xml}
+  \State Lade XML-Baum mit Netzstruktur
+  \State Initialisiere Dictionary \texttt{tls\_max\_index} für maximale Signalindices
+  \ForAll{\texttt{connection}-Elemente}
+    \If{TLS-ID und \texttt{linkIndex} vorhanden}
+      \State Aktualisiere \texttt{tls\_max\_index[tl]} mit höchstem Index
+    \EndIf
+  \EndFor
+
+  \ForAll{\texttt{junction}-Elemente}
+    \State Hole TLS-ID
+    \If{TLS nicht in \texttt{tls\_max\_index}}
+      \State \textbf{continue}
+    \EndIf
+    \State Bestimme erlaubten Maximalindex (\texttt{max\_idx})
+    \ForAll{\texttt{request}-Einträge}
+      \If{Index $>$ \texttt{max\_idx}}
+        \State Entferne ungültigen \texttt{request}
+      \EndIf
+    \EndFor
+
+    \ForAll{\texttt{tlLogic}-Elemente mit passender TLS-ID}
+      \ForAll{Phasen}
+        \If{\texttt{state}-String ist zu lang}
+          \State Kürze \texttt{state} auf \texttt{max\_idx + 1}
+        \EndIf
+      \EndFor
+    \EndFor
+  \EndFor
+
+  \State Speichere modifizierte XML-Datei
+  \State Gib Statistiken zu entfernten Requests und angepassten Phasen aus
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
+\noindent
+\textbf{Originalcode in Python (\texttt{fix\_requests.py}):}
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import xml.etree.ElementTree as ET
+
+net_file = "karlsruhe.net.xml"
+output_file = "karlsruhe_fixed_tls.net.xml"
+
+tree = ET.parse(net_file)
+root = tree.getroot()
+
+# Finde maximal verwendete Signal-Indices pro TLS
+tls_max_index = {}
+for conn in root.findall("connection"):
+    tl = conn.get("tl")
+    idx = conn.get("linkIndex")
+    if tl and idx:
+        idx = int(idx)
+        tls_max_index[tl] = max(tls_max_index.get(tl, -1), idx)
+
+# Bereinigung
+total_removed_requests = 0
+total_adjusted_phases = 0
+changed_tls = []
+
+for junction in root.findall("junction"):
+    tls_id = junction.get("id")
+    if tls_id not in tls_max_index:
+        continue
+
+    max_idx = tls_max_index[tls_id]
+    requests = list(junction.findall("request"))
+    removed = 0
+
+    for req in requests:
+        req_idx = int(req.get("index"))
+        if req_idx > max_idx:
+            junction.remove(req)
+            removed += 1
+
+    if removed > 0:
+        print(f"TLS '{tls_id}': {removed} ungültige <request>-Einträge entfernt.")
+        total_removed_requests += removed
+        changed_tls.append(tls_id)
+
+    # Kürze zugehörige Phasen
+    for tl in root.findall("tlLogic"):
+        if tl.get("id") == tls_id:
+            adjusted = 0
+            for phase in tl.findall("phase"):
+                state = phase.get("state")
+                if len(state) > max_idx + 1:
+                    old_len = len(state)
+                    phase.set("state", state[:max_idx + 1])
+                    adjusted += 1
+            if adjusted > 0:
+                print(f" TLS '{tls_id}': {adjusted} <phase>-Strings auf Länge {max_idx + 1} gekürzt.")
+                total_adjusted_phases += adjusted
+                if tls_id not in changed_tls:
+                    changed_tls.append(tls_id)
+
+# Speichern
+tree.write(output_file, encoding="utf-8")
+print("\n Reparatur abgeschlossen.")
+print(f" Gesamt entfernte <request>-Einträge: {total_removed_requests}")
+print(f" Gesamt angepasste <phase>-Einträge: {total_adjusted_phases}")
+print(f" Betroffene TLS-IDs: {len(changed_tls)} Stück")
+for tls in changed_tls:
+    print(f"  - {tls}")
+print(f"\n Bereinigte Datei gespeichert unter: {output_file}")
+\end{minted}
+\vspace{1cm}
+    \item \textbf{\texttt{repair-net.py}} nutzt ein manuell gepflegtes Dictionary mit TLS-IDs und deren erwarteter Phasenlänge (Anzahl kontrollierter Verbindungen). Alle Phasen, deren Länge abweicht, werden automatisch gekürzt oder aufgefüllt.
+
+    \begin{algorithm}[H]
+\caption{RepairTLSStates – Korrektur der Phasenlängen anhand manuell gepflegter Referenz}
+\begin{algorithmic}[1]
+\Function{RepairTLSStates}{net.xml, referenz\_dictionary}
+  \State Lade Netzstruktur aus \texttt{net.xml}
+  \ForAll{\texttt{tlLogic}-Elemente im Netz}
+    \State \texttt{tls\_id} $\gets$ ID des Ampelknotens
+    \If{\texttt{tls\_id} nicht in referenz\_dictionary}
+      \State \textbf{continue}
+    \EndIf
+    \State \texttt{correctLen} $\gets$ erwartete Zustandslänge aus Referenz
+    \ForAll{Phasen des Knotens}
+      \State \texttt{state} $\gets$ Zeichenkette der Phase
+      \If{Länge(\texttt{state}) $\neq$ \texttt{correctLen}}
+        \State Kürze oder ergänze \texttt{state} auf \texttt{correctLen}
+        \State Markiere Netz als geändert
+      \EndIf
+    \EndFor
+  \EndFor
+  \If{Netz wurde geändert}
+    \State Speichere bereinigte Netzdatei als \texttt{karlsruhe\_fixed.net.xml}
+  \Else
+    \State Gib Hinweis: Alle Phasen bereits korrekt
+  \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\newpage
+\noindent
+\textbf{Originalcode in Python (\texttt{repair\_net.py}):}
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+from xml.etree import ElementTree as ET
+
+# Manuell gepflegte Dictionary mit {TLS-ID: Anzahl controlledLinks}
+controlled_links = {
+    "1720933516": 6,
+    "3538953167": 2,
+    "3664415977": 10,
+    "cluster_14795187_1720919996_2670370290_2670370291": 11,
+    "cluster_14795804_55474925_6655074904_765746891_#1more": 49,
+    "cluster_15431428_1719671850_1720917935": 20,
+    "cluster_1590912233_3664415976_5083348337_5083348350": 11,
+    "cluster_1692973685_1692973722_1718084055_1718084058_#11more": 36,
+    "cluster_1729190097_3687504105": 8,
+    "cluster_1744031943_5131521735": 10,
+    "joinedS_1623835169_cluster_1137679587_1626739216_1728272870_1728272909_#17more": 33,
+    "joinedS_309108716_cluster_11001804363_1125509937_12515596172_1784859792_#5more": 14,
+    "joinedS_5092985445_cluster_1590912226_2911376263": 10,
+    # ggf. mehr hinzufügen
+}
+
+tree = ET.parse("karlsruhe.net.xml")
+root = tree.getroot()
+changed = False
+
+for logic in root.findall("tlLogic"):
+    tl_id = logic.attrib["id"]
+    if tl_id not in controlled_links:
+        continue
+
+    correct_len = controlled_links[tl_id]
+    for phase in logic.findall("phase"):
+        state = phase.attrib["state"]
+        if len(state) != correct_len:
+            new_state = state[:correct_len].ljust(correct_len, 'r')
+            print(f" Fixing {tl_id}: {len(state)} → {correct_len}")
+            phase.attrib["state"] = new_state
+            changed = True
+
+if changed:
+    tree.write("karlsruhe_fixed.net.xml")
+    print(" Bereinigte Datei gespeichert: karlsruhe_fixed.net.xml")
+else:
+    print(" Alle Phasen bereits korrekt.")
+
+\end{minted}
+
+    \newpage
+    \item \textbf{\texttt{statecheck.py}} gibt eine Liste aller TLS-Phasen mit ungewöhnlichen Längen aus. Dieses Tool wurde verwendet, um bei vereinheitlichten Netzen auf eine Ziel-Zustandslänge zu prüfen.
+
+    \begin{algorithm}[H]
+\caption{StateCheck – Prüfung auf einheitliche Phasenlängen}
+\begin{algorithmic}[1]
+\Function{StateCheck}{net.xml}
+  \State Lade XML-Baum aus der Netzdatei
+  \ForAll{\texttt{tlLogic}-Elemente im Netz}
+    \State \texttt{tl\_id} $\gets$ ID des aktuellen TLS
+    \ForAll{Phasen $i$ in \texttt{tlLogic}}
+      \State \texttt{state} $\gets$ Zustand der Phase
+      \If{\texttt{len(state)} $\neq$ 57}
+        \State Gib Warnung mit \texttt{tl\_id}, Phasenindex und tatsächlicher Länge aus
+      \EndIf
+    \EndFor
+  \EndFor
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\noindent
+\textbf{Originalcode in Python (\texttt{statecheck.py}):}
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+from xml.etree import ElementTree as ET
+
+tree = ET.parse("karlsruhe.net.xml")
+root = tree.getroot()
+
+for logic in root.findall("tlLogic"):
+    tl_id = logic.attrib["id"]
+    for i, phase in enumerate(logic.findall("phase")):
+        state = phase.attrib["state"]
+        if len(state) != 57:
+            print(f" Phase {i} of TLS '{tl_id}' has length {len(state)}")
+\end{minted}
+
+\end{itemize}
+
+\newpage
+\paragraph{Gültigkeitsprüfung für SUMO-RL}
+
+Zur Vorbereitung des Trainings wurden weitere Programme zur Identifikation funktionaler TLS entwickelt:
+
+\begin{itemize}
+    \item \textbf{\texttt{find\_valid\_tls.py}} iteriert über alle TLS im Netz und testet jede einzeln in einem minimalen \texttt{sumo-rl}-Lauf. TLS, bei denen die Umgebung erfolgreich initialisiert werden kann, gelten als kompatibel.
+
+    \begin{algorithm}[H]
+\caption{FindValidTLS – Gültigkeitsprüfung aller TLS im Netz}
+\begin{algorithmic}[1]
+\Function{TestTLS}{\texttt{tls\_id}}
+  \State Initialisiere \texttt{SumoEnvironment}
+  \State Setze \texttt{ts\_ids} auf \texttt{[tls\_id]}
+  \State Versuche: \texttt{env.reset()}
+  \If{kein Fehler}
+    \State \texttt{env.close()}
+    \State \Return \texttt{True}
+  \Else
+    \State Gib Fehlermeldung aus
+    \State \Return \texttt{False}
+  \EndIf
+\EndFunction
+\vspace{0.5em}
+\State Initialisiere leere Liste \texttt{all\_tls}
+\State Versuche: Umgebung mit \texttt{SumoEnvironment} zu starten
+\If{erfolgreich}
+  \State Lese alle \texttt{ts\_ids}
+  \State Schließe Umgebung
+\Else
+  \State Gib Fehler aus
+\EndIf
+\vspace{0.5em}
+\State Initialisiere leere Liste \texttt{valid\_tls}
+\ForAll{\texttt{tls\_id} in \texttt{all\_tls}}
+  \If{ \Call{TestTLS}{\texttt{tls\_id}} }
+    \State Füge \texttt{tls\_id} zu \texttt{valid\_tls} hinzu
+  \EndIf
+\EndFor
+\State Gib alle gültigen TLS aus
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
+\noindent
+\textbf{Originalcode in Python (\texttt{find\_valid\_tls.py}):}
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+from sumo_rl import SumoEnvironment
+import traci
+import os
+
+def test_tls(tls_id):
+    try:
+        env = SumoEnvironment(
+            net_file="karlsruhe.net.xml",
+            route_file="karlsruhe.rou.xml",
+            use_gui=False,
+            single_agent=True
+        )
+        env.ts_ids = [tls_id]
+        env.reset()
+        env.close()
+        return True
+    except Exception as e:
+        print(f" TLS {tls_id} nicht gültig: {e}")
+        return False
+
+# Alle TLS holen
+try:
+    env = SumoEnvironment(
+        net_file="karlsruhe.net.xml",
+        route_file="karlsruhe.rou.xml",
+        use_gui=False,
+        single_agent=True
+    )
+    all_tls = env.ts_ids
+    env.close()
+except Exception as e:
+    print(" Konnte TLS nicht auslesen:", e)
+    all_tls = []
+
+print(f" Teste {len(all_tls)} TLS auf Gültigkeit...\n")
+valid_tls = []
+
+for tls_id in all_tls:
+    if test_tls(tls_id):
+        valid_tls.append(tls_id)
+
+print("\n Gültige TLS:")
+print(valid_tls)
+\end{minted}
+    
+\end{itemize}
+
+\subsubsection{Auswahl eines bereinigten Netzes}
+
+Nach mehrfacher Iteration und Debugging wurde ein final bereinigtes Netz erzeugt: \texttt{karlsruhe.net.xml}. Dieses enthält ausschließlich überprüfte TLS mit konsistenten Phasenlängen und steuerbaren Verbindungen. Es bildet die Grundlage für alle nachfolgenden Reinforcement-Learning-Experimente.
+
+\subsubsection{Vorteil des automatisierten Workflows}
+
+Die entwickelte Toolchain ermöglicht:
+
+\begin{itemize}
+    \item eine strukturierte Diagnose typischer OSM-bedingter Netzprobleme,
+    \item reproduzierbare Netzreparaturen ohne manuelles Editieren in \texttt{netedit},
+    \item automatisierte Validierung vor dem Training in \texttt{sumo-rl},
+    \item gezielte Selektion steuerbarer TLS für das Experiment.
+\end{itemize}
+
+Der Einsatz dieser Werkzeuge war unerlässlich, um ein funktionales, kompatibles und robusteres Simulationsnetz auf Basis realer OSM-Daten zu etablieren.
+\subsubsection{Einbindung des SUMO-Netzes in die RL-Umgebung}
+
+Nach Bereinigung, struktureller Prüfung und gezielter Auswahl geeigneter Lichtsignalanlagen (TLS) wurde das resultierende SUMO-Verkehrsnetz in die Reinforcement-Learning-Umgebung \texttt{sumo-rl} integriert. Die Umgebung basiert auf dem Open-Source-Projekt \texttt{sumo-rl}\footnote{\url{https://lucasalegre.github.io/sumo-rl/}}, das eine Schnittstelle zwischen dem Verkehrssimulator SUMO und modernen RL-Frameworks bietet.
+
+Ziel war es, eine stabil lauffähige Multiagentensimulation zu realisieren, bei der mehrere Ampelknoten unabhängig voneinander durch separate Agenten gesteuert werden. \texttt{sumo-rl} nutzt das \texttt{TraCI}-Protokoll, um die Steuerung einzelner TLS-Knoten durch externe Agenten in Echtzeit zu ermöglichen.
+
+\paragraph{Filterung und Vorbereitung der TLS}
+
+Im Vorfeld der Einbindung wurde eine automatisierte Vorverarbeitung durchgeführt, um nur technisch einwandfreie TLS-Knoten zu berücksichtigen. Dabei wurden folgende Kriterien geprüft:
+
+\begin{itemize}
+    \item \textbf{Knotentyp:} Nur TLS vom Typ \texttt{traffic\_light} wurden berücksichtigt.
+    \item \textbf{Phasenstruktur:} Jeder Knoten musste mindestens zwei steuerbare \texttt{<phase>}-Einträge enthalten.
+    \item \textbf{Signaldefinition:} Alle Phasen mussten syntaktisch korrekt und vollständig sein (korrekte Anzahl an Zeichen, gültige Zustände, keine verweisten Connections).
+\end{itemize}
+
+Die Überprüfung erfolgte über das Python-Modul \texttt{sumolib} in Kombination mit XML-Parsing mittels \texttt{ElementTree}. Fehlerhafte oder unvollständige TLS wurden automatisch ausgeschlossen. Die so bereinigte Liste \texttt{valid\_tls\_ids} bildet die Grundlage für die nachfolgende RL-Umgebung.
+
+\paragraph{Konfiguration der \texttt{sumo-rl} Umgebung}
+
+Die zentrale Steuereinheit ist das Objekt \texttt{SumoEnvironment}, das aus der \texttt{sumo-rl}-Bibliothek importiert wird. Für den Multiagentenbetrieb wird der Parameter \texttt{single\_agent=False} gesetzt. Die wichtigsten Parameter sind:
+
+\begin{itemize}
+    \item \texttt{net\_file}: Pfad zur bereinigten SUMO-Netzdatei (\texttt{.net.xml}),
+    \item \texttt{route\_file}: Pfad zur Datei mit generierten Fahrzeugrouten (\texttt{.rou.xml}),
+    \item \texttt{ts\_ids}: Liste gültiger TLS-Knoten zur Steuerung,
+    \item \texttt{use\_gui}: Aktiviert das SUMO-GUI zur Laufzeitbeobachtung,
+    \item \texttt{delta\_time}: Zeitabstand zwischen zwei Agentenentscheidungen (z.\,B. 5\,s),
+    \item \texttt{yellow\_time}: Dauer der Gelbphase bei Phasenwechsel,
+    \item \texttt{min\_green}: Mindestgrünzeit einer Phase vor erneutem Wechsel,
+    \item \texttt{reward\_fn}: Belohnungsfunktion (z.\,B. \texttt{"diff-waiting-time"}),
+    \item \texttt{fixed\_ts}: Wenn \texttt{True}, werden Aktionen ignoriert und feste Signalpläne genutzt.
+\end{itemize}
+
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+env = SumoEnvironment(
+    net_file="network.net.xml",
+    route_file="routes.rou.xml",
+    use_gui=True,
+    single_agent=False,
+    reward_fn="diff-waiting-time",
+    delta_time=5,
+    yellow_time=2,
+    min_green=5,
+    fixed_ts=False,
+    ts_ids=valid_tls_ids
+)
+\end{minted}
+
+\paragraph{Parallele Steuerung im Multiagentensystem}
+
+Im Multiagentenbetrieb erzeugt \texttt{sumo-rl} intern ein Mapping von TLS-IDs auf einzelne Agenteninstanzen. Jeder Agent erhält eine isolierte Beobachtung, trifft lokal eine Entscheidung und erhält eine eigene Belohnung. Die Entscheidungsfindung erfolgt synchron: Alle Agenten geben gleichzeitig eine Aktion ab, bevor die SUMO-Simulation fortgesetzt wird.
+
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+obs = env.reset()
+done = False
+while not done:
+    actions = {tls: env.action_space[tls].sample() for tls in env.ts_ids}
+    obs, rewards, done, _, infos = env.step(actions)
+\end{minted}
+
+\paragraph{Beobachtungen und Aktionen}
+
+Standardmäßig umfasst die Beobachtung eines TLS-Agenten:
+
+\begin{itemize}
+    \item die aktuelle Phase (als One-Hot-Encoding),
+    \item die Zeit seit der letzten Phase,
+    \item für jede anliegende Spur: normierte Dichte und Fahrzeugwarteschlange.
+\end{itemize}
+
+Der Action-Space ist diskret und erlaubt das Umschalten zwischen vordefinierten Phasen. Ein Wechsel löst automatisch die Gelbphase (\texttt{yellow\_time}) aus, bevor die neue Grünphase aktiv wird. Optional können auch eigene Beobachtungsklassen über \texttt{observation\_class=} übergeben werden.
+
+\paragraph{Verfügbare Belohnungsfunktionen}
+
+\texttt{sumo-rl} unterstützt eine Reihe vordefinierter Belohnungsfunktionen, z.\,B.:
+
+\begin{itemize}
+    \item \texttt{"diff-waiting-time"}: Reduktion der kumulierten Wartezeit (Standard),
+    \item \texttt{"average-speed"}: Maximierung der Durchschnittsgeschwindigkeit,
+    \item \texttt{"queue"}: Minimierung der Gesamtlänge aller Fahrzeugwarteschlangen,
+    \item benutzerdefiniert: Übergabe eigener Reward-Funktionen möglich.
+\end{itemize}
+
+Diese Funktionen lassen sich über \texttt{reward\_fn} und optional über \texttt{reward\_weights} kombinieren. Dadurch können beispielsweise komplexe Metriken mit mehreren Zielen (z.\,B. Fahrzeit + Emissionen) implementiert werden.
+
+\paragraph{Kompatibilität mit RL-Frameworks}
+
+Die Umgebung ist vollständig kompatibel mit gängigen RL-Bibliotheken wie:
+
+\begin{itemize}
+    \item \textbf{Stable-Baselines3}: Direkt einsetzbar für PPO, DQN, A2C etc.
+    \item \textbf{Gymnasium}: Standardisiertes Interface (\texttt{env.step()}, \texttt{env.reset()}).
+    \item \textbf{PettingZoo}: Unterstützung für koordinierte oder unabhängige Multiagentenszenarien.
+    \item \textbf{SuperSuit}: Wrapper zur Vereinheitlichung, Padding, Flattening etc.
+\end{itemize}
+
+\paragraph{Zusammenfassung}
+
+Mit der Konfiguration von \texttt{sumo-rl} wurde eine robuste, modular erweiterbare RL-Trainingsumgebung geschaffen, in der mehrere Ampelknoten unabhängig voneinander agieren. Die durchgeführte TLS-Filterung sowie die explizite Kontrolle über Beobachtung, Belohnung und Aktionsauswahl ermöglichen gezielte Experimente zur lernbasierten Optimierung von Verkehrssteuerung unter realitätsnahen Bedingungen.
+
+
+\subsection{Trainingsstrategie und Hyperparameterwahl}

@@ -1,0 +1,92 @@
+\section{Hintergrund und Stand der Technik}
+
+\subsection{Urbane Verkehrssysteme und Verkehrssteuerung}
+
+Die urbane Verkehrssteuerung umfasst alle Maßnahmen zur Regelung, Lenkung und Optimierung von Verkehrsflüssen innerhalb städtischer Räume. Ziel ist es, den Verkehrsfluss effizient zu gestalten, Staus zu vermeiden, die Sicherheit aller Verkehrsteilnehmer zu erhöhen sowie Emissionen und Lärm zu reduzieren. Klassische Steuerungsmechanismen basieren häufig auf festen Zeitplänen oder einfachen verkehrsabhängigen Regeln, z.\,B. durch Induktionsschleifen oder Detektoren gesteuerte Ampelphasen.
+
+Mit dem Aufkommen neuer Technologien und wachsender Mobilitätsdaten entstehen zunehmend datenbasierte und dynamische Steuerungsansätze. Dazu gehören adaptive Lichtsignalsteuerungen, vernetzte Fahrzeuge (V2X-Kommunikation) und erste Pilotprojekte mit KI-gesteuerten Verkehrsmanagementsystemen. Dennoch sind viele Systeme in der Praxis noch unflexibel oder schwer skalierbar.
+
+\subsection{Simulation urbaner Mobilität mit SUMO}
+
+\textit{Simulation of Urban MObility} (SUMO) ist ein quelloffener, mikroskopischer Verkehrs-Simulator, der ursprünglich vom Deutschen Zentrum für Luft- und Raumfahrt (DLR) entwickelt wurde. SUMO erlaubt die detaillierte Modellierung individueller Fahrzeuge, Straßeninfrastruktur, Ampelschaltungen sowie Fahrverhalten.
+
+Besonders relevant für diese Arbeit sind folgende Merkmale:
+
+\begin{itemize}
+    \item \textbf{Mikroskopische Modellierung:} Jedes Fahrzeug wird als individuelles Objekt simuliert. Parameter wie Geschwindigkeit, Abstand oder Spurwechselverhalten sind individuell konfigurierbar.
+    \item \textbf{Flexible Netzdefinition:} Verkehrsnetze lassen sich aus OpenStreetMap-Daten sowie aus Shapefiles oder VISUM-Modellen mit dem Tool \texttt{netconvert} erzeugen. Netzdateien können auch mit \texttt{netedit} visuell editiert werden.
+    \item \textbf{Nachfragegenerierung:} Fahrpläne und Routen lassen sich mit Tools wie \texttt{activitygen}, \texttt{randomTrips}, \texttt{od2trips} oder \texttt{duarouter} erzeugen – basierend auf statistischen oder echten OD-Matrizen.
+    \item \textbf{Multimodalität:} SUMO unterstützt neben Pkw auch Busse, Fahrräder, Fußgänger sowie den öffentlichen Nahverkehr. Ampeln können für alle Verkehrsarten gleichzeitig modelliert werden.
+    \item \textbf{Emissionsmodellierung:} Mit Hilfe von integrierten HBEFA-Tabellen (Version 4) kann SUMO CO\textsubscript{2}-, NO\textsubscript{x}- und Feinstaubemissionen simulieren und ausgeben.
+    \item \textbf{Steuerbare Ampelanlagen:} Lichtsignalanlagen können sowohl mit festen Programmen als auch dynamisch über die TraCI-Schnittstelle gesteuert werden.
+    \item \textbf{Reproduzierbarkeit und Kontrolle:} SUMO ist vollständig deterministisch, was es ideal für kontrollierte Experimente und das Training von KI-Agenten macht.
+    \item \textbf{Visualisierung und Debugging:} Die SUMO-GUI und das Tool \texttt{sumo-gui} ermöglichen eine grafische Darstellung von Netz, Fahrzeugen, Ampelphasen und Simulationsergebnissen.
+\end{itemize}
+
+Die SUMO-Toolchain bietet damit alle notwendigen Komponenten für die Entwicklung, Analyse und Auswertung urbaner Verkehrsszenarien und stellt eine erprobte Plattform für KI-gestützte Steuerungsexperimente dar.
+
+\subsection{Verstärkendes Lernen (Reinforcement Learning)}
+
+Reinforcement Learning (RL) ist ein Teilgebiet des maschinellen Lernens, bei dem ein Agent durch Interaktion mit einer Umgebung lernt, optimale Handlungen auszuführen. Dabei verfolgt er das Ziel, eine kumulative Belohnung zu maximieren.
+
+Ein RL-Prozess wird typischerweise als Markov Decision Process (MDP) beschrieben und besteht aus folgenden Komponenten:
+
+\begin{itemize}
+    \item \textbf{Zustand $s$ (state):} Eine Repräsentation der aktuellen Situation der Umgebung.
+    \item \textbf{Aktion $a$ (action):} Eine Entscheidung oder Handlung, die der Agent im Zustand $s$ trifft.
+    \item \textbf{Belohnung $r$ (reward):} Ein numerischer Wert, der die Güte der Aktion bewertet.
+    \item \textbf{Policy $\pi$:} Eine Strategie, die angibt, welche Aktion in welchem Zustand gewählt wird.
+\end{itemize}
+
+Der Agent interagiert mit der Umgebung, beobachtet den Zustand, wählt eine Aktion, erhält eine Belohnung und gelangt in einen neuen Zustand. Durch viele Wiederholungen lernt er, welche Entscheidungen langfristig die besten sind.
+
+Wichtige Algorithmen, die in dieser Arbeit potenziell relevant sind, sind:
+
+\begin{itemize}
+    \item \textbf{Q-Learning:} Modellfreies, off-policy Lernverfahren zur Annäherung an optimale Aktionen.
+    \item \textbf{DQN (Deep Q-Network):} Kombination von Q-Learning mit neuronalen Netzen.
+    \item \textbf{PPO (Proximal Policy Optimization):} Policy-basierter RL-Ansatz mit stabiler Optimierung.
+\end{itemize}
+
+\subsection{SUMO-RL: Architektur und Funktionalität}
+
+\texttt{sumo-rl} ist ein Python-Framework, das SUMO mit Reinforcement Learning verbindet. Es basiert auf der \texttt{gymnasium}-Schnittstelle und abstrahiert typische Aufgaben wie die Definition von Beobachtungen, Aktionen und Belohnungen für RL-Agenten. Die Umgebung wird durch die Klasse \texttt{SumoEnvironment} bereitgestellt.
+
+Zentrale Eigenschaften von \texttt{sumo-rl}:\cite{sumo-rl}
+
+\begin{itemize}
+    \item \textbf{TraCI-Integration:} Ermöglicht über das Traffic Control Interface zur Laufzeit den Zugriff auf Fahrzeugdaten, Ampelphasen, Fahrzeugwarteschlangen u.\,v.\,m.
+    \item \textbf{Ein- und Mehragentenunterstützung:} \texttt{sumo-rl} unterstützt sowohl Single-Agent-Setups als auch Multi-Agent-Steuerung über die PettingZoo-API. Jeder gesteuerte Knoten im Netz kann einem eigenen Agenten zugewiesen werden.
+    \item \textbf{Beobachtungen:} Die Umgebung liefert Beobachtungsvektoren mit kodierter Ampelphase, Rückstaulänge, Anzahl wartender Fahrzeuge und Fahrzeugdichte je Spur.
+    \item \textbf{Aktionen:} Die Agenten treffen diskrete Entscheidungen über Phasenwechsel, wobei \texttt{delta\_time}, \texttt{yellow\_time} und \texttt{min\_green} die zeitliche Dynamik definieren.
+    \item \textbf{Belohnungsfunktionen:} Der Standard-Reward basiert auf der Differenz kumulierter Wartezeiten. Eigene Funktionen können bei Initialisierung übergeben werden.
+    \item \textbf{Kompatibilität:} Das Framework ist kompatibel mit Stable-Baselines3, PyTorch, TensorFlow, RLlib und anderen gängigen ML-Frameworks.
+\end{itemize}
+
+Beispielhafte Initialisierung:
+
+\begin{verbatim}
+env = SumoEnvironment(
+    net_file='net.net.xml',
+    route_file='routes.rou.xml',
+    use_gui=True,
+    reward_fn='diff-waiting-time',
+    single_agent=True,
+    delta_time=5,
+    yellow_time=2,
+    min_green=5
+)
+\end{verbatim}
+
+\subsection{Verwandte Arbeiten}
+
+In den letzten Jahren wurden zunehmend Studien veröffentlicht, die KI-Methoden zur Optimierung der Verkehrssteuerung einsetzen. Eine Auswahl relevanter Forschungsansätze:
+
+\begin{itemize}
+    \item \textbf{Wei et al. (2019):} Einsatz von Deep Q-Learning zur Optimierung einer einzelnen Ampel in SUMO mit signifikantem Rückgang der Wartezeiten \cite{wei2019}.
+    \item \textbf{Chu et al. (2020):} Untersuchung von Multi-Agent-Ansätzen mit Deep RL zur Steuerung großflächiger Ampelnetze \cite{chu2020}.
+    \item \textbf{Zheng et al. (2019):} Einführung eines Lernverfahrens zur Koordination konkurrierender Phasen bei Ampelsteuerungen mit Hilfe von SUMO \cite{zheng2019}.
+\end{itemize}
+
+Diese Arbeiten zeigen, dass RL-basierte Methoden das Potenzial haben, bestehende Systeme zu übertreffen – sowohl bei einfachen als auch bei komplexeren Szenarien. Die vorliegende Arbeit knüpft an diesen Forschungsstand an und erweitert ihn um eine Anwendung auf reale Geodaten aus Karlsruhe sowie eine methodische Evaluation.
+

@@ -1,2 +1,37 @@
 # Ignoriere alle 'trash'-Ordner überall im Projekt
 **/trash/
+
+# Ignore LaTeX build files inside latex/
+latex/*.aux
+latex/*.bbl
+latex/*.blg
+latex/*.brf
+latex/*.fdb_latexmk
+latex/*.fls
+latex/*.log
+latex/*.out
+latex/*.toc
+latex/*.lof
+latex/*.lot
+latex/*.synctex.gz
+latex/*.nav
+latex/*.snm
+latex/*.vrb
+latex/*.xdv
+latex/*.run.xml
+latex/*.pyg
+latex/*.data.minted
+latex/*.config.minted
+
+# Ignore output folder
+latex/out/
+
+# Optional: ignore compiled PDF
+latex/*.pdf
+
+# Optional: ignore VS Code settings
+latex/.vscode/
+
+# OS-specific
+.DS_Store
+Thumbs.db
