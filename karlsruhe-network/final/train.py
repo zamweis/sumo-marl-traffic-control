@@ -19,7 +19,7 @@ from supersuit import (
 from gym import Wrapper
 
 # ==== Seeds definieren ====
-SEEDS = [1111, 2222, 3333, 4444]  # beliebig erweiterbar
+SEEDS = [1234, 3456, 5678, 7890]  # beliebig erweiterbar
 
 # ==== Custom Reward Function ====
 def custom_reward(traffic_signal):
@@ -214,7 +214,7 @@ for SEED in SEEDS:
 
     try:
         model.learn(
-            total_timesteps=2_000_000,
+            total_timesteps=1_500_000,
             callback=callbacks,
         )
         model.save(os.path.join(log_dir, "model.zip"))

@@ -12,27 +12,27 @@ Das resultierende Verkehrsnetz umfasst 1.379 definierte Knotenpunkte (\textit{ju
 Optional wurden zusätzliche Informationen wie Ampeldefinitionen und Vorfahrtsregeln manuell über das Tool \texttt{netedit} ergänzt oder angepasst, um die Netzrealität weiter zu verfeinern. Dabei wurden insbesondere fehlerhafte Knotenbeziehungen bereinigt sowie isolierte Netzteile entfernt. Die finale \texttt{.net.xml}-Datei bildet die topologische und funktionale Grundlage für alle weiteren Simulationsschritte.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{images/karlsruhe_net.png}
-\caption{Visualisierung des aus OSM generierten SUMO-Netzes (eigene Darstellung).}
-\label{fig:sumo_network}
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/karlsruhe_net.png}
+    \caption{Visualisierung des aus OSM generierten SUMO-Netzes (eigene Darstellung).}
+    \label{fig:sumo_network}
 \end{figure}
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{images/karlsruhe_osm.png}
-\caption{Screenshot des ursprünglichen OpenStreetMap-Ausschnitts (eigene Darstellung).}
-\label{fig:osm_screenshot}
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/karlsruhe_osm.png}
+    \caption{Screenshot des ursprünglichen OpenStreetMap-Ausschnitts (eigene Darstellung).}
+    \label{fig:osm_screenshot}
 \end{figure}
 
 Die Wahl von OpenStreetMap als Datenquelle gewährleistet eine offene, reproduzierbare und erweiterbare Modellierungsbasis. Jedoch bringt die Nutzung von OSM-Daten auch einige Einschränkungen mit sich, die bei der Modellierung berücksichtigt werden müssen:\cite{osm-export}
 
 \begin{itemize}
-\item \textbf{Uneinheitlicher Detaillierungsgrad:} Die Erfassungstiefe variiert regional stark, was dazu führt, dass z.\,B. Tempolimits, Fahrspuren oder Abbiegebeschränkungen an vielen Stellen fehlen oder unvollständig sind.
-\item \textbf{Fehlende Ampel- und Signalsteuerungsdaten:} OSM enthält in der Regel keine vollständigen Angaben zu Ampelphasen, Umlaufzeiten oder koordinierter Schaltung. SUMO kann zwar aus heuristischen Annahmen Standardampeln generieren, diese weichen jedoch potenziell stark von der realen Steuerung ab.
-\item \textbf{Keine garantierte Netzvollständigkeit:} Besonders kleinere Straßen, private Zufahrten oder temporäre Baustellen sind häufig nicht oder nur unzureichend erfasst. Zudem treten beim Zuschnitt von Kartenausschnitten an den Netzrändern regelmäßig unvollständige Knoten oder isolierte Kanten auf.
-\item \textbf{Abweichende Modellierungskonzepte:} In OSM werden parallele Fahrbahnen oder getrennte Richtungsfahrbahnen oft als unabhängige Wege modelliert. Ohne geeignete Nachbearbeitung kann dies zu unnötigen Knoten und ineffizientem Verkehrsverhalten führen.
-\item \textbf{Abhängig von Typemap- und Importoptionen:} Die Interpretation der OSM-Tags erfolgt in SUMO durch sogenannte Typemaps, die z.\,B. Tempolimits und Spuranzahl je nach Straßentyp zuweisen. Ohne geeignete Typemap kann das Verhalten nicht der Realität entsprechen.
+    \item \textbf{Uneinheitlicher Detaillierungsgrad:} Die Erfassungstiefe variiert regional stark, was dazu führt, dass z.\,B. Tempolimits, Fahrspuren oder Abbiegebeschränkungen an vielen Stellen fehlen oder unvollständig sind.
+    \item \textbf{Fehlende Ampel- und Signalsteuerungsdaten:} OSM enthält in der Regel keine vollständigen Angaben zu Ampelphasen, Umlaufzeiten oder koordinierter Schaltung. SUMO kann zwar aus heuristischen Annahmen Standardampeln generieren, diese weichen jedoch potenziell stark von der realen Steuerung ab.
+    \item \textbf{Keine garantierte Netzvollständigkeit:} Besonders kleinere Straßen, private Zufahrten oder temporäre Baustellen sind häufig nicht oder nur unzureichend erfasst. Zudem treten beim Zuschnitt von Kartenausschnitten an den Netzrändern regelmäßig unvollständige Knoten oder isolierte Kanten auf.
+    \item \textbf{Abweichende Modellierungskonzepte:} In OSM werden parallele Fahrbahnen oder getrennte Richtungsfahrbahnen oft als unabhängige Wege modelliert. Ohne geeignete Nachbearbeitung kann dies zu unnötigen Knoten und ineffizientem Verkehrsverhalten führen.
+    \item \textbf{Abhängig von Typemap- und Importoptionen:} Die Interpretation der OSM-Tags erfolgt in SUMO durch sogenannte Typemaps, die z.\,B. Tempolimits und Spuranzahl je nach Straßentyp zuweisen. Ohne geeignete Typemap kann das Verhalten nicht der Realität entsprechen.
 \end{itemize}
 
 \textbf{Fazit:} Insgesamt erlaubt OSM trotz dieser Limitationen den Aufbau eines funktionalen Verkehrsnetzes für mikroskopische Simulationen, sofern der Import sorgfältig konfiguriert und die resultierenden Daten kritisch hinterfragt und gegebenenfalls manuell nachbearbeitet werden.
@@ -63,30 +63,30 @@ Im direkten Untersuchungsgebiet, der Reinhold-Frank-Straße in Karlsruhe, befind
 Diese Messwerte stimmen gut mit den aus den äußeren Zufahrtsachsen abgeleiteten Schätzungen überein. Um das Verkehrsaufkommen plausibel zu quantifizieren, wurden zusätzlich acht zentrale Zählstellen aus dem Jahr 2023 entlang wichtiger Ein- und Ausfallstraßen berücksichtigt. Sie bilden die Grundlage für die Annahmen über den täglichen Verkehr, der potenziell durch das untersuchte innerstädtische Netz fließt:
 
 \begin{table}[H]
-\centering
-\caption{Verkehrszählungen in und um Karlsruhe (DTV, Jahr 2023)}
-\begin{tabular}{|l|l|r|r|r|}
-\hline
-\textbf{Zufahrt} & \textbf{Zählstellenbeschreibung} & \textbf{KFZ/Tag} & \textbf{SV/Tag} & \textbf{Gesamt} \\
-\hline
-B10 West & Rheinbrücke / Entenfang & 62.102 & 6.159 & 68.261 \\
-B36 Neureut & Neureuter Str. / Ausfahrt Neureut Süd & 35.165 & 1.712 & 36.877 \\
-B36 Nord & Eggenstein / Neureut & 28.595 & 1.361 & 29.956 \\
-L605 Nord & Weißes Haus / Eggenstein & 14.563 & 220 & 14.783 \\
-B36 Süd & Rheinstetten / Innenstadt & 24.239 & 1.487 & 25.726 \\
-B36 Mörsch & Mörsch / Forchheim & 26.841 & 1.531 & 28.372 \\
-L605 Süd & Ettlingen / Bulacher Kreuz & 65.816 & 3.474 & 69.290 \\
-B10 Ost & Durlach (A5) / Innenstadt & 28.555 & 913 & 29.468 \\
-\hline
-\end{tabular}
-\label{tab:zaehlstellen}
+    \centering
+    \caption{Verkehrszählungen in und um Karlsruhe (DTV, Jahr 2023)}
+    \begin{tabular}{|l|l|r|r|r|}
+        \hline
+        \textbf{Zufahrt} & \textbf{Zählstellenbeschreibung}      & \textbf{KFZ/Tag} & \textbf{SV/Tag} & \textbf{Gesamt} \\
+        \hline
+        B10 West         & Rheinbrücke / Entenfang               & 62.102           & 6.159           & 68.261          \\
+        B36 Neureut      & Neureuter Str. / Ausfahrt Neureut Süd & 35.165           & 1.712           & 36.877          \\
+        B36 Nord         & Eggenstein / Neureut                  & 28.595           & 1.361           & 29.956          \\
+        L605 Nord        & Weißes Haus / Eggenstein              & 14.563           & 220             & 14.783          \\
+        B36 Süd          & Rheinstetten / Innenstadt             & 24.239           & 1.487           & 25.726          \\
+        B36 Mörsch       & Mörsch / Forchheim                    & 26.841           & 1.531           & 28.372          \\
+        L605 Süd         & Ettlingen / Bulacher Kreuz            & 65.816           & 3.474           & 69.290          \\
+        B10 Ost          & Durlach (A5) / Innenstadt             & 28.555           & 913             & 29.468          \\
+        \hline
+    \end{tabular}
+    \label{tab:zaehlstellen}
 \end{table}
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.95\textwidth]{images/zaehlstellenkarte.png}
-\caption{Lage der Dauerzählstellen im Raum Karlsruhe (Quelle: MobiData BW \cite{mobidata_karte}).}
-\label{fig:zaehlstellenkarte}
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/zaehlstellenkarte.png}
+    \caption{Lage der Dauerzählstellen im Raum Karlsruhe (Quelle: MobiData BW \cite{mobidata_karte}).}
+    \label{fig:zaehlstellenkarte}
 \end{figure}
 
 Diese externen Zuflüsse liefern eine verlässliche Grundlage zur Generierung plausibler Eingangsrouten für Fahrzeuge in der Simulation. Das betrachtete Gebiet wird von mehreren dieser Hauptachsen direkt gespeist, wodurch sich ein realitätsnahes Verkehrsaufkommen im Bereich von 20.000–40.000 Fahrzeugen/Tag ergibt – im Einklang mit der Messung in der Reinhold-Frank-Straße.

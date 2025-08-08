@@ -11,6 +11,7 @@
 \usepackage[ngerman]{babel}
 \usepackage[T1]{fontenc}
 \usepackage{float}
+\usepackage{lmodern}
 
 % Typografie und Layout
 \usepackage{lmodern}
@@ -21,6 +22,7 @@
 
 % Bilder und Grafiken
 \usepackage{graphicx}
+\usepackage{caption}
 
 % Aufzählungen
 \usepackage{enumitem}
@@ -32,7 +34,23 @@
 
 % TikZ für grafische Elemente
 \usepackage{tikz}
-\usetikzlibrary{positioning}
+\usetikzlibrary{shapes, arrows.meta, positioning}
+
+\tikzset{
+  box/.style={
+    rectangle,
+    draw,
+    thick,
+    minimum width=7cm,
+    minimum height=1.2cm,
+    align=center,
+    fill=blue!5
+  },
+  arrow/.style={
+    -{Latex[length=3mm]},
+    thick
+  }
+}
 
 % Image folder
 \graphicspath{{images/}}
@@ -51,21 +69,21 @@
 \begin{document}
 
 \begin{titlepage}
-    \centering
-    \includegraphics[width=5cm]{HKA_IWI_Wortmarke_RGB.jpg}
-    \hspace{2cm}
-    \includegraphics[width=3cm]{HKA_IWI_Bildmarke_RGB.jpg}
-    \vspace{2cm}
+  \centering
+  \includegraphics[width=5cm]{HKA_IWI_Wortmarke_RGB.jpg}
+  \hspace{2cm}
+  \includegraphics[width=3cm]{HKA_IWI_Bildmarke_RGB.jpg}
+  \vspace{2cm}
 
-    \Large
-    \textbf{Optimierung einer Verkehrssimulation mit KI-basierten Agenten in SUMO}
-    
-    \vspace{2cm}
+  \Large
+  \textbf{Optimierung einer Verkehrssimulation mit KI-basierten Agenten in SUMO}
 
-    Studiengang Informatik\\
-    
-    Sam Weiler\\
-    Matr. Nr. 73640\\
+  \vspace{2cm}
+
+  Studiengang Informatik\\
+
+  Sam Weiler\\
+  Matr. Nr. 73640\\
 \end{titlepage}
 
 \tableofcontents
@@ -92,85 +110,81 @@
 \subsection{Mögliche Weiterentwicklungen}
 \subsection{Relevanz für reale Verkehrsplanung}
 
-\appendix
-\section{Anhang}
-\subsection{Code-Ausschnitte}
-\subsection{Parameterlisten}
-\subsection{Zusätzliche Auswertungen}
-\subsection{Korrespondenz mit Behörden}
+% Anhang
+\include{chapters/appendix.tex}
 
 \newpage
 \begin{thebibliography}{12}
-\bibitem{bast}
-Bundesanstalt für Straßenwesen (BASt). \url{https://www.bast.de}, Zugriff am 21.05.2025.
+  \bibitem{bast}
+  Bundesanstalt für Straßenwesen (BASt). \url{https://www.bast.de}, Zugriff am 21.05.2025.
 
-\bibitem{chu2020}
-Chu, T.; Wang, J.; He, R.; Xia, Y. (2020):  
-\textit{Multi-Agent Deep Reinforcement Learning for Large-Scale Traffic Signal Control}.  
-In: IEEE Transactions on Intelligent Transportation Systems.  
-DOI: \url{https://doi.org/10.1109/TITS.2020.3014863}
+  \bibitem{chu2020}
+  Chu, T.; Wang, J.; He, R.; Xia, Y. (2020):
+  \textit{Multi-Agent Deep Reinforcement Learning for Large-Scale Traffic Signal Control}.
+  In: IEEE Transactions on Intelligent Transportation Systems.
+  DOI: \url{https://doi.org/10.1109/TITS.2020.3014863}
 
-\bibitem{googlemaps}
-Google Maps Traffic API. 
-\href{https://developers.google.com/maps/documentation/traffic}, Zugriff am 21.05.2025.
+  \bibitem{googlemaps}
+  Google Maps Traffic API.
+  \href{https://developers.google.com/maps/documentation/traffic}, Zugriff am 21.05.2025.
 
-\bibitem{josm}
-JOSM – Java OpenStreetMap Editor.  
-\url{https://josm.openstreetmap.de}, Zugriff am 21.05.2025.
+  \bibitem{josm}
+  JOSM – Java OpenStreetMap Editor.
+  \url{https://josm.openstreetmap.de}, Zugriff am 21.05.2025.
 
-\bibitem{mobidata}
-MobiData BW – Mobilitätsdatenplattform Baden-Württemberg. 
-\url{https://www.mobidata-bw.de}, Zugriff am 21.05.2025.
+  \bibitem{mobidata}
+  MobiData BW – Mobilitätsdatenplattform Baden-Württemberg.
+  \url{https://www.mobidata-bw.de}, Zugriff am 21.05.2025.
 
-\bibitem{mobidata_karte}
-MobiData BW: Karte der Dauerzählstellen im Straßenverkehr,  
-\url{https://mobidata-bw.de/dataset/karte_strassenverkehrszaehlung}, Zugriff am 21.05.2025.
+  \bibitem{mobidata_karte}
+  MobiData BW: Karte der Dauerzählstellen im Straßenverkehr,
+  \url{https://mobidata-bw.de/dataset/karte_strassenverkehrszaehlung}, Zugriff am 21.05.2025.
 
-\bibitem{mobidata_stunden}
-MobiData BW: Stundenwerte an Dauerzählstellen (Straßenverkehr),  
-\url{https://mobidata-bw.de/dataset/stundenwerte_dauerzaehlstellen}, Zugriff am 21.05.2025.
+  \bibitem{mobidata_stunden}
+  MobiData BW: Stundenwerte an Dauerzählstellen (Straßenverkehr),
+  \url{https://mobidata-bw.de/dataset/stundenwerte_dauerzaehlstellen}, Zugriff am 21.05.2025.
 
-\bibitem{osm}
-OpenStreetMap. 
-\url{https://www.openstreetmap.org}, Zugriff am 21.05.2025.
+  \bibitem{osm}
+  OpenStreetMap.
+  \url{https://www.openstreetmap.org}, Zugriff am 21.05.2025.
 
-\bibitem{osm-export}
-OpenStreetMap Wiki: Export.  
-\url{https://wiki.openstreetmap.org/w/index.php?title=Export&oldid=2822860}, Zugriff am 21.06.2025.
+  \bibitem{osm-export}
+  OpenStreetMap Wiki: Export.
+  \url{https://wiki.openstreetmap.org/w/index.php?title=Export&oldid=2822860}, Zugriff am 21.06.2025.
 
-\bibitem{sumo-doc}
-SUMO Dokumentation. 
-\url{https://sumo.dlr.de}, Zugriff am 21.05.2025.
+  \bibitem{sumo-doc}
+  SUMO Dokumentation.
+  \url{https://sumo.dlr.de}, Zugriff am 21.05.2025.
 
-\bibitem{sumo-rl}
-sumo-rl: Reinforcement Learning Environments for Traffic Signal Control in SUMO.  
-GitHub Repository.  
-\url{https://github.com/LucasAlegre/sumo-rl}, Zugriff am 21.05.2025.
+  \bibitem{sumo-rl}
+  sumo-rl: Reinforcement Learning Environments for Traffic Signal Control in SUMO.
+  GitHub Repository.
+  \url{https://github.com/LucasAlegre/sumo-rl}, Zugriff am 21.05.2025.
 
-\bibitem{sumo-tools}
-SUMO Toolchain: Netzwerk- und Routengeneratoren.  
-\url{https://sumo.dlr.de/docs/Tools.html}, Zugriff am 21.05.2025.
+  \bibitem{sumo-tools}
+  SUMO Toolchain: Netzwerk- und Routengeneratoren.
+  \url{https://sumo.dlr.de/docs/Tools.html}, Zugriff am 21.05.2025.
 
-\bibitem{svzbw}
-Straßenverkehrszentrale Baden-Württemberg. 
-\url{https://www.svz-bw.de}, Zugriff am 21.05.2025.
+  \bibitem{svzbw}
+  Straßenverkehrszentrale Baden-Württemberg.
+  \url{https://www.svz-bw.de}, Zugriff am 21.05.2025.
 
-\bibitem{tomtom}
-TomTom Traffic API.
-\url{https://developer.tomtom.com/traffic-api}, Zugriff am 21.05.2025.
+  \bibitem{tomtom}
+  TomTom Traffic API.
+  \url{https://developer.tomtom.com/traffic-api}, Zugriff am 21.05.2025.
 
-\bibitem{wei2019}
-Wei, H.; Zheng, G.; Yao, H.; Li, Z. (2019):  
-\textit{A Deep Reinforcement Learning Approach for Traffic Signal Control in Vehicular Networks}.  
-In: Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining, S. 2496–2505.  
-DOI: 
-\url{https://doi.org/10.1145/3292500.3330662}
+  \bibitem{wei2019}
+  Wei, H.; Zheng, G.; Yao, H.; Li, Z. (2019):
+  \textit{A Deep Reinforcement Learning Approach for Traffic Signal Control in Vehicular Networks}.
+  In: Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining, S. 2496–2505.
+  DOI:
+  \url{https://doi.org/10.1145/3292500.3330662}
 
-\bibitem{zheng2019}
-Zheng, G.; Ye, H.; Zhang, H.; Wu, K.; Li, Z. (2019):  
-\textit{Learning Phase Competition for Traffic Signal Control}.  
-arXiv preprint.  
-\url{https://arxiv.org/abs/1907.09076}
+  \bibitem{zheng2019}
+  Zheng, G.; Ye, H.; Zhang, H.; Wu, K.; Li, Z. (2019):
+  \textit{Learning Phase Competition for Traffic Signal Control}.
+  arXiv preprint.
+  \url{https://arxiv.org/abs/1907.09076}
 
 \end{thebibliography}
 

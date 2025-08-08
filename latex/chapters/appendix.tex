@@ -1,0 +1,803 @@
+\appendix
+
+\section{Python-Skripte}
+\label{app:python_scripts}
+
+Dieser Anhang enthält die vollständigen Python-Skripte, die zur Validierung, Reparatur und Steuerung der SUMO-basierten Reinforcement-Learning-Umgebung eingesetzt wurden. Jedes Unterkapitel dokumentiert ein spezifisches Tool oder Modul aus dem Projekt.
+
+\subsection{\texttt{train.py} – Trainingsskript für PPO über mehrere Seeds}
+\label{app:train_script}
+Das folgende Skript enthält die vollständige Trainingslogik für das Reinforcement Learning mit \texttt{sumo-rl} unter Verwendung von \texttt{Stable-Baselines3}.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import os
+import re
+import time
+import datetime
+import traci
+import numpy as np
+import torch
+import json
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import VecNormalize, VecMonitor
+from stable_baselines3.common.callbacks import BaseCallback, CallbackList
+from sumo_rl.environment.env import parallel_env
+from supersuit import (
+    pad_observations_v0,
+    pad_action_space_v0,
+    pettingzoo_env_to_vec_env_v1,
+    concat_vec_envs_v1
+)
+from gym import Wrapper
+
+# ==== Seeds definieren ====
+SEEDS = [1234, 3456, 5678, 7890]  # beliebig erweiterbar
+
+# ==== Custom Reward Function ====
+def custom_reward(traffic_signal):
+    if not hasattr(traffic_signal, "prev_queue"):
+        traffic_signal.prev_queue = traffic_signal.get_total_queued()
+
+    queue = traffic_signal.get_total_queued()
+    waiting = np.sum(traffic_signal.get_accumulated_waiting_time_per_lane())
+
+    sim = traci.simulation
+    arrived = sim.getArrivedNumber()
+    teleport = sim.getStartingTeleportNumber()
+    collisions = sim.getCollidingVehiclesNumber()
+
+    delta_queue = traffic_signal.prev_queue - queue
+    traffic_signal.prev_queue = queue
+
+    reward = (
+        -0.1 * queue
+        - 0.05 * waiting
+        - 2.0 * teleport
+        - 10.0 * collisions
+        + 1.0 * arrived
+        + 0.3 * delta_queue
+    )
+
+    if teleport > 10 or collisions > 5:
+        reward -= 20
+
+    return np.clip(reward, -100, 100)
+
+# ==== Finde letzten vollständigen Run ====
+def find_latest_complete_run(base_dir="runs", prefix="ppo_sumo_"):
+    subdirs = sorted(
+        [d for d in os.listdir(base_dir) if d.startswith(prefix)],
+        reverse=True
+    )
+    for d in subdirs:
+        dir_path = os.path.join(base_dir, d)
+        norm_path = os.path.join(dir_path, "vecnormalize.pkl")
+        if not os.path.exists(norm_path):
+            continue
+
+        final_model = os.path.join(dir_path, "model.zip")
+        if os.path.exists(final_model):
+            return dir_path, final_model, norm_path
+
+        checkpoint_models = [
+            f for f in os.listdir(dir_path)
+            if re.match(r"ppo_sumo_model_(\d+)_steps\.zip", f)
+        ]
+        if checkpoint_models:
+            checkpoint_models.sort(key=lambda x: int(re.findall(r"\d+", x)[0]), reverse=True)
+            best_checkpoint = checkpoint_models[0]
+            return dir_path, os.path.join(dir_path, best_checkpoint), norm_path
+
+    return None
+
+# ==== Adaptive Parameter-Schedules ====
+def adaptive_entropy_schedule(start=0.01):
+    return lambda progress: max(0.001, start * (1 - progress))
+
+def dynamic_clip_range(start=0.2):
+    return lambda progress: max(0.1, start * (1 - 0.5 * progress))
+
+def linear_schedule(start):
+    return lambda progress: start * (1 - progress)
+
+# ==== Finde letzten vollständigen Run ====
+def find_latest_complete_run(base_dir="runs", prefix="ppo_sumo_"):
+    subdirs = sorted(
+        [d for d in os.listdir(base_dir) if d.startswith(prefix)],
+        reverse=True
+    )
+    for d in subdirs:
+        dir_path = os.path.join(base_dir, d)
+        norm_path = os.path.join(dir_path, "vecnormalize.pkl")
+        if not os.path.exists(norm_path):
+            continue
+
+        final_model = os.path.join(dir_path, "model.zip")
+        if os.path.exists(final_model):
+            return dir_path, final_model, norm_path
+
+        checkpoint_models = [
+            f for f in os.listdir(dir_path)
+            if re.match(r"ppo_sumo_model_(\d+)_steps\.zip", f)
+        ]
+        if checkpoint_models:
+            checkpoint_models.sort(key=lambda x: int(re.findall(r"\d+", x)[0]), reverse=True)
+            best_checkpoint = checkpoint_models[0]
+            return dir_path, os.path.join(dir_path, best_checkpoint), norm_path
+
+    return None
+
+# ==== Checkpoint Callback ====
+class TimeBasedCheckpointCallback(BaseCallback):
+    def __init__(self, save_interval_sec, save_path, name_prefix="ppo_sumo_model", verbose=0):
+        super().__init__(verbose)
+        self.save_interval_sec = save_interval_sec
+        self.save_path = save_path
+        self.name_prefix = name_prefix
+        self.last_save_time = time.time()
+
+    def _on_step(self) -> bool:
+        return True
+
+    def _on_rollout_end(self) -> bool:
+        current_time = time.time()
+        if current_time - self.last_save_time >= self.save_interval_sec:
+            timestep = self.num_timesteps
+            filename = f"{self.name_prefix}_{timestep}_steps"
+            self.model.save(os.path.join(self.save_path, filename + ".zip"))
+            if hasattr(self.training_env, "save"):
+                self.training_env.save(os.path.join(self.save_path, f"{filename}_vecnormalize.pkl"))
+            print(f"[Checkpoint] Modell gespeichert bei {timestep} Schritten ({filename})")
+            self.last_save_time = current_time
+        return True
+
+# ==== Learning Rate Logger ====
+class LearningRateLoggerCallback(BaseCallback):
+    def __init__(self, verbose=0):
+        super().__init__(verbose)
+
+    def _on_step(self) -> bool:
+        progress = self.num_timesteps / self.model._total_timesteps
+        lr = self.model.lr_schedule(progress)
+        self.logger.record("train/learning_rate", lr)
+
+        if hasattr(self.model, 'clip_range'):
+            clip = self.model.clip_range(progress)
+            self.logger.record("train/clip_range", clip)
+
+        return True
+
+# ==== Best Model Saver Callback ====
+class BestModelSaverCallback(BaseCallback):
+    def __init__(self, save_path, verbose=0):
+        super().__init__(verbose)
+        self.best_mean_reward = -float('inf')
+        self.save_path = save_path
+
+    def _on_step(self) -> bool:
+        return True
+
+    def _on_rollout_end(self):
+        ep_info_buffer = self.model.ep_info_buffer
+        if len(ep_info_buffer) > 0:
+            mean_rew = np.mean([ep_info['r'] for ep_info in ep_info_buffer])
+            if mean_rew > self.best_mean_reward:
+                self.best_mean_reward = mean_rew
+                model_path = os.path.join(self.save_path, "best_model.zip")
+                self.model.save(model_path)
+                if hasattr(self.model.env, "save"):
+                    norm_path = os.path.join(self.save_path, "best_model_vecnormalize.pkl")
+                    self.model.env.save(norm_path)
+                print(f"[AUTOLOG] Neuer Bestwert {mean_rew:.2f} → best_model gespeichert!", flush=True)
+
+# ==== Hauptschleife über Seeds ====
+for SEED in SEEDS:
+    np.random.seed(SEED)
+    torch.manual_seed(SEED)
+
+    now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_dir = os.path.join("runs", f"ppo_sumo_{SEED}_{now}")
+    os.makedirs(log_dir, exist_ok=True)
+
+    print(f"\n[INFO] Starte Training mit Seed: {SEED}")
+
+    env = parallel_env(
+        net_file="map.net.xml",
+        route_file="map.rou.xml",
+        use_gui=False,
+        num_seconds=1000,
+        reward_fn=custom_reward,
+        min_green=5,
+        max_depart_delay=100,
+        sumo_seed=SEED,
+        add_system_info=True,
+        add_per_agent_info=True, 
+    )
+
+    if hasattr(env, "seed"):
+        env.seed(SEED)
+
+    env = pad_observations_v0(env)
+    env = pad_action_space_v0(env)
+    env = pettingzoo_env_to_vec_env_v1(env)
+    env = concat_vec_envs_v1(env, num_vec_envs=1, num_cpus=8, base_class="stable_baselines3")
+    env = VecMonitor(env)
+    env = VecNormalize(env, norm_obs=True, norm_reward=True, clip_obs=10.0)
+
+    model = PPO(
+        policy="MlpPolicy",
+        env=env,
+        verbose=1,
+        tensorboard_log=log_dir,
+        batch_size=2048,
+        n_steps=2048,
+        learning_rate=linear_schedule(3e-4),
+        clip_range=dynamic_clip_range(0.2),
+        ent_coef=0.005,
+        gamma=0.99,
+        gae_lambda=0.95,
+        device="cpu",
+        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])),
+    )
+
+    callbacks = CallbackList([
+        TimeBasedCheckpointCallback(
+            save_interval_sec=3600,
+            save_path=log_dir,
+            name_prefix="ppo_sumo_model",
+            verbose=1,
+        ),
+        LearningRateLoggerCallback(),
+        BestModelSaverCallback(save_path=log_dir),
+    ])
+
+    try:
+        model.learn(
+            total_timesteps=1_500_000,
+            callback=callbacks,
+        )
+        model.save(os.path.join(log_dir, "model.zip"))
+        env.save(os.path.join(log_dir, "vecnormalize.pkl"))
+        print(f"\n[INFO] Training abgeschlossen für Seed {SEED}. Modell gespeichert unter: {log_dir}")
+
+    except KeyboardInterrupt:
+        print("[ABBRUCH] Manuelles Beenden erkannt. Speichere aktuellen Stand...")
+        model.save(os.path.join(log_dir, "model_interrupt.zip"))
+        env.save(os.path.join(log_dir, "vecnormalize_interrupt.pkl"))
+
+    except Exception as e:
+        print(f"\n[FEHLER] Während des Trainings bei Seed {SEED} aufgetreten: {e}")
+
+    finally:
+        try:
+            env.save(os.path.join(log_dir, "vecnormalize.pkl"))
+        except Exception as e:
+            print(f"[WARNUNG] VecNormalize konnte nicht gespeichert werden: {e}")
+        env.close()
+
+\end{minted}
+
+\subsection{\texttt{continuetrain.py} – Trainingsskript zum Weitertrainieren}
+\label{app:continuetrain}
+Startet für jede einzelne Ampelkreuzung eine Minimalumgebung und überprüft, ob diese in \texttt{sumo-rl} trainierbar ist.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import os
+import re
+import time
+import datetime
+import traci
+import numpy as np
+import torch
+import json
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import VecNormalize, VecMonitor
+from stable_baselines3.common.callbacks import BaseCallback, CallbackList
+from sumo_rl.environment.env import parallel_env
+from supersuit import (
+    pad_observations_v0,
+    pad_action_space_v0,
+    pettingzoo_env_to_vec_env_v1,
+    concat_vec_envs_v1
+)
+from gym import Wrapper
+
+# ==== Seed setzen ====
+SEED = 42
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+
+# ==== Custom Reward Function ====
+def custom_reward(traffic_signal):
+    if not hasattr(traffic_signal, "prev_queue"):
+        traffic_signal.prev_queue = traffic_signal.get_total_queued()
+
+    queue = traffic_signal.get_total_queued()
+    waiting = np.sum(traffic_signal.get_accumulated_waiting_time_per_lane())
+
+    sim = traci.simulation
+    arrived = sim.getArrivedNumber()
+    teleport = sim.getStartingTeleportNumber()
+    collisions = sim.getCollidingVehiclesNumber()
+
+    delta_queue = traffic_signal.prev_queue - queue
+    traffic_signal.prev_queue = queue
+
+    reward = (
+        -0.1 * queue
+        - 0.05 * waiting
+        - 2.0 * teleport
+        - 10.0 * collisions
+        + 1.0 * arrived
+        + 0.3 * delta_queue
+    )
+
+    if teleport > 10 or collisions > 5:
+        reward -= 20
+
+    return np.clip(reward, -100, 100)
+
+# ==== Adaptive Parameter-Schedules ====
+def dynamic_clip_range(start=0.2):
+    return lambda progress: max(0.1, start * (1 - 0.5 * progress))
+
+def linear_schedule(start):
+    return lambda progress: start * (1 - progress)
+
+# ==== Finde letzten vollständigen Run ====
+def find_latest_complete_run(base_dir="runs", prefix="ppo_sumo_"):
+    subdirs = sorted(
+        [d for d in os.listdir(base_dir) if d.startswith(prefix)],
+        reverse=True
+    )
+    for d in subdirs:
+        dir_path = os.path.join(base_dir, d)
+        norm_path = os.path.join(dir_path, "vecnormalize.pkl")
+        if not os.path.exists(norm_path):
+            continue
+
+        final_model = os.path.join(dir_path, "model.zip")
+        if os.path.exists(final_model):
+            return dir_path, final_model, norm_path
+
+        checkpoint_models = [
+            f for f in os.listdir(dir_path)
+            if re.match(r"ppo_sumo_model_(\d+)_steps\.zip", f)
+        ]
+        if checkpoint_models:
+            checkpoint_models.sort(key=lambda x: int(re.findall(r"\d+", x)[0]), reverse=True)
+            best_checkpoint = checkpoint_models[0]
+            return dir_path, os.path.join(dir_path, best_checkpoint), norm_path
+
+    return None
+
+# ==== Zeitbasierter Checkpoint Callback ====
+class TimeBasedCheckpointCallback(BaseCallback):
+    def __init__(self, save_interval_sec, save_path, name_prefix="ppo_sumo_model", verbose=0):
+        super().__init__(verbose)
+        self.save_interval_sec = save_interval_sec
+        self.save_path = save_path
+        self.name_prefix = name_prefix
+        self.last_save_time = time.time()
+
+    def _on_step(self) -> bool:
+        return True
+        
+    def _on_rollout_end(self) -> bool:
+        current_time = time.time()
+        if current_time - self.last_save_time >= self.save_interval_sec:
+            timestep = self.num_timesteps
+            filename = f"{self.name_prefix}_{timestep}_steps"
+            self.model.save(os.path.join(self.save_path, filename + ".zip"))
+            if hasattr(self.training_env, "save"):
+                self.training_env.save(os.path.join(self.save_path, f"{filename}_vecnormalize.pkl"))
+            print(f"[Checkpoint] Modell gespeichert bei {timestep} Schritten ({filename})")
+            self.last_save_time = current_time
+        return True
+
+# ==== Learning Rate Logger Callback ====
+class LearningRateLoggerCallback(BaseCallback):
+    def __init__(self, verbose=0):
+        super().__init__(verbose)
+
+    def _on_step(self) -> bool:
+        lr = self.model.lr_schedule(self.num_timesteps / self.model._total_timesteps)
+        self.logger.record("train/learning_rate", lr)
+        return True
+
+# ==== Logging ====
+now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+log_dir = os.path.join("runs", f"ppo_sumo_{now}")
+os.makedirs(log_dir, exist_ok=True)
+
+# ==== SUMO-RL Umgebung ====
+env = parallel_env(
+    net_file="map.net.xml",
+    route_file="map.rou.xml",
+    use_gui=False,
+    num_seconds=1000,
+    reward_fn=custom_reward,
+    min_green=5,
+    max_depart_delay=100,
+    sumo_seed=SEED,
+    add_system_info=True,
+    add_per_agent_info=True, 
+)
+
+if hasattr(env, "seed"):
+    env.seed(SEED)
+
+# ==== Wrapping ====
+env = pad_observations_v0(env)
+env = pad_action_space_v0(env)
+env = pettingzoo_env_to_vec_env_v1(env)
+env = concat_vec_envs_v1(env, num_vec_envs=1, num_cpus=8, base_class="stable_baselines3")
+env = VecMonitor(env)
+
+# ==== Modell laden oder neu starten ====
+result = find_latest_complete_run()
+if result:
+    latest_run_dir, model_path, normalize_path = result
+    print("Fortsetzung wird gestartet mit:")
+    print(f"Verzeichnis : {latest_run_dir}")
+    print(f"Modell      : {model_path}")
+    print(f"Normalize   : {normalize_path}\n")
+
+    env = VecNormalize.load(normalize_path, env)
+    env.training = True
+    env.norm_reward = True
+
+    model = PPO.load(model_path, env=env, tensorboard_log=log_dir, verbose=1, device="cpu")
+    print(f"[INFO] Modell startet bei {model.num_timesteps} Timesteps.")
+else:
+    print("[INFO] Kein vorheriges Modell gefunden. Starte frisches Training.\n")
+    env = VecNormalize(env, norm_obs=True, norm_reward=True, clip_obs=10.0)
+    model = PPO(
+        policy="MlpPolicy",
+        env=env,
+        verbose=1,
+        tensorboard_log=log_dir,
+        batch_size=2048,
+        n_steps=2048,
+        learning_rate=linear_schedule(3e-4),
+        clip_range=dynamic_clip_range(0.2),
+        ent_coef=0.005,
+        gamma=0.99,
+        gae_lambda=0.95,
+        device="cpu",
+        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])),
+    )
+
+# ==== Automatisches Speichern bei verbessertem ep_rew_mean ====
+class BestModelSaverCallback(BaseCallback):
+    def __init__(self, save_path, verbose=0):
+        super().__init__(verbose)
+        self.best_mean_reward = -float('inf')
+        self.save_path = save_path
+
+    def _on_step(self) -> bool:
+        # Muss vorhanden sein, selbst wenn sie nichts tut
+        return True
+        
+    def _on_rollout_end(self):
+        ep_info_buffer = self.model.ep_info_buffer
+        if len(ep_info_buffer) > 0:
+            mean_rew = np.mean([ep_info['r'] for ep_info in ep_info_buffer])
+            
+            if mean_rew > self.best_mean_reward:
+                self.best_mean_reward = mean_rew
+
+                model_path = os.path.join(self.save_path, "best_model.zip")
+                self.model.save(model_path)
+
+                if hasattr(self.model.env, "save"):
+                    norm_path = os.path.join(self.save_path, "best_model_vecnormalize.pkl")
+                    self.model.env.save(norm_path)
+
+                print(f"[AUTOLOG] Neuer Bestwert {mean_rew:.2f} → best_model gespeichert!", flush=True)
+
+# ==== Callbacks kombinieren ====
+callbacks = CallbackList([
+    TimeBasedCheckpointCallback(
+        save_interval_sec=300,
+        save_path=log_dir,
+        name_prefix="ppo_sumo_model",
+        verbose=1,
+    ),
+    LearningRateLoggerCallback(),
+    BestModelSaverCallback(save_path=log_dir),
+])
+
+# ==== Training starten ====
+try:
+    model.learn(
+        total_timesteps=1_000_000,
+        callback=callbacks,
+    )
+    model.save(os.path.join(log_dir, "model.zip"))
+    env.save(os.path.join(log_dir, "vecnormalize.pkl"))
+    print(f"\n[INFO] Training abgeschlossen. Modell gespeichert unter: {log_dir}")
+
+except KeyboardInterrupt:
+    print("[ABBRUCH] Manuelles Beenden erkannt. Speichere aktuellen Stand...")
+    model.save(os.path.join(log_dir, "model_interrupt.zip"))
+    env.save(os.path.join(log_dir, "vecnormalize_interrupt.pkl"))
+
+except Exception as e:
+    print(f"\n[FEHLER] Während des Trainings aufgetreten: {e}")
+
+finally:
+    try:
+        env.save(os.path.join(log_dir, "vecnormalize.pkl"))
+    except Exception as e:
+        print(f"[WARNUNG] VecNormalize konnte nicht gespeichert werden: {e}")
+    env.close()
+\end{minted}
+\subsection{\texttt{check\_tls\_consistency.py} – Prüfung inkonsistenter Phasenlängen}
+\label{app:check_tls_consistency}
+Dieses Tool analysiert alle TLS im SUMO-Netz und prüft, ob die Länge des \texttt{state}-Strings mit der Anzahl der kontrollierten Verbindungen übereinstimmt.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import xml.etree.ElementTree as ET
+
+# === Konfiguration ===
+net_file = "karlsruhe.net.xml"
+
+# === Einlesen ===
+tree = ET.parse(net_file)
+root = tree.getroot()
+
+# === Alle controlledLinks zählen ===
+tls_controlled_links = {}
+for connection in root.findall("connection"):
+    if "tl" in connection.attrib and "linkIndex" in connection.attrib:
+        tls_id = connection.attrib["tl"]
+        tls_controlled_links.setdefault(tls_id, set()).add(int(connection.attrib["linkIndex"]))
+
+# === Alle Phasen prüfen ===
+def check_tls_lengths():
+    print("Überprüfe alle TLS auf inkonsistente Phasenlängen...\n")
+    any_issues = False
+    for logic in root.findall("tlLogic"):
+        tls_id = logic.attrib["id"]
+        expected_len = len(tls_controlled_links.get(tls_id, []))
+
+        if expected_len == 0:
+            print(f" TLS '{tls_id}' hat keine controlledLinks (wird evtl. nicht gesteuert)")
+            continue
+
+        for i, phase in enumerate(logic.findall("phase")):
+            actual_len = len(phase.attrib["state"])
+            if actual_len != expected_len:
+                print(f" Phase {i} von TLS '{tls_id}' hat Länge {actual_len}, erwartet: {expected_len}")
+                print(f"    → state=\"{phase.attrib['state']}\"")
+                any_issues = True
+
+    if not any_issues:
+        print(" Alle TLS-Phasen stimmen mit ihren controlledLinks überein!")
+
+check_tls_lengths()
+\end{minted}
+
+\subsection{\texttt{check\_tls\_requests.py} – Prüfung ungültiger \texttt{<request>}-Indizes}
+\label{app:check_tls_requests}
+Prüft, ob alle \texttt{request}-Indizes innerhalb der zulässigen Grenzen liegen, um Laufzeitfehler in \texttt{sumo-rl} zu vermeiden.
+
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import xml.etree.ElementTree as ET
+
+net_file = "karlsruhe.net.xml"
+tree = ET.parse(net_file)
+root = tree.getroot()
+
+# Zähle für jedes TLS wie viele signal indices es gibt (controlled links)
+tls_signal_indices = {}
+for conn in root.findall("connection"):
+    if "tl" in conn.attrib and "linkIndex" in conn.attrib:
+        tls_id = conn.attrib["tl"]
+        tls_signal_indices.setdefault(tls_id, set()).add(int(conn.attrib["linkIndex"]))
+
+# Vergleiche mit den request-Elementen
+print("Überprüfe request-Indizes gegen Signalindizes...\n")
+any_issues = False
+for junction in root.findall("junction"):
+    tls_id = junction.attrib.get("id")
+    requests = junction.findall("request")
+    if tls_id in tls_signal_indices:
+        expected_max = len(tls_signal_indices[tls_id])
+        for req in requests:
+            index = int(req.attrib["index"])
+            if index >= expected_max:
+                print(f"Junction '{tls_id}': request index {index} > max signal index {expected_max - 1}")
+                any_issues = True
+
+if not any_issues:
+    print("Alle request-Indizes passen zu den TLS-Signalindizes!")
+\end{minted}
+
+\subsection{\texttt{fix\_requests.py} – Automatische Korrektur von Requests und Phasen}
+\label{app:fix_requests}
+Dieses Skript bereinigt überzählige \texttt{<request>}-Einträge und passt \texttt{state}-Strings in den Phasenlängen an.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import xml.etree.ElementTree as ET
+
+net_file = "karlsruhe.net.xml"
+output_file = "karlsruhe_fixed_tls.net.xml"
+
+tree = ET.parse(net_file)
+root = tree.getroot()
+
+# Finde maximal verwendete Signal-Indices pro TLS
+tls_max_index = {}
+for conn in root.findall("connection"):
+    tl = conn.get("tl")
+    idx = conn.get("linkIndex")
+    if tl and idx:
+        idx = int(idx)
+        tls_max_index[tl] = max(tls_max_index.get(tl, -1), idx)
+
+# Bereinigung
+total_removed_requests = 0
+total_adjusted_phases = 0
+changed_tls = []
+
+for junction in root.findall("junction"):
+    tls_id = junction.get("id")
+    if tls_id not in tls_max_index:
+        continue
+
+    max_idx = tls_max_index[tls_id]
+    requests = list(junction.findall("request"))
+    removed = 0
+
+    for req in requests:
+        req_idx = int(req.get("index"))
+        if req_idx > max_idx:
+            junction.remove(req)
+            removed += 1
+
+    if removed > 0:
+        print(f"TLS '{tls_id}': {removed} ungültige <request>-Einträge entfernt.")
+        total_removed_requests += removed
+        changed_tls.append(tls_id)
+
+    # Kürze zugehörige Phasen
+    for tl in root.findall("tlLogic"):
+        if tl.get("id") == tls_id:
+            adjusted = 0
+            for phase in tl.findall("phase"):
+                state = phase.get("state")
+                if len(state) > max_idx + 1:
+                    old_len = len(state)
+                    phase.set("state", state[:max_idx + 1])
+                    adjusted += 1
+            if adjusted > 0:
+                print(f" TLS '{tls_id}': {adjusted} <phase>-Strings auf Länge {max_idx + 1} gekürzt.")
+                total_adjusted_phases += adjusted
+                if tls_id not in changed_tls:
+                    changed_tls.append(tls_id)
+
+# Speichern
+tree.write(output_file, encoding="utf-8")
+print("\n Reparatur abgeschlossen.")
+print(f" Gesamt entfernte <request>-Einträge: {total_removed_requests}")
+print(f" Gesamt angepasste <phase>-Einträge: {total_adjusted_phases}")
+print(f" Betroffene TLS-IDs: {len(changed_tls)} Stück")
+for tls in changed_tls:
+    print(f"  - {tls}")
+print(f"\n Bereinigte Datei gespeichert unter: {output_file}")
+\end{minted}
+
+\subsection{\texttt{repair\_net.py} – manuelle TLS-Reparatur auf Basis eines Referenz-Dictionaries}
+\label{app:repair_net}
+Repariert TLS-Definitionen durch Abgleich mit einer vordefinierten Mapping-Tabelle von korrekten Phasenlängen.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+from xml.etree import ElementTree as ET
+
+# Manuell gepflegte Dictionary mit {TLS-ID: Anzahl controlledLinks}
+controlled_links = {
+    "1720933516": 6,
+    "3538953167": 2,
+    "3664415977": 10,
+    "cluster_14795187_1720919996_2670370290_2670370291": 11,
+    "cluster_14795804_55474925_6655074904_765746891_#1more": 49,
+    "cluster_15431428_1719671850_1720917935": 20,
+    "cluster_1590912233_3664415976_5083348337_5083348350": 11,
+    "cluster_1692973685_1692973722_1718084055_1718084058_#11more": 36,
+    "cluster_1729190097_3687504105": 8,
+    "cluster_1744031943_5131521735": 10,
+    "joinedS_1623835169_cluster_1137679587_1626739216_1728272870_1728272909_#17more": 33,
+    "joinedS_309108716_cluster_11001804363_1125509937_12515596172_1784859792_#5more": 14,
+    "joinedS_5092985445_cluster_1590912226_2911376263": 10,
+    # ggf. mehr hinzufügen
+}
+
+tree = ET.parse("karlsruhe.net.xml")
+root = tree.getroot()
+changed = False
+
+for logic in root.findall("tlLogic"):
+    tl_id = logic.attrib["id"]
+    if tl_id not in controlled_links:
+        continue
+
+    correct_len = controlled_links[tl_id]
+    for phase in logic.findall("phase"):
+        state = phase.attrib["state"]
+        if len(state) != correct_len:
+            new_state = state[:correct_len].ljust(correct_len, 'r')
+            print(f" Fixing {tl_id}: {len(state)} → {correct_len}")
+            phase.attrib["state"] = new_state
+            changed = True
+
+if changed:
+    tree.write("karlsruhe_fixed.net.xml")
+    print(" Bereinigte Datei gespeichert: karlsruhe_fixed.net.xml")
+else:
+    print(" Alle Phasen bereits korrekt.")
+
+\end{minted}
+
+\subsection{\texttt{statecheck.py} – Prüfung auf Ziel-Phasenlänge}
+\label{app:statecheck}
+Hilft bei der Kontrolle einheitlicher Phasenlängen über das gesamte Netz hinweg (z.\,B. Zielwert = 57).
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+from xml.etree import ElementTree as ET
+
+tree = ET.parse("karlsruhe.net.xml")
+root = tree.getroot()
+
+for logic in root.findall("tlLogic"):
+    tl_id = logic.attrib["id"]
+    for i, phase in enumerate(logic.findall("phase")):
+        state = phase.attrib["state"]
+        if len(state) != 57:
+            print(f" Phase {i} of TLS '{tl_id}' has length {len(state)}")
+\end{minted}
+
+\subsection{\texttt{find\_valid\_tls.py} – Validierung lauffähiger TLS für SUMO-RL}
+\label{app:find_valid_tls}
+Startet für jede einzelne Ampelkreuzung eine Minimalumgebung und überprüft, ob diese in \texttt{sumo-rl} trainierbar ist.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+from sumo_rl import SumoEnvironment
+import traci
+import os
+
+def test_tls(tls_id):
+    try:
+        env = SumoEnvironment(
+            net_file="karlsruhe.net.xml",
+            route_file="karlsruhe.rou.xml",
+            use_gui=False,
+            single_agent=True
+        )
+        env.ts_ids = [tls_id]
+        env.reset()
+        env.close()
+        return True
+    except Exception as e:
+        print(f" TLS {tls_id} nicht gültig: {e}")
+        return False
+
+# Alle TLS holen
+try:
+    env = SumoEnvironment(
+        net_file="karlsruhe.net.xml",
+        route_file="karlsruhe.rou.xml",
+        use_gui=False,
+        single_agent=True
+    )
+    all_tls = env.ts_ids
+    env.close()
+except Exception as e:
+    print(" Konnte TLS nicht auslesen:", e)
+    all_tls = []
+
+print(f" Teste {len(all_tls)} TLS auf Gültigkeit...\n")
+valid_tls = []
+
+for tls_id in all_tls:
+    if test_tls(tls_id):
+        valid_tls.append(tls_id)
+
+print("\n Gültige TLS:")
+print(valid_tls)
+\end{minted}
+

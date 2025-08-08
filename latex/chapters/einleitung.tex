@@ -28,13 +28,13 @@ Insbesondere ergeben sich folgende Einschränkungen:
 
 \begin{itemize}
     \item \textbf{Eingeschränkte Datenverfügbarkeit:} Nicht alle für eine realitätsnahe Verkehrsmodellierung relevanten Daten liegen in ausreichender Qualität oder Auflösung vor. Exakte Ampelschaltzeiten, Fußgängerfrequenzen oder dynamische Verkehrsdaten zu Stoßzeiten sind teilweise nicht öffentlich zugänglich oder nur unvollständig. Dazu kommt, dass Kommunen teilweise bewusst den Verkehr lenken – etwa durch Zufahrtsbeschränkungen oder Verkehrsberuhigungszonen –, was oft nicht öffentlich kommuniziert wird.
-    
+
     \item \textbf{Vereinfachte Modellierung der Umgebung:} In der Simulation wird angenommen, dass alle Verkehrsteilnehmer (Fahrzeuge, Fußgänger, Radfahrer) durch die Agenten präzise erfasst werden können – eine Annahme, die in der Realität durch technische und datenschutzrechtliche Hürden nicht haltbar ist. Moderne Systeme arbeiten hier mit Datenschutz‑mechanismen, aber eine flächendeckende, genaue Erfassung ist unerlässlich, aber derzeit technisch und rechtlich nicht umsetzbar.
-    
+
     \item \textbf{Städtebauliche Verkehrslenkung:} In der Realität regeln Städte Verkehrsflüsse z.B. durch Low‑Traffic‑Neighbourhoods, Zufahrtsbeschränkungen oder geregelte Zuflusssteuerung, um bestimmte Stadtbereiche zu entlasten. Solche Maßnahmen sind jedoch in der Simulationsumgebung nicht dynamisch abbildbar, da nur externe Ampelagenten kontrollieren und keine zonale Steuerungslogik abgebildet wird.
-    
+
     \item \textbf{Begrenzter räumlicher und zeitlicher Umfang:} Simuliert wird lediglich ein ausgewählter Ausschnitt des Karlsruher Straßennetzes und nur für definierte Zeitabschnitte. Eine vollständige Tag‑Nacht‑Modellierung oder eine Darstellung saisonaler sowie städtischer Ereigniszeiten liegt außerhalb des Umfangs.
-    
+
     \item \textbf{Trainings- und Evaluierungsgrenzen:} Reinforcement‑Learning‑Agenten benötigen viele Trainingszyklen. Die in dieser Arbeit verwendete Hardware limitiert Trainingsdauer und Modellkomplexität.
 \end{itemize}
 
