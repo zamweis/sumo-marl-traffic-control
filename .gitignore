@@ -1,1 +1,2 @@
-trash\
+# Ignoriere alle 'trash'-Ordner überall im Projekt
+**/trash/
