@@ -595,6 +595,8 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
   \label{fig:rl_architektur}
 \end{figure}
 
+Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} und \texttt{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes API für Multiagenten-Umgebungen bereit – analog zu \texttt{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate, wie sie für paralleles Training mit \texttt{Stable-Baselines3} erforderlich sind.
+
 \subsubsection{Konfiguration der Umgebung}
 
 Die Reinforcement-Learning-Umgebung wurde auf Basis der Klasse \texttt{SumoEnvironment} bzw. \texttt{parallel\_env} aus \texttt{sumo-rl} konfiguriert. Wichtige Parameter umfassen:
