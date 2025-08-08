@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<routes><vType id="car" accel="2.6" decel="4.5" length="5.0" maxSpeed="13.9" sigma="0.5" color="1,0,0" /><flow id="flow1" type="car" begin="0" end="3600" number="600" from="-1157505360" to="503190615#0" departLane="best" departSpeed="max" /><flow id="flow2" type="car" begin="0" end="3600" number="400" from="-1003269855#2" to="86548565#1" departLane="best" departSpeed="max" /></routes>

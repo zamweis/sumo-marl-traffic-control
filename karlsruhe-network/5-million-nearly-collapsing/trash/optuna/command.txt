@@ -1,0 +1,1 @@
+python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o map.trips.xml --seed 123 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 1000 -p 2 --fringe-factor 5.0 --validate
