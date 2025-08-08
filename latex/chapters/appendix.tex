@@ -1,9 +1,8 @@
 \appendix
 
-\section{Python-Skripte}
-\label{app:python_scripts}
-
 Dieser Anhang enthält die vollständigen Python-Skripte, die zur Validierung, Reparatur und Steuerung der SUMO-basierten Reinforcement-Learning-Umgebung eingesetzt wurden. Jedes Unterkapitel dokumentiert ein spezifisches Tool oder Modul aus dem Projekt.
+
+\section{Trainings-Skripte}
 
 \subsection{\texttt{train.py} – Trainingsskript für PPO über mehrere Seeds}
 \label{app:train_script}
@@ -531,6 +530,9 @@ finally:
         print(f"[WARNUNG] VecNormalize konnte nicht gespeichert werden: {e}")
     env.close()
 \end{minted}
+
+\section{Netzwerk-Skripte}
+
 \subsection{\texttt{check\_tls\_consistency.py} – Prüfung inkonsistenter Phasenlängen}
 \label{app:check_tls_consistency}
 Dieses Tool analysiert alle TLS im SUMO-Netz und prüft, ob die Länge des \texttt{state}-Strings mit der Anzahl der kontrollierten Verbindungen übereinstimmt.
