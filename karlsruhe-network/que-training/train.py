@@ -19,7 +19,7 @@ from supersuit import (
 from gym import Wrapper
 
 # ==== Seeds definieren ====
-SEEDS = [11, 22, 33, 44]  # beliebig erweiterbar
+SEEDS = [546, 234, 4563, 135]  # beliebig erweiterbar
 
 # ==== Custom Reward Function ====
 def custom_reward(traffic_signal):
@@ -167,7 +167,7 @@ for SEED in SEEDS:
         route_file="map.rou.xml",
         use_gui=False,
         num_seconds=1000,
-        reward_fn=custom_reward,
+        reward_fn="queue",
         min_green=5,
         max_depart_delay=100,
         sumo_seed=SEED,
@@ -214,7 +214,7 @@ for SEED in SEEDS:
 
     try:
         model.learn(
-            total_timesteps=1_500_000,
+            total_timesteps=5_000_000,
             callback=callbacks,
         )
         model.save(os.path.join(log_dir, "model.zip"))

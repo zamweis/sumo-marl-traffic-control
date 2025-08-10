@@ -19,37 +19,136 @@ from supersuit import (
 from gym import Wrapper
 
 # ==== Seeds definieren ====
-SEEDS = [11, 22, 33, 44]  # beliebig erweiterbar
+SEEDS = [143534, 456, 635768, 13755]  # beliebig erweiterbar
 
-# ==== Custom Reward Function ====
-def custom_reward(traffic_signal):
-    if not hasattr(traffic_signal, "prev_queue"):
-        traffic_signal.prev_queue = traffic_signal.get_total_queued()
+# ==== RealWorld Reward Function ====
 
-    queue = traffic_signal.get_total_queued()
-    waiting = np.sum(traffic_signal.get_accumulated_waiting_time_per_lane())
+# ==== Custom Reward Function (real-world measurable only) ====
+def realworld_reward(traffic_signal):
+    # Reset-Check: Wenn neue Episode beginnt -> State löschen
+    if hasattr(traffic_signal, "step_count") and traffic_signal.step_count == 0:
+        traffic_signal._rw_state = None
 
-    sim = traci.simulation
-    arrived = sim.getArrivedNumber()
-    teleport = sim.getStartingTeleportNumber()
-    collisions = sim.getCollidingVehiclesNumber()
+    """
+    Reward-Funktion, die nur real messbare Metriken nutzt:
+    - Queue (Anzahl Fahrzeuge in Anfahrtsbereichen)
+    - Outflow (Fahrzeuge, die in diesem Step die Kreuzung verlassen)
+    - Optional: Phasenwechsel (phase_changed-Flag)
+    """
+    # --- Lazy init von Zustandsgrößen für Deltas & EMA ---
+    if not hasattr(traffic_signal, "_rw_state") or traffic_signal._rw_state is None:
+        q = int(traffic_signal.get_local_queue())
+        f = int(traffic_signal.get_local_outflow())
+        traffic_signal._rw_state = {"prev_q": q, "ema_q": float(q), "ema_f": float(f)}
+        return 0.0
 
-    delta_queue = traffic_signal.prev_queue - queue
-    traffic_signal.prev_queue = queue
+    # --- Parameter (an Kreuzung anpassen) ---
+    max_storage = 40            # max. Fahrzeuge, die sich in allen Zufahrten stauen können
+    max_outflow_per_step = 8    # physikalisch möglicher Abfluss pro Step (alle Ausfahrten)
+    w_q = 1.0                   # Gewicht: Queue-Niveau strafen
+    w_build = 0.8                # Gewicht: Queue-Aufbau strafen
+    w_flow = 0.7                 # Gewicht: Durchsatz belohnen
+    w_switch = 0.1               # Gewicht: Phasenwechsel leicht strafen
+    ema = 0.3                    # EMA-Faktor (0..1); höher = weniger Glättung
+    clip = 5.0                   # Clipping für stabilen Wertebereich
 
-    reward = (
-        -0.1 * queue
-        - 0.05 * waiting
-        - 2.0 * teleport
-        - 10.0 * collisions
-        + 1.0 * arrived
-        + 0.3 * delta_queue
+    # --- Messungen ---
+    q = int(traffic_signal.get_local_queue())
+    f = int(traffic_signal.get_local_outflow())
+    phase_sw = 1.0 if getattr(traffic_signal, "phase_changed", False) else 0.0
+
+    # --- Vorherige Werte laden ---
+    st = traffic_signal._rw_state
+
+    # --- Glättung (EMA) ---
+    ema_q = (1 - ema) * st["ema_q"] + ema * q
+    ema_f = (1 - ema) * st["ema_f"] + ema * f
+
+    # --- Queue-Aufbau (nur positives Wachstum strafen) ---
+    delta_q = q - st["prev_q"]
+    build = max(0, delta_q)
+
+    # --- Normierung ---
+    q_norm = np.clip(ema_q / max(1.0, float(max_storage)), 0.0, 1.5)
+    b_norm = np.clip(build / max(1.0, float(max_storage) * 0.2), 0.0, 1.5)
+    f_norm = np.clip(ema_f / max(1.0, float(max_outflow_per_step)), 0.0, 1.5)
+
+    # --- Reward ---
+    r = (
+        -w_q * q_norm
+        -w_build * b_norm
+        +w_flow * f_norm
+        -w_switch * phase_sw
     )
 
-    if teleport > 10 or collisions > 5:
-        reward -= 20
+    # --- Clipping & State Update ---
+    r = float(np.clip(r, -clip, clip))
+    st["prev_q"] = q
+    st["ema_q"] = ema_q
+    st["ema_f"] = ema_f
+    traffic_signal._rw_state = st
 
-    return np.clip(reward, -100, 100)
+    return r
+
+# ==== Custom Reward Function (balanced, bounded to [-1, 1]) ====
+def custom_reward(traffic_signal):
+    # Lazy init von Zustandsgrößen für Delta-Berechnungen
+    if not hasattr(traffic_signal, "_prev_queue"):
+        traffic_signal._prev_queue = 0
+    if not hasattr(traffic_signal, "_prev_wait_sum"):
+        traffic_signal._prev_wait_sum = 0.0
+
+    # --- Metriken aus der SUMO/Env ---
+    queue = traffic_signal.get_total_queued()  # #Fahrzeuge im Stau (aktuell)
+    wait_sum_total = float(np.sum(traffic_signal.get_accumulated_waiting_time_per_lane()))  # kumuliert seit Sim-Start
+
+    sim = traci.simulation
+    arrived = sim.getArrivedNumber()                  # in diesem Step angekommen
+    teleports = sim.getStartingTeleportNumber()       # in diesem Step teleportiert
+    collisions = sim.getCollidingVehiclesNumber()     # in diesem Step kollidiert
+
+    # --- Deltas (per Step) statt kumulativer Summen ---
+    delta_queue = queue - traffic_signal._prev_queue
+    # Wartezuwachs seit letztem Step (>= 0 in der Praxis, robust gegen Sprünge)
+    delta_wait = max(0.0, wait_sum_total - traffic_signal._prev_wait_sum)
+
+    # Zustände aktualisieren
+    traffic_signal._prev_queue = queue
+    traffic_signal._prev_wait_sum = wait_sum_total
+
+    # --- Sanfte, robuste Normalisierung via tanh(x / scale) ---
+    # Skalen auf praxisnahe Größen einstellen (je nach Netzgröße anpassbar)
+    q_term       = -np.tanh(queue      / 30.0)                 # mehr Stau -> stärker negativ
+    dq_term      = -np.tanh(max(0,delta_queue) / 10.0)         # nur Stauzunahme bestrafen
+    wait_term    = -np.tanh(delta_wait / 60.0)                 # ~60 s zusätzl. Warten → deutliche Strafe
+    arrived_term =  np.tanh(arrived    / 5.0)                  # Durchsatz positiv (5 Ankünfte ≈ stark positiv)
+    tp_term      = -np.tanh(teleports  / 1.0)                  # schon 1 Teleport → fast maximale Strafe
+    col_term     = -np.tanh(collisions / 1.0)                  # schon 1 Kollision → fast maximale Strafe
+
+    # --- Gewichte (balanciert: Stabilität, Fluss, Sicherheit/Fehler) ---
+    # Sicherheit/Fehler am stärksten, dann Wartezeiten/Stau, dann Durchsatz
+    w_q, w_dq, w_wait = 0.35, 0.20, 0.45
+    w_arr, w_tp, w_col = 0.40, 0.90, 1.20
+
+    raw = (
+        w_q   * q_term +
+        w_dq  * dq_term +
+        w_wait* wait_term +
+        w_arr * arrived_term +
+        w_tp  * tp_term +
+        w_col * col_term
+    )
+
+    # Optionale harte Zusatzstrafen bei grobem Fehlverhalten
+    if teleports > 0:
+        raw -= 0.5
+    if collisions > 0:
+        raw -= 0.8
+
+    # Gesamtreward stabil in (-1, 1) abbilden
+    reward = float(np.tanh(raw))
+
+    return reward
 
 # ==== Adaptive Parameter-Schedules ====
 def adaptive_entropy_schedule(start=0.01):
@@ -112,6 +211,33 @@ class TimeBasedCheckpointCallback(BaseCallback):
             self.last_save_time = current_time
         return True
 
+# ==== Env Metric Logger ====
+class EnvMetricsLoggerCallback(BaseCallback):
+    def __init__(self, prefix="env", verbose=0):
+        super().__init__(verbose); self.prefix = prefix
+
+    def _flatten_items(self, d, parent=""):
+        for k, v in d.items():
+            key = f"{parent}.{k}" if parent else str(k)
+            if isinstance(v, dict):
+                yield from self._flatten_items(v, key)
+            else:
+                yield key, v
+
+    def _on_step(self) -> bool:
+        infos = self.locals.get("infos")
+        if not infos: return True
+        sums, counts = {}, {}
+        for info in infos:
+            if not isinstance(info, dict): continue
+            for k, v in self._flatten_items(info):
+                if isinstance(v, (int, float)) and np.isfinite(v):
+                    sums[k] = sums.get(k, 0.0) + float(v)
+                    counts[k] = counts.get(k, 0) + 1
+        for k in sums:
+            self.logger.record(f"{self.prefix}/{k}", sums[k] / max(1, counts[k]))
+        return True
+
 # ==== Learning Rate Logger ====
 class LearningRateLoggerCallback(BaseCallback):
     def __init__(self, verbose=0):
@@ -166,7 +292,7 @@ for SEED in SEEDS:
         net_file="map.net.xml",
         route_file="map.rou.xml",
         use_gui=False,
-        num_seconds=1000,
+        num_seconds=5000,
         reward_fn=custom_reward,
         min_green=5,
         max_depart_delay=100,
@@ -214,7 +340,7 @@ for SEED in SEEDS:
 
     try:
         model.learn(
-            total_timesteps=1_500_000,
+            total_timesteps=10_000_000,
             callback=callbacks,
         )
         model.save(os.path.join(log_dir, "model.zip"))
