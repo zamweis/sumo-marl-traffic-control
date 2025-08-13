@@ -803,3 +803,64 @@ print("\n Gültige TLS:")
 print(valid_tls)
 \end{minted}
 
+
+\subsection{\texttt{find\_relevant\_edges.py} – Suche alle relevanten edges}
+\label{app:find_relevant_edges}
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import xml.etree.ElementTree as ET
+
+# Konfiguration: Pfad zur .net.xml-Datei und Suchbegriffe
+NET_FILE = "network.net.xml"
+SUCHBEGRIFFE = ["B10", "B36", "L605", "Durlacher Allee", "Reinhold-Frank-Straße"]
+
+# Ausgabe-Datei für gefundene Kanten
+OUTPUT_FILE = "edges.txt"
+
+def finde_relevante_kanten(net_file, suchbegriffe):
+    tree = ET.parse(net_file)
+    root = tree.getroot()
+    
+    relevante_kanten = []
+    
+    for edge in root.findall("edge"):
+        name = edge.get("name")
+        if name:
+            for begriff in suchbegriffe:
+                if begriff.lower() in name.lower():
+                    relevante_kanten.append((edge.get("id"), name))
+                    break  # nicht doppelt eintragen, falls mehrere Begriffe passen
+                    
+    return relevante_kanten
+
+if __name__ == "__main__":
+    kanten = finde_relevante_kanten(NET_FILE, SUCHBEGRIFFE)
+    
+    # Ergebnisse speichern
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        for edge_id, name in kanten:
+            f.write(f"{edge_id}\t{name}\n")
+    
+    print(f"{len(kanten)} relevante Kanten gefunden.")
+    print(f"Ergebnisse in '{OUTPUT_FILE}' gespeichert.")
+
+\end{minted}
+
+\section{Sumo-Konfiguration}
+\subsection{\texttt{sumoconfig\_.sumocfg}}
+\label{app:sumocfg}
+Die folgende Konfigurationsdatei definiert die zentralen Eingaben und
+Parameter für die Simulation in SUMO. Sie verweist auf die zu ladende
+Netzdatei und die zugehörigen Routendateien sowie auf den zu simulierenden
+Zeitraum.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{xml}
+<configuration>
+  <input>
+    <net-file value="network.net.xml"/>
+    <route-files value="routes.xml"/>
+  </input>
+  <time>
+    <begin value="0"/>
+    <end value="5000"/>
+  </time>
+</configuration>
+\end{minted}
