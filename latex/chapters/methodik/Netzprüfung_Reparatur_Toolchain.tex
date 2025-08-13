@@ -1,6 +1,6 @@
 
 \subsection{Netzprüfung, Reparatur und Toolchain}
-Aufgrund der oben beschriebenen strukturellen Schwächen im importierten OSM-Netz war eine manuelle Nachbearbeitung ineffizient und fehleranfällig. Daher wurden eigene Werkzeuge entwickelt, um eine systematische und automatisierte Reparatur zu ermöglichen.
+Aufgrund der oben beschriebenen strukturellen Schwächen im importierten OSM-Netz (siehe Kapitel \ref{sec:OSM-Import-Fehler}) war eine manuelle Nachbearbeitung ineffizient und fehleranfällig. Daher wurden eigene Werkzeuge entwickelt, um eine systematische und automatisierte Reparatur zu ermöglichen.
 
 
 \subsubsection{Werkzeuge zur Netzprüfung und Reparatur}
@@ -12,7 +12,7 @@ Um die Kompatibilität des aus OpenStreetMap abgeleiteten Verkehrsnetzes mit \te
 Zwei zentrale Tools wurden entwickelt, um die Konsistenz zwischen kontrollierten Verbindungen (\textit{controlled links}) und Phasenzuständen (\texttt{state}) der TLS zu überprüfen:
 
 \begin{itemize}
-  \item \textbf{\texttt{check\_tls\_consistency.py}} prüft, ob die Länge jedes \texttt{state}-Strings in den \texttt{<phase>}-Elementen exakt der Anzahl der gesteuerten Signalindizes entspricht. Abweichungen werden detailliert gelistet, inklusive betroffener Phase und TLS-ID.
+  \item \textbf{\texttt{check\_tls\_consistency.py}} (siehe Anhang \ref{app:check_tls_consistency}) prüft, ob die Länge jedes \texttt{state}-Strings in den \texttt{<phase>}-Elementen exakt der Anzahl der gesteuerten Signalindizes entspricht. Abweichungen werden detailliert gelistet, inklusive betroffener Phase und TLS-ID.
         \begin{algorithm}[H]
           \caption{CheckTLSLengths – Prüfung inkonsistenter Phasenlängen}
           \begin{algorithmic}[1]
@@ -39,7 +39,7 @@ Zwei zentrale Tools wurden entwickelt, um die Konsistenz zwischen kontrollierten
           \end{algorithmic}
         \end{algorithm}
 
-  \item \textbf{\texttt{check\_tls\_requests.py}} validiert, ob alle \texttt{<request>}-Indizes innerhalb zulässiger Grenzen liegen. Falsch verknüpfte Einträge – z.\,B. \texttt{index > max(signalIndex)} – werden gemeldet.
+  \item \textbf{\texttt{check\_tls\_requests.py}} (siehe Anhang \ref{app:check_tls_requests}) validiert, ob alle \texttt{<request>}-Indizes innerhalb zulässiger Grenzen liegen. Falsch verknüpfte Einträge – z.\,B. \texttt{index > max(signalIndex)} – werden gemeldet.
 
         \begin{algorithm}[H]
           \caption{CheckTLSRequests – Prüfung ungültiger \texttt{request}-Indizes}
@@ -72,7 +72,7 @@ Zwei zentrale Tools wurden entwickelt, um die Konsistenz zwischen kontrollierten
 Die folgenden Programme wurden zur strukturellen Korrektur entwickelt:
 
 \begin{itemize}
-  \item \textbf{\texttt{fix\_requests.py}} entfernt überzählige \texttt{<request>}-Einträge und kürzt \texttt{state}-Strings in Phasen auf die zulässige Länge. Die Bereinigung erfolgt anhand der tatsächlichen Anzahl gesteuerter Signalverbindungen (\texttt{linkIndex}).
+  \item \textbf{\texttt{fix\_requests.py}} (siehe Anhang \ref{app:fix_requests}) entfernt überzählige \texttt{<request>}-Einträge und kürzt \texttt{state}-Strings in Phasen auf die zulässige Länge. Die Bereinigung erfolgt anhand der tatsächlichen Anzahl gesteuerter Signalverbindungen (\texttt{linkIndex}).
 
         \begin{algorithm}[H]
           \caption{FixRequests – Bereinigung ungültiger \texttt{<request>}-Einträge und Anpassung der Phasen}
@@ -113,7 +113,7 @@ Die folgenden Programme wurden zur strukturellen Korrektur entwickelt:
           \end{algorithmic}
         \end{algorithm}
 
-  \item \textbf{\texttt{repair-net.py}} nutzt ein manuell gepflegtes Dictionary mit TLS-IDs und deren erwarteter Phasenlänge (Anzahl kontrollierter Verbindungen). Alle Phasen, deren Länge abweicht, werden automatisch gekürzt oder aufgefüllt.
+  \item \textbf{\texttt{repair-net.py}} (siehe Anhang \ref{app:repair_net}) nutzt ein manuell gepflegtes Dictionary mit TLS-IDs und deren erwarteter Phasenlänge (Anzahl kontrollierter Verbindungen). Alle Phasen, deren Länge abweicht, werden automatisch gekürzt oder aufgefüllt.
 
         \begin{algorithm}[H]
           \caption{RepairTLSStates – Korrektur der Phasenlängen anhand manuell gepflegter Referenz}
@@ -143,7 +143,7 @@ Die folgenden Programme wurden zur strukturellen Korrektur entwickelt:
           \end{algorithmic}
         \end{algorithm}
 
-  \item \textbf{\texttt{statecheck.py}} gibt eine Liste aller TLS-Phasen mit ungewöhnlichen Längen aus. Dieses Tool wurde verwendet, um bei vereinheitlichten Netzen auf eine Ziel-Zustandslänge zu prüfen.
+  \item \textbf{\texttt{statecheck.py}} (siehe Anhang \ref{app:statecheck}) gibt eine Liste aller TLS-Phasen mit ungewöhnlichen Längen aus. Dieses Tool wurde verwendet, um bei vereinheitlichten Netzen auf eine Ziel-Zustandslänge zu prüfen.
 
         \begin{algorithm}[H]
           \caption{StateCheck – Prüfung auf einheitliche Phasenlängen}
@@ -171,7 +171,7 @@ Die folgenden Programme wurden zur strukturellen Korrektur entwickelt:
 Zur Vorbereitung des Trainings wurden weitere Programme zur Identifikation funktionaler TLS entwickelt:
 
 \begin{itemize}
-  \item \textbf{\texttt{find\_valid\_tls.py}} iteriert über alle TLS im Netz und testet jede einzeln in einem minimalen \texttt{sumo-rl}-Lauf. TLS, bei denen die Umgebung erfolgreich initialisiert werden kann, gelten als kompatibel.
+  \item \textbf{\texttt{find\_valid\_tls.py}} (siehe Anhang \ref{app:find_valid_tls}) iteriert über alle TLS im Netz und testet jede einzeln in einem minimalen \texttt{sumo-rl}-Lauf. TLS, bei denen die Umgebung erfolgreich initialisiert werden kann, gelten als kompatibel.
 
         \begin{algorithm}[H]
           \caption{FindValidTLS – Gültigkeitsprüfung aller TLS im Netz}
@@ -212,7 +212,7 @@ Zur Vorbereitung des Trainings wurden weitere Programme zur Identifikation funkt
 
 \subsubsection{Auswahl eines bereinigten Netzes}
 
-Nach mehrfacher Iteration und Debugging wurde ein final bereinigtes Netz erzeugt: \texttt{karlsruhe.net.xml}. Dieses enthält ausschließlich überprüfte TLS mit konsistenten Phasenlängen und steuerbaren Verbindungen. Es bildet die Grundlage für alle nachfolgenden Reinforcement-Learning-Experimente.
+Nach mehrfacher Iteration und Debugging wurde ein final bereinigtes Netz erzeugt: \texttt{network.net.xml}. Dieses enthält ausschließlich überprüfte TLS mit konsistenten Phasenlängen und steuerbaren Verbindungen. Es bildet die Grundlage für alle nachfolgenden Reinforcement-Learning-Experimente.
 
 \subsubsection{Vorteil des automatisierten Workflows}
 
@@ -220,7 +220,7 @@ Die entwickelte Toolchain ermöglicht:
 
 \begin{itemize}
   \item eine strukturierte Diagnose typischer OSM-bedingter Netzprobleme,
-  \item reproduzierbare Netzreparaturen ohne reines manuelles Editieren in \texttt{netedit},
+  \item reproduzierbare Netzreparaturen ohne reines manuelles Editieren in \texttt{netedit} \cite{netedit},
   \item gezielte Selektion steuerbarer TLS für das Experiment.
 \end{itemize}
 

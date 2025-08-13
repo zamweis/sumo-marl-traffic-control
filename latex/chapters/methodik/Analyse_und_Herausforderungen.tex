@@ -2,12 +2,12 @@
 \subsection{Analyse und Herausforderungen bei der OSM-Netznutzung}
 
 \subsubsection{Grundstruktur von Lichtsignalanlagen (TLS) in SUMO}
-Bevor die Probleme beim OSM-Import analysiert werden, ist es hilfreich, den Aufbau und die Abhängigkeiten der relevanten XML-Elemente in SUMO zu verstehen, insbesondere im Zusammenhang mit der Steuerung von Lichtsignalanlagen (\textit{Traffic Light Systems, TLS}).
+Bevor die Probleme beim OSM-Import analysiert werden, ist es hilfreich, den Aufbau und die Abhängigkeiten der relevanten XML-Elemente in SUMO \cite{sumo-doc} zu verstehen, insbesondere im Zusammenhang mit der Steuerung von Lichtsignalanlagen (\textit{Traffic Light Systems, TLS}). \cite{Sumo-tls}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\textwidth]{images/junktion.png}
-  \caption{Visualisierung einer TLS-Kreuzung (eigene Darstellung).}
+  \caption{Visualisierung einer TLS-Kreuzung (eigene Darstellung \cite{Sumo-Gui}).}
   \label{fig:sumo_karlsruhe}
 \end{figure}
 
@@ -58,24 +58,25 @@ Bevor die Probleme beim OSM-Import analysiert werden, ist es hilfreich, den Aufb
 \end{figure}
 
 \subsubsection{Typische Fehlerquellen nach OSM-Import}
+\label{sec:OSM-Import-Fehler}
 
 Die automatische Ableitung von Ampelsteuerungen aus OSM ist unvollständig und fehleranfällig. Im Zusammenspiel mit \texttt{sumo-rl} ergeben sich daraus mehrere konkrete Probleme:
 
 \begin{itemize}
-  \item \textbf{Fehlende oder unvollständige TLS-Definitionen:} In OSM sind Ampelanlagen in der Regel lediglich als Punktknoten mit dem Tag \texttt{highway=traffic\_signals} erfasst. Die genaue Schaltlogik (\texttt{tlLogic}) – inklusive Phasen und Zustände – fehlt vollständig. SUMO generiert daher beim Netzimport mit \texttt{--tls.guess-signals} heuristische Ampeldefinitionen, die jedoch oft lückenhaft oder unbrauchbar sind.
+  \item \textbf{Fehlende oder unvollständige TLS-Definitionen:} In OSM sind Ampelanlagen in der Regel lediglich als Punktknoten mit dem Tag \texttt{highway=traffic\_signals} erfasst. Die genaue Schaltlogik (\texttt{tlLogic}) – inklusive Phasen und Zustände – fehlt vollständig. SUMO generiert daher beim Netzimport mit \texttt{--tls.guess-signals} heuristische Ampeldefinitionen, die jedoch oft lückenhaft oder unbrauchbar sind. \cite{OSM-Trafic-signals,Sumo-osm}
 
-  \item \textbf{TLS mit nur einer Phase:} Viele der generierten Ampeln besitzen lediglich eine einzige definierte Phase. Dies entspricht keinem realen Verhalten und führt zu Fehlern beim Training mit \texttt{sumo-rl}, da das Framework mindestens zwei steuerbare Phasen voraussetzt. Die betroffenen Knoten müssen daher identifiziert und aus der Simulation ausgeschlossen oder manuell korrigiert werden.
+  \item \textbf{TLS mit nur einer Phase:} Viele der generierten Ampeln besitzen lediglich eine einzige definierte Phase. Dies entspricht keinem realen Verhalten und führt zu Fehlern beim Training mit \texttt{sumo-rl}, da das Framework mindestens zwei steuerbare Phasen voraussetzt. Die betroffenen Knoten müssen daher identifiziert und aus der Simulation ausgeschlossen oder manuell korrigiert werden. \cite{sumo-rl_docs,sumo-doc,Sumo-osm}
 
-  \item \textbf{Unstimmige Phasenlängen:} Jede Phase in SUMO ist ein Zeichenstring (\texttt{state}), dessen Länge der Anzahl der gesteuerten Verbindungen (sogenannte \textit{controlled links}) entsprechen muss. Bei fehlerhafter Generierung ist diese Bedingung oft verletzt – etwa wenn der \texttt{state} zu kurz oder zu lang ist. Dies führt in \texttt{sumo-rl} zu Indexfehlern oder undefiniertem Verhalten.
+  \item \textbf{Unstimmige Phasenlängen:} Jede Phase in SUMO ist ein Zeichenstring (\texttt{state}), dessen Länge der Anzahl der gesteuerten Verbindungen (sogenannte \textit{controlled links}) entsprechen muss. Bei fehlerhafter Generierung ist diese Bedingung oft verletzt – etwa wenn der \texttt{state} zu kurz oder zu lang ist. Dies führt in \texttt{sumo-rl} zu Indexfehlern oder undefiniertem Verhalten. \cite{sumo-rl_docs}
 
-  \item \textbf{Fehlerhafte oder überzählige \texttt{<request>}-Einträge:} Jede TLS enthält in der Netzdatei zusätzliche Steuerinformationen über \texttt{request}-Elemente. Diese verweisen auf spezifische Signale mittels eines Index. Häufig verweisen diese Einträge jedoch auf nicht vorhandene Verbindungen, da \texttt{netconvert} Signalverknüpfungen nicht korrekt zuordnet. SUMO ignoriert solche Fehler teilweise still – \texttt{sumo-rl} hingegen bricht mit Ausnahmen ab.
+  \item \textbf{Fehlerhafte oder überzählige \texttt{<request>}-Einträge:} Jede TLS enthält in der Netzdatei zusätzliche Steuerinformationen über \texttt{request}-Elemente. Diese verweisen auf spezifische Signale mittels eines Index. Häufig verweisen diese Einträge jedoch auf nicht vorhandene Verbindungen, da \texttt{netconvert} Signalverknüpfungen nicht korrekt zuordnet. SUMO ignoriert solche Fehler teilweise still – \texttt{sumo-rl} hingegen bricht mit Ausnahmen ab. \cite{sumo-rl_docs}
 
-  \item \textbf{Mehrdeutige oder verschachtelte Kreuzungen:} In komplexeren innerstädtischen Kreuzungen fasst SUMO mehrere OSM-Knoten zu einem „cluster“ zusammen, um den Verkehrsfluss abzubilden. Dies kann zu sehr großen TLS mit dutzenden Ein- und Ausfahrten führen, die übermäßig viele Phasen oder extrem lange Zustandsdefinitionen erzeugen. Solche TLS sind schwer zu debuggen und häufig inkompatibel mit den Erwartungen von \texttt{sumo-rl}.
+  \item \textbf{Mehrdeutige oder verschachtelte Kreuzungen:} In komplexeren innerstädtischen Kreuzungen fasst SUMO mehrere OSM-Knoten zu einem „cluster“ zusammen, um den Verkehrsfluss abzubilden. Dies kann zu sehr großen TLS mit dutzenden Ein- und Ausfahrten führen, die übermäßig viele Phasen oder extrem lange Zustandsdefinitionen erzeugen. Solche TLS sind schwer zu debuggen und häufig inkompatibel mit den Erwartungen von \texttt{sumo-rl}. \cite{sumo-rl_docs,sumo-doc}
 \end{itemize}
 
 \paragraph{Folgen für \texttt{sumo-rl}}
 
-Das Framework \texttt{sumo-rl} erwartet für jede zu steuernde TLS:
+Das Framework \texttt{sumo-rl} erwartet für jede zu steuernde TLS: \cite{sumo-rl_docs}
 
 \begin{itemize}
   \item mindestens zwei valide Phasen,
@@ -95,11 +96,11 @@ Sind diese Anforderungen nicht erfüllt, führt dies typischerweise zu einer der
 Da diese Probleme nicht durch SUMO selbst gemeldet, sondern erst zur Laufzeit in \texttt{sumo-rl} sichtbar werden, ist ein systematischer Debugging- und Reparaturprozess zwingend notwendig. Die Komplexität steigt dabei exponentiell mit der Anzahl der TLS im Netz.
 \paragraph{Erkenntnis}
 
-Der direkte Import von OSM-Daten in SUMO erzeugt ein formal nutzbares Verkehrsnetz – jedoch nicht automatisch ein für Reinforcement Learning (RL) geeignetes. Ohne zusätzliche Aufbereitung ist ein stabiler Trainingsbetrieb in \texttt{sumo-rl} nicht möglich. Im Rahmen dieser Arbeit wurde das reale OSM-Netz von Karlsruhe daher gezielt analysiert, bereinigt und überarbeitet, sodass es nun erfolgreich und stabil im RL-Kontext eingesetzt werden kann. Dazu wurden eigene Werkzeuge zur automatisierten Strukturprüfung und Reparatur entwickelt, die im folgenden Abschnitt näher beschrieben werden.
+Der direkte Import von OSM-Daten in SUMO erzeugt ein formal nutzbares Verkehrsnetz – jedoch nicht automatisch ein für Reinforcement Learning (RL) geeignetes. Ohne zusätzliche Aufbereitung ist ein stabiler Trainingsbetrieb in \texttt{sumo-rl} nicht möglich. Im Rahmen dieser Arbeit wurde das reale OSM-Netz von Karlsruhe daher gezielt analysiert, bereinigt und überarbeitet, sodass es nun erfolgreich und stabil im RL-Kontext eingesetzt werden kann. Dazu wurden eigene Werkzeuge zur automatisierten Strukturprüfung und Reparatur entwickelt, die im einem folgenden Abschnitt näher beschrieben werden.
 
 \subsubsection{Problematik nicht-motorisierter Verkehrswege im OSM-Modell}
 
-Ein zentrales Problem beim ursprünglichen OSM-Import stellten die Strukturen nicht-motorisierter Verkehrsträger dar – insbesondere Fußwege, Überwege und Fahrradtrassen. Diese sind im OSM-Modell zwar detailliert erfasst, führen aber in SUMO häufig zu problematischen Simulationseffekten:
+Ein zentrales Problem beim ursprünglichen OSM-Import stellten die Strukturen nicht-motorisierter Verkehrsträger dar – insbesondere Fußwege, Überwege und Fahrradtrassen. Diese sind im OSM-Modell zwar detailliert erfasst, führen aber in SUMO häufig zu problematischen Simulationseffekten: \cite{Sumo-osm}
 
 \begin{itemize}
   \item \textbf{Separate Fahrspuren für Radverkehr:} Zusätzliche Radstreifen erzeugen neue Kanten mit eigenen Abbiegebeziehungen, die von SUMO automatisch als TLS-relevant eingestuft werden – oft mit übermäßig vielen Signalgruppen.
@@ -113,7 +114,7 @@ Diese Herausforderungen machten eine rein automatische Nutzung des OSM-Imports z
 
 \subsubsection{Eingesetzte \texttt{netconvert}-Optionen und deren Grenzen}
 
-Zur automatisierten Aufbereitung kamen zahlreiche Optionen von \texttt{netconvert} zum Einsatz, um das aus OSM exportierte Netz anzupassen. Dabei zeigte sich jedoch, dass viele dieser Optionen nicht auf die hohen Anforderungen von RL-Umgebungen zugeschnitten sind:
+Zur automatisierten Aufbereitung kamen zahlreiche Optionen von \texttt{netconvert} zum Einsatz, um das aus OSM exportierte Netz anzupassen. Dabei zeigte sich jedoch, dass viele dieser Optionen nicht auf die hohen Anforderungen von RL-Umgebungen zugeschnitten sind: \cite{netconvert}
 
 \begin{itemize}
   \item \texttt{--tls.guess-signals}: Erzeugt Ampeln auf Basis der Netzstruktur – allerdings oft mit unrealistischen oder unbrauchbaren Phasen.
@@ -129,7 +130,7 @@ Obwohl diese Optionen wichtige Vorarbeiten leisteten, war ihre Wirkung für das 
 
 \subsubsection{Manuelle Eingriffe und strukturelle Rekonstruktionen}
 
-Neben automatisierten Bereinigungen waren auch gezielte manuelle Anpassungen notwendig. Insbesondere wurden mithilfe von \texttt{netedit} einzelne Kreuzungen vollständig neu aufgebaut, um \textbf{Deadlocks zu vermeiden}, die zwar in der realen Verkehrsführung nicht auftreten, jedoch in SUMO durch implizite Abbiegelogiken und Vorrangregeln entstehen können.
+Neben automatisierten Bereinigungen waren auch gezielte manuelle Anpassungen notwendig. Insbesondere wurden mithilfe von \texttt{netedit} \cite{netedit} einzelne Kreuzungen vollständig neu aufgebaut, um \textbf{Deadlocks zu vermeiden}, die zwar in der realen Verkehrsführung nicht auftreten, jedoch in SUMO durch implizite Abbiegelogiken und Vorrangregeln entstehen können.
 
 Diese Rekonstruktionen erfolgten unter Beibehaltung der realweltlichen Topologie, jedoch mit einer technisch sauberen Definition aller Fahrbeziehungen und Signalisierungen. Damit konnte sichergestellt werden, dass auch komplexere Kreuzungen reproduzierbar, konfliktfrei und steuerbar bleiben.
 
