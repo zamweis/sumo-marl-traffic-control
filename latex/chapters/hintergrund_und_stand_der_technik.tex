@@ -2,22 +2,22 @@
 
 \subsection{Urbane Verkehrssysteme und Verkehrssteuerung}
 
-Die urbane Verkehrssteuerung umfasst alle Maßnahmen zur Regelung, Lenkung und Optimierung von Verkehrsflüssen innerhalb städtischer Räume. Ziel ist es, den Verkehrsfluss effizient zu gestalten, Staus zu vermeiden, die Sicherheit aller Verkehrsteilnehmer zu erhöhen sowie Emissionen und Lärm zu reduzieren. Klassische Steuerungsmechanismen basieren häufig auf festen Zeitplänen oder einfachen verkehrsabhängigen Regeln, z.\,B. durch Induktionsschleifen oder Detektoren gesteuerte Ampelphasen.
+Die urbane Verkehrssteuerung umfasst alle Maßnahmen zur Regelung, Lenkung und Optimierung von Verkehrsflüssen innerhalb städtischer Räume. Ziel ist es, den Verkehrsfluss effizient zu gestalten, Staus zu vermeiden, die Sicherheit aller Verkehrsteilnehmer zu erhöhen sowie Emissionen und Lärm zu reduzieren. Klassische Steuerungsmechanismen basieren häufig auf festen Zeitplänen oder einfachen verkehrsabhängigen Regeln, z.\,B. durch Induktionsschleifen oder Detektoren gesteuerte Ampelphasen. \cite{Traffic-Flow-Theory}
 
-Mit dem Aufkommen neuer Technologien und wachsender Mobilitätsdaten entstehen zunehmend datenbasierte und dynamische Steuerungsansätze. Dazu gehören adaptive Lichtsignalsteuerungen, vernetzte Fahrzeuge (V2X-Kommunikation) und erste Pilotprojekte mit KI-gesteuerten Verkehrsmanagementsystemen. Dennoch sind viele Systeme in der Praxis noch unflexibel oder schwer skalierbar.
+Mit dem Aufkommen neuer Technologien und wachsender Mobilitätsdaten entstehen zunehmend datenbasierte und dynamische Steuerungsansätze. Dazu gehören adaptive Lichtsignalsteuerungen, vernetzte Fahrzeuge (V2X-Kommunikation) und erste Pilotprojekte mit KI-gesteuerten Verkehrsmanagementsystemen. \cite{Kooperative-Lichtsignalsteuerung, SURTRAC} Dennoch sind viele Systeme in der Praxis noch unflexibel oder schwer skalierbar. \cite{KI-Ampel, dynamischen-Verkehrsumlegung}
 
 \subsection{Simulation urbaner Mobilität mit SUMO}
 
-\textit{Simulation of Urban MObility} (SUMO) ist ein quelloffener, mikroskopischer Verkehrs-Simulator, der ursprünglich vom Deutschen Zentrum für Luft- und Raumfahrt (DLR) entwickelt wurde. SUMO erlaubt die detaillierte Modellierung individueller Fahrzeuge, Straßeninfrastruktur, Ampelschaltungen sowie Fahrverhalten.
+\textit{Simulation of Urban MObility} (SUMO) ist ein quelloffener,  Verkehrs-Simulator, der ursprünglich vom Deutschen Zentrum für Luft- und Raumfahrt (DLR) entwickelt wurde. \cite{sumo-doc} SUMO erlaubt die detaillierte Modellierung individueller Fahrzeuge, Straßeninfrastruktur, Ampelschaltungen sowie Fahrverhalten. \cite{sumo-doc, Sumo-git, Sumo-Publikation}
 
-Besonders relevant für diese Arbeit sind folgende Merkmale:
+Besonders relevant für diese Arbeit sind folgende Merkmale\cite{sumo-doc}:
 
 \begin{itemize}
     \item \textbf{Mikroskopische Modellierung:} Jedes Fahrzeug wird als individuelles Objekt simuliert. Parameter wie Geschwindigkeit, Abstand oder Spurwechselverhalten sind individuell konfigurierbar.
     \item \textbf{Flexible Netzdefinition:} Verkehrsnetze lassen sich aus OpenStreetMap-Daten sowie aus Shapefiles oder VISUM-Modellen mit dem Tool \texttt{netconvert} erzeugen. Netzdateien können auch mit \texttt{netedit} visuell editiert werden.
     \item \textbf{Nachfragegenerierung:} Fahrpläne und Routen lassen sich mit Tools wie \texttt{activitygen}, \texttt{randomTrips}, \texttt{od2trips} oder \texttt{duarouter} erzeugen – basierend auf statistischen oder echten OD-Matrizen.
     \item \textbf{Multimodalität:} SUMO unterstützt neben Pkw auch Busse, Fahrräder, Fußgänger sowie den öffentlichen Nahverkehr. Ampeln können für alle Verkehrsarten gleichzeitig modelliert werden.
-    \item \textbf{Emissionsmodellierung:} Mit Hilfe von integrierten HBEFA-Tabellen (Version 4) kann SUMO CO\textsubscript{2}-, NO\textsubscript{x}- und Feinstaubemissionen simulieren und ausgeben.
+    \item \textbf{Emissionsmodellierung:} Mit Hilfe von integrierten HBEFA-Tabellen (Version 4)\cite{Sumo-HBEFA} kann SUMO CO\textsubscript{2}-, NO\textsubscript{x}- und Feinstaubemissionen simulieren und ausgeben.
     \item \textbf{Steuerbare Ampelanlagen:} Lichtsignalanlagen können sowohl mit festen Programmen als auch dynamisch über die TraCI-Schnittstelle gesteuert werden.
     \item \textbf{Reproduzierbarkeit und Kontrolle:} SUMO ist vollständig deterministisch, was es ideal für kontrollierte Experimente und das Training von KI-Agenten macht.
     \item \textbf{Visualisierung und Debugging:} Die SUMO-GUI und das Tool \texttt{sumo-gui} ermöglichen eine grafische Darstellung von Netz, Fahrzeugen, Ampelphasen und Simulationsergebnissen.
@@ -27,7 +27,7 @@ Die SUMO-Toolchain bietet damit alle notwendigen Komponenten für die Entwicklun
 
 \subsection{Verstärkendes Lernen (Reinforcement Learning)}
 
-Reinforcement Learning (RL) ist ein Teilgebiet des maschinellen Lernens, bei dem ein Agent durch Interaktion mit einer Umgebung lernt, optimale Handlungen auszuführen. Dabei verfolgt er das Ziel, eine kumulative Belohnung zu maximieren.
+Reinforcement Learning (RL) ist ein Teilgebiet des maschinellen Lernens, bei dem ein Agent durch Interaktion mit einer Umgebung lernt, optimale Handlungen auszuführen. Dabei verfolgt er das Ziel, eine kumulative Belohnung zu maximieren. \cite{sutton-barto}
 
 Ein RL-Prozess wird typischerweise als Markov Decision Process (MDP) beschrieben und besteht aus folgenden Komponenten:
 
@@ -43,24 +43,24 @@ Der Agent interagiert mit der Umgebung, beobachtet den Zustand, wählt eine Akti
 Wichtige Algorithmen, die in dieser Arbeit potenziell relevant sind, sind:
 
 \begin{itemize}
-    \item \textbf{Q-Learning:} Modellfreies, off-policy Lernverfahren zur Annäherung an optimale Aktionen.
-    \item \textbf{DQN (Deep Q-Network):} Kombination von Q-Learning mit neuronalen Netzen.
-    \item \textbf{PPO (Proximal Policy Optimization):} Policy-basierter RL-Ansatz mit stabiler Optimierung.
+    \item \textbf{Q-Learning\cite{Q-Learning}:} Modellfreies, off-policy Lernverfahren zur Annäherung an optimale Aktionen.
+    \item \textbf{DQN (Deep Q-Network)\cite{Deep Q-Learning}:} Kombination von Q-Learning mit neuronalen Netzen.
+    \item \textbf{PPO (Proximal Policy Optimization)\cite{Proximal Policy Optimization}:} Policy-basierter RL-Ansatz mit stabiler Optimierung.
 \end{itemize}
 
 \subsection{SUMO-RL: Architektur und Funktionalität}
 
-\texttt{sumo-rl} ist ein Python-Framework, das SUMO mit Reinforcement Learning verbindet. Es basiert auf der \texttt{gymnasium}-Schnittstelle und abstrahiert typische Aufgaben wie die Definition von Beobachtungen, Aktionen und Belohnungen für RL-Agenten. Die Umgebung wird durch die Klasse \texttt{SumoEnvironment} bereitgestellt.
+\texttt{sumo-rl} ist ein Python-Framework, das SUMO mit Reinforcement Learning verbindet. Es basiert auf der \texttt{gymnasium}-Schnittstelle\cite{Gymnasium} und abstrahiert typische Aufgaben wie die Definition von Beobachtungen, Aktionen und Belohnungen für RL-Agenten. Die Umgebung wird durch die Klasse \texttt{SumoEnvironment} bereitgestellt.
 
-Zentrale Eigenschaften von \texttt{sumo-rl}:\cite{sumo-rl}
+Zentrale Eigenschaften von \texttt{sumo-rl}\cite{sumo-rl}:
 
 \begin{itemize}
     \item \textbf{TraCI-Integration:} Ermöglicht über das Traffic Control Interface zur Laufzeit den Zugriff auf Fahrzeugdaten, Ampelphasen, Fahrzeugwarteschlangen u.\,v.\,m.
-    \item \textbf{Ein- und Mehragentenunterstützung:} \texttt{sumo-rl} unterstützt sowohl Single-Agent-Setups als auch Multi-Agent-Steuerung über die PettingZoo-API. Jeder gesteuerte Knoten im Netz kann einem eigenen Agenten zugewiesen werden.
+    \item \textbf{Ein- und Mehragentenunterstützung:} \texttt{sumo-rl} unterstützt sowohl Single-Agent-Setups als auch Multi-Agent-Steuerung über die PettingZoo-API\cite{PettingZoo}. Jeder gesteuerte Knoten im Netz kann einem eigenen Agenten zugewiesen werden.
     \item \textbf{Beobachtungen:} Die Umgebung liefert Beobachtungsvektoren mit kodierter Ampelphase, Rückstaulänge, Anzahl wartender Fahrzeuge und Fahrzeugdichte je Spur.
     \item \textbf{Aktionen:} Die Agenten treffen diskrete Entscheidungen über Phasenwechsel, wobei \texttt{delta\_time}, \texttt{yellow\_time} und \texttt{min\_green} die zeitliche Dynamik definieren.
     \item \textbf{Belohnungsfunktionen:} Der Standard-Reward basiert auf der Differenz kumulierter Wartezeiten. Eigene Funktionen können bei Initialisierung übergeben werden.
-    \item \textbf{Kompatibilität:} Das Framework ist kompatibel mit Stable-Baselines3, PyTorch, TensorFlow, RLlib und anderen gängigen ML-Frameworks.
+    \item \textbf{Kompatibilität:} Das Framework ist kompatibel mit Stable-Baselines3\cite{Stable-Baselines3}, PyTorch\cite{pytorch}, TensorFlow\cite{TensorFlow}, RLlib\cite{RLlib} und anderen gängigen ML-Frameworks.
 \end{itemize}
 
 Beispielhafte Initialisierung:
@@ -80,13 +80,22 @@ env = SumoEnvironment(
 
 \subsection{Verwandte Arbeiten}
 
-In den letzten Jahren wurden zunehmend Studien veröffentlicht, die KI-Methoden zur Optimierung der Verkehrssteuerung einsetzen. Eine Auswahl relevanter Forschungsansätze:
+In den letzten Jahren wurden zahlreiche wissenschaftliche Arbeiten veröffentlicht, die KI-basierte Methoden zur Optimierung der Verkehrslichtsteuerung mithilfe der SUMO-RL-Bibliothek vorstellen. Im Folgenden eine Auswahl repräsentativer Ansätze, die sich durch innovative RL-Methoden und vielfältige Anwendungsfelder auszeichnen:
 
 \begin{itemize}
-    \item \textbf{Wei et al. (2019):} Einsatz von Deep Q-Learning zur Optimierung einer einzelnen Ampel in SUMO mit signifikantem Rückgang der Wartezeiten \cite{wei2019}.
-    \item \textbf{Chu et al. (2020):} Untersuchung von Multi-Agent-Ansätzen mit Deep RL zur Steuerung großflächiger Ampelnetze \cite{chu2020}.
-    \item \textbf{Zheng et al. (2019):} Einführung eines Lernverfahrens zur Koordination konkurrierender Phasen bei Ampelsteuerungen mit Hilfe von SUMO \cite{zheng2019}.
+    \item \textbf{Alegre et al. (2021):} Untersuchung des Einflusses von Nicht-Stationarität auf lernbasierte Ampelsteuerungsstrategien. Die Arbeit beleuchtet, wie sich veränderte Verkehrsbedingungen auf die Stabilität und Leistung von Reinforcement-Learning-Agenten auswirken. \cite{alegre2021}
+
+    \item \textbf{Hwang et al. (2023):} Entwicklung eines informations-theoretischen Zustandsraummodells für Multi-View Reinforcement Learning. Dieser Ansatz zielt auf die verbesserte Integration heterogener Sensordaten zur präziseren Verkehrssteuerung. \cite{hwang2023}
+
+    \item \textbf{Reza et al. (2023):} Einsatz einer TD-Learning-basierten Methode zur umfassenden stadtweiten Ampelregelung unter besonderem Fokus auf autonome Fahrzeuge. Die Performance wird mittels SUMO-Simulationen evaluiert. \cite{reza2023}
+
+    \item \textbf{Almeida et al. (2022):} Kombination von Multiagenten-Reinforcement Learning mit k-Nearest-Neighbors-Technik zur koordinierten Steuerung von Ampeln in Netzwerken mit dichtem Verkehrsaufkommen. \cite{almeida2022}
+
+    \item \textbf{Zheng et al. (2022):} Vorschlag eines Curriculum-Learning-Ansatzes, der schrittweise von lokalen zu globalen Steuerstrategien führt – mit dem Ziel, RL-Agenten robuster und lernfähiger zu machen. \cite{zheng2022}
+
+    \item \textbf{Weitere erwähnenswerte Arbeiten:} Benchmarking verschiedener RL-Algorithmen für Ampelsteuerung (Ault \& Sharon, 2021), ein Framework zur Belohnungsgestaltung („EcoLight“, Agand et al., 2021) sowie ontologiegestützte Lernmodelle, die eine robuste Anwendung von Steuerungsstrategien in unbekannten Situationen ermöglichen (Ghanadbashi et al., 2022). \cite{ault2021,agand2021,ghanadbashi2023}
 \end{itemize}
+
 
 Diese Arbeiten zeigen, dass RL-basierte Methoden das Potenzial haben, bestehende Systeme zu übertreffen – sowohl bei einfachen als auch bei komplexeren Szenarien. Die vorliegende Arbeit knüpft an diesen Forschungsstand an und erweitert ihn um eine Anwendung auf reale Geodaten aus Karlsruhe sowie eine methodische Evaluation.
 
