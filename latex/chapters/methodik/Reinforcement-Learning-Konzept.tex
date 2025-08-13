@@ -1,0 +1,75 @@
+
+\subsection{Reinforcement-Learning-Konzept}
+\subsubsection{Formulierung des RL-Problems}
+Das Problem der Verkehrssteuerung wird als sequentielles Entscheidungsproblem modelliert und mit Hilfe von Reinforcement Learning (RL) gelöst. Ziel ist es, einen Agenten zu trainieren, der durch geeignete Steuerung der Ampelphasen den Verkehrsfluss optimiert. Die Umgebung besteht aus dem simulierten Straßennetz, wie es in SUMO definiert ist. Die Interaktion erfolgt über das TraCI-Interface, das eine Laufzeitsteuerung der Ampelanlagen erlaubt.
+\paragraph{Zustände}
+
+Der Zustand \( s_t \) eines Reinforcement-Learning-Agenten beschreibt die Verkehrssituation an einer einzelnen Kreuzung zum Zeitpunkt \( t \). Ziel ist es, dem Agenten ausreichend Informationen über den lokalen Verkehrsfluss zur Verfügung zu stellen, damit er fundierte Entscheidungen über die Steuerung der Lichtsignalanlage treffen kann.
+
+Die Zustandsrepräsentation basiert auf den folgenden Komponenten:
+
+\begin{itemize}
+  \item \textbf{Fahrzeuganzahl pro Zufahrtsspur:} Für jede dem Knoten zuführende Fahrspur wird die aktuelle Anzahl an Fahrzeugen ermittelt. Dies geschieht über sogenannte \texttt{laneAreaDetector}, die für jede Spur individuell in SUMO definiert werden. Die Werte werden periodisch über \texttt{TraCI} abgefragt.
+
+  \item \textbf{Warteschlangenlänge (queue length):} Gibt die Anzahl der Fahrzeuge an, die sich auf einer Spur mit Geschwindigkeit \texttt{< 0.1 m/s} befinden. Dies ist ein wichtiges Maß für Rückstaus an Kreuzungen.
+
+  \item \textbf{Durchschnittliche Geschwindigkeit pro Spur:} Diese Kenngröße erlaubt Rückschlüsse auf den Verkehrsfluss pro Richtung und ergänzt die reine Anzahlinformation.
+
+  \item \textbf{Ampelphase (TLS state):} Die aktuell geschaltete Ampelphase wird als diskrete Phase kodiert (z.\,B. 0, 1, 2, ...). In SUMO entspricht dies der Index der aktiven Phase im Phasenplan der TLS.
+
+  \item \textbf{Dauer der aktuellen Phase:} Die Anzahl der Zeitschritte seit Beginn der aktuellen Phase. Diese Information ist notwendig, um Phasenlängen sinnvoll zu steuern (z.\,B. Mindestgrünzeit).
+
+  \item \textbf{Binärmasken zur Phasenwechselbarkeit:} Kodierung, ob ein Wechsel zur nächsten Phase gemäß Übergangsbedingungen (z.\,B. Mindestgrünzeit) aktuell möglich ist. Diese Information ist erforderlich, falls das Aktionsmodell auch direkte Sprünge zwischen nicht direkt benachbarten Phasen erlaubt.
+
+  \item \textbf{Optional – Nachbarschaftszustand:} In Multi-Agent-Settings kann es sinnvoll sein, zusätzlich aggregierte Zustandsinformationen benachbarter Knoten einzubeziehen (z.\,B. Gesamtwarteschlange auf ausgehenden Spuren, die zu benachbarten TLS führen).
+\end{itemize}
+
+Die Zustände werden zu einem normierten Merkmalsvektor kombiniert und bilden damit die Eingabe für das neuronale Entscheidungsmodell des Agenten.
+
+\paragraph{Aktionen}
+
+Die Aktionsmenge \( A \) eines Agenten beschreibt die Eingriffsmöglichkeiten in den Steuerungsablauf der jeweiligen Ampelkreuzung. Dabei wird zwischen zwei gängigen Aktionsmodellen unterschieden:
+
+\begin{enumerate}
+  \item \textbf{Phasenwechsel-Modell:} Der Agent entscheidet, ob die aktuelle Phase fortgesetzt oder zur nächsten gewechselt werden soll. Es handelt sich um ein binäres Aktionsmodell:
+        \[
+          A = \{ \texttt{keep},\ \texttt{switch} \}
+        \]
+        Diese Variante wird häufig in klassischen SUMO-RL-Implementierungen verwendet (z.\,B. `sumo-rl`). Die Reihenfolge der Phasen ist dabei festgelegt (z.\,B. zyklischer Übergang).
+
+  \item \textbf{Direktwahl-Modell:} Der Agent wählt direkt aus allen möglichen Phasen die nächste aus:
+        \[
+          A = \{ \texttt{phase}_0,\ \texttt{phase}_1,\ \ldots,\ \texttt{phase}_n \}
+        \]
+        Diese Variante erfordert eine eigene Definition der Übergangslogik in SUMO (z.\,B. über permissive TLS-Ketten), erlaubt aber größere Flexibilität und exploratives Verhalten.
+\end{enumerate}
+
+Unabhängig vom Modell gelten folgende Einschränkungen:
+
+\begin{itemize}
+  \item \textbf{Mindestgrünzeiten:} Ein Wechsel der Phase darf erst nach einer definierten Mindestgrünzeit erfolgen (z.\,B. 5 s), um realistische Signalisierung und Verkehrssicherheit zu gewährleisten.
+
+  \item \textbf{Sicherheitsbedingte Zwischenphasen:} SUMO erzwingt automatisch Zwischenphasen wie Gelb- oder Räumzeiten. Der Agent gibt nur den Phasenwunsch an, die exakte Ablaufsteuerung erfolgt durch das TLS-Modell in SUMO.
+
+  \item \textbf{Simultane Agentenentscheidung:} Bei mehreren Knoten wird jeder TLS-Agent unabhängig gesteuert, es sei denn, ein zentrales Multi-Agent-Training wird implementiert.
+\end{itemize}
+
+Zur Reduktion der Aktionsfrequenz wird häufig ein sogenanntes \textbf{Action Interval} festgelegt (z.\,B. alle 5 s), sodass Entscheidungen nur in bestimmten Zeitschritten getroffen werden können. Dies verhindert zu hektisches Umschalten der Ampeln.
+
+\paragraph{Belohnungsfunktion}
+
+Die Belohnungsfunktion ist zentrales Element des Lernprozesses und bestimmt das Optimierungsziel. Sie wurde so gestaltet, dass sie folgende Aspekte negativ gewichtet:
+
+\begin{itemize}
+  \item \textbf{Gesamte Wartezeit aller Fahrzeuge} (minimieren)
+  \item \textbf{Länge der Fahrzeugschlangen} (minimieren)
+  \item \textbf{Anzahl der Stopps} (minimieren)
+\end{itemize}
+
+Die konkrete Belohnung \( r_t \) zum Zeitpunkt \( t \) berechnet sich nach:
+
+\[
+  r_t = -\alpha \cdot \sum_{\text{alle Spuren}} \text{queueLength}_i(t) - \beta \cdot \sum_{\text{alle Fahrzeuge}} \text{waitingTime}_j(t)
+\]
+
+wobei \( \alpha \) und \( \beta \) Gewichtungsfaktoren darstellen, die im Rahmen der Hyperparameteroptimierung bestimmt werden. In späteren Varianten kann die Belohnung durch zusätzliche Komponenten wie Emissionen oder Energieverbrauch ergänzt werden, um umweltfreundliche Steuerungsstrategien zu fördern.

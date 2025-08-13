@@ -14,8 +14,8 @@ Besonders relevant für diese Arbeit sind folgende Merkmale\cite{sumo-doc}:
 
 \begin{itemize}
     \item \textbf{Mikroskopische Modellierung:} Jedes Fahrzeug wird als individuelles Objekt simuliert. Parameter wie Geschwindigkeit, Abstand oder Spurwechselverhalten sind individuell konfigurierbar.
-    \item \textbf{Flexible Netzdefinition:} Verkehrsnetze lassen sich aus OpenStreetMap-Daten sowie aus Shapefiles oder VISUM-Modellen mit dem Tool \texttt{netconvert} erzeugen. Netzdateien können auch mit \texttt{netedit} visuell editiert werden.
-    \item \textbf{Nachfragegenerierung:} Fahrpläne und Routen lassen sich mit Tools wie \texttt{activitygen}, \texttt{randomTrips}, \texttt{od2trips} oder \texttt{duarouter} erzeugen – basierend auf statistischen oder echten OD-Matrizen.
+    \item \textbf{Flexible Netzdefinition:} Verkehrsnetze lassen sich aus OpenStreetMap-Daten sowie aus Shapefiles oder VISUM-Modellen mit dem Tool \texttt{netconvert} erzeugen. \cite{netconvert} Netzdateien können auch mit \texttt{netedit} visuell editiert werden.
+    \item \textbf{Nachfragegenerierung:} Fahrpläne und Routen lassen sich mit Tools wie \texttt{activitygen}, \texttt{randomTrips}, \texttt{od2trips} oder \texttt{duarouter} erzeugen – basierend auf statistischen oder echten OD-Matrizen. \cite{randomTrips,duarouter}
     \item \textbf{Multimodalität:} SUMO unterstützt neben Pkw auch Busse, Fahrräder, Fußgänger sowie den öffentlichen Nahverkehr. Ampeln können für alle Verkehrsarten gleichzeitig modelliert werden.
     \item \textbf{Emissionsmodellierung:} Mit Hilfe von integrierten HBEFA-Tabellen (Version 4)\cite{Sumo-HBEFA} kann SUMO CO\textsubscript{2}-, NO\textsubscript{x}- und Feinstaubemissionen simulieren und ausgeben.
     \item \textbf{Steuerbare Ampelanlagen:} Lichtsignalanlagen können sowohl mit festen Programmen als auch dynamisch über die TraCI-Schnittstelle gesteuert werden.

@@ -1,0 +1,123 @@
+
+\subsection{Einbindung des SUMO-Netzes in die RL-Umgebung}
+\label{sec:sumo-rl-architektur}
+
+Nach Abschluss der Netzbereinigung, der strukturellen Validierung und der Identifikation steuerbarer Lichtsignalanlagen (TLS) wurde das finale Verkehrsnetz in eine auf \texttt{sumo-rl} basierende Reinforcement-Learning-Umgebung integriert. Ziel war die Realisierung einer robusten, modularen Multiagentenumgebung, die eine lernbasierte Optimierung der Verkehrssteuerung unter realitätsnahen Bedingungen erlaubt.
+
+\subsubsection{Gesamtsystem und Architektur}
+
+Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt, bei dem jede signalgesteuerte Kreuzung durch einen eigenständigen Agenten repräsentiert wird. Die Interaktion erfolgt über das TraCI-Protokoll von SUMO, das eine Echtzeitkommunikation zwischen Simulator und RL-Agenten ermöglicht. Die zentrale Steuerung und das Training der Agenten basiert auf der RL-Bibliothek \texttt{Stable-Baselines3}, konkret dem Algorithmus \texttt{Proximal Policy Optimization (PPO)}.
+
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[node distance=1.2cm]
+
+    \node[box] (sim) {Verkehrssimulation\\\textbf{SUMO + Traci}};
+    \node[box, below=of sim] (mae) {Multi-Agent Environment (MAE)\\\texttt{sumo-rl.parallel\_env} + \texttt{custom\_reward}};
+    \node[box, below=of mae] (wrap) {Supersuit Wrappers\\\texttt{- pad\_obs / pad\_actions}\\\texttt{- pettingzoo\_to\_vec\_env}};
+    \node[box, below=of wrap] (vec) {VecNormalize + VecMonitor\\(Stable-Baselines3)};
+    \node[box, below=of vec] (ppo) {PPO Agent (Stable-Baselines3)\\\texttt{- MLPPolicy}\\\texttt{- Schedules: LR, Clip, Ent.}};
+    \node[box, below=of ppo] (cb) {Callbacks\\\texttt{- TimeBasedCheckpoint}\\\texttt{- BestModelSaver (mean\_reward)}\\\texttt{- LearningRateLogger}};
+    \node[box, below=of cb] (log) {Modell- \& Log-Speicherung\\\texttt{(pro Seed in runs/)}};
+
+    % Arrows
+    \draw[arrow] (sim) -- (mae);
+    \draw[arrow] (mae) -- (wrap);
+    \draw[arrow] (wrap) -- (vec);
+    \draw[arrow] (vec) -- (ppo);
+    \draw[arrow] (ppo) -- (cb);
+    \draw[arrow] (cb) -- (log);
+
+  \end{tikzpicture}
+  \caption{Architektur der RL-Trainingspipeline mit SUMO, MAE und Stable-Baselines3}
+  \label{fig:rl_architektur}
+\end{figure}
+
+Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} und \texttt{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes API für Multiagenten-Umgebungen bereit – analog zu \texttt{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate, wie sie für paralleles Training mit \texttt{Stable-Baselines3} erforderlich sind.
+
+\subsubsection{Konfiguration der Umgebung}
+
+Die Reinforcement-Learning-Umgebung wurde auf Basis der Klasse \texttt{SumoEnvironment} bzw. \texttt{parallel\_env} aus \texttt{sumo-rl} konfiguriert. Wichtige Parameter umfassen:
+
+\begin{itemize}
+  \item \texttt{net\_file}, \texttt{route\_file}: Pfade zum bereinigten Verkehrsnetz und zugehöriger Routendatei.
+  \item \texttt{use\_gui}: Aktiviert die grafische Visualisierung von SUMO (zur Laufzeit abschaltbar für Trainingsgeschwindigkeit).
+  \item \texttt{num\_seconds}: Dauer einer Simulationsepisode in Sekunden.
+  \item \texttt{reward\_fn}: Referenz auf die benutzerdefinierte Belohnungsfunktion.
+  \item \texttt{min\_green}: Minimale Grünphasenlänge in Sekunden zur Sicherstellung realistischer Signalzyklen.
+  \item \texttt{max\_depart\_delay}: Maximale Verzögerung bei der Einfahrt eines Fahrzeugs (zur Kontrolle der Spawn-Zeit).
+  \item \texttt{sumo\_seed}: Zufalls-Seed zur Reproduzierbarkeit von Verkehrsflüssen und Routenentscheidungen.
+  \item \texttt{add\_system\_info}: Wenn aktiviert, werden systemweite Kennzahlen (z.\,B. durchschnittliche Wartezeit) in die Beobachtung eingebettet.
+  \item \texttt{add\_per\_agent\_info}: Ergänzt die lokale Beobachtung jedes Agenten um zusätzliche Kontextdaten (z.\,B. Verkehrsdichte im Knoten).
+  \item \texttt{single\_agent = False}: Aktiviert den Multiagentenmodus, bei dem jede steuerbare Ampel einen separaten Agenten darstellt.
+\end{itemize}
+
+Die Umgebung ist vollständig kompatibel mit \texttt{Gymnasium}, \texttt{PettingZoo} sowie den Wrapper-Bibliotheken \texttt{SuperSuit} und \texttt{VecEnv}, wodurch ein standardisiertes Interfacing mit RL-Algorithmen ermöglicht wird.
+
+\subsubsection{Beobachtungen und Aktionsraum}
+
+Jeder Agent erhält eine lokale Beobachtung, die sich aus folgenden Informationen zusammensetzt:
+
+\begin{itemize}
+  \item aktuelle Ampelphase (diskreter Index oder One-Hot-Encoding),
+  \item Dauer der aktuellen Phase (zur Einhaltung von Mindestzeiten),
+  \item für jede anliegende Spur: Anzahl wartender Fahrzeuge, durchschnittliche Geschwindigkeit, Dichte.
+\end{itemize}
+
+Der Aktionsraum ist diskret und erlaubt die Auswahl der nächsten Phase. Der Phasenwechsel wird durch SUMO automatisch mit einer Zwischenphase (Gelbphase) ergänzt. Die Entscheidung erfolgt synchron für alle Agenten alle \texttt{delta\_time} Sekunden.
+
+\subsubsection{Belohnungsfunktionen}
+
+\texttt{sumo-rl} unterstützt verschiedene standardisierte Reward-Funktionen:
+
+\begin{itemize}
+  \item \texttt{"diff-waiting-time"}: Reduktion der Differenz kumulierter Wartezeiten,
+  \item \texttt{\char`\"average-speed"}: Maximierung der mittleren Geschwindigkeit im Netz,
+  \item \texttt{"queue"}: Minimierung der Gesamtlänge aller Warteschlangen.
+\end{itemize}
+
+Im Rahmen dieser Arbeit wurde zusätzlich eine eigene Reward-Funktion definiert, welche folgende Größen kombiniert:
+
+\begin{itemize}
+  \item aktuelle Warteschlangenlänge (negativ),
+  \item akkumulierte Wartezeiten (negativ),
+  \item Anzahl an Teleportationen und Kollisionen (stark negativ),
+  \item Anzahl neu eingetroffener Fahrzeuge (positiv),
+  \item Veränderung der Stauhöhe zur Vorperiode (positiv).
+\end{itemize}
+
+Die Belohnung wird nach jedem Simulationsschritt einzeln für jeden TLS-Agenten berechnet. Extreme Ereignisse (z.\,B. viele Teleports) führen zu stark negativen Strafwerten, um stabile Lernverläufe zu fördern.
+
+\subsubsection{Trainingsalgorithmus und Hyperparameter}
+
+Das Training der Agenten erfolgte mittels \texttt{PPO}, wobei folgende Hyperparameter eingesetzt wurden:
+
+\begin{itemize}
+  \item \textbf{Policy-Architektur:} Zwei Hidden-Layer mit jeweils 128 Neuronen,
+  \item \textbf{Batchgröße:} 2048,
+  \item \textbf{Lernrate:} linear abnehmend von $3\cdot10^{-4}$,
+  \item \textbf{Clip-Range:} dynamisch, linear von 0.2 auf 0.1,
+  \item \textbf{Entropiekoeffizient:} $0.005$ zur Förderung explorativen Verhaltens,
+  \item \textbf{Discount-Faktor:} $\gamma = 0.99$,
+  \item \textbf{GAE-Lambda:} $0.95$ für stabilisierte Vorteilsschätzung.
+\end{itemize}
+
+Die Umgebung wurde über \texttt{VecNormalize} normalisiert und mit \texttt{VecMonitor} überwacht. Zusätzlich kamen Wrapper zur Aktion- und Beobachtungsstandardisierung (\texttt{pad\_observations\_v0}, \texttt{pad\_action\_space\_v0}) zum Einsatz, um variable TLS-Strukturen zu harmonisieren.
+
+\subsubsection{Checkpoints, Monitoring und Logging}
+
+Zur Sicherstellung eines robusten Trainingsprozesses wurde eine Reihe von Callback-Mechanismen implementiert:
+
+\begin{itemize}
+  \item \textbf{Checkpointing:} Zeitbasierte Sicherung des Modells alle 60 Minuten,
+  \item \textbf{Bestmodell-Erkennung:} Automatische Speicherung des jeweils besten Modells (höchste mittlere Reward),
+  \item \textbf{Adaptive Schedules:} Dynamische Anpassung von Lernrate und Clip-Range an den Trainingsfortschritt,
+  \item \textbf{Logging via TensorBoard:} Visualisierung von Reward-Kurven, Lernraten, Clip-Werten und Modellmetriken.
+\end{itemize}
+
+Alle Modellartefakte (\texttt{.zip}, \texttt{vecnormalize.pkl}) sowie die TensorBoard-Logs wurden pro Seed-Version strukturiert gespeichert. Dadurch konnten sowohl Reproduzierbarkeit als auch vergleichende Auswertungen zwischen Trainingsläufen gewährleistet werden.
+
+\subsubsection{Zusammenfassung}
+
+Die konfigurierte RL-Umgebung erlaubt eine modulare und flexible Steuerung realer Verkehrsnetze auf Basis von SUMO. Durch die Kombination aus systematischer TLS-Auswahl, stabiler Reward-Funktion, adaptiven Trainingsparametern und umfassendem Monitoring wurde eine solide Grundlage für die experimentelle Evaluation lernbasierter Verkehrssteuerung geschaffen.

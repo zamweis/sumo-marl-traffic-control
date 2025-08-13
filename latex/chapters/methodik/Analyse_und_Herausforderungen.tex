@@ -1,0 +1,150 @@
+
+\subsection{Analyse und Herausforderungen bei der OSM-Netznutzung}
+
+\subsubsection{Grundstruktur von Lichtsignalanlagen (TLS) in SUMO}
+Bevor die Probleme beim OSM-Import analysiert werden, ist es hilfreich, den Aufbau und die Abhängigkeiten der relevanten XML-Elemente in SUMO zu verstehen, insbesondere im Zusammenhang mit der Steuerung von Lichtsignalanlagen (\textit{Traffic Light Systems, TLS}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{images/junktion.png}
+  \caption{Visualisierung einer TLS-Kreuzung (eigene Darstellung).}
+  \label{fig:sumo_karlsruhe}
+\end{figure}
+
+\begin{itemize}
+  \item \textbf{\texttt{<junction>}} – Definiert Knotenpunkte im Netz. Falls eine Ampel gesteuert wird, ist der Typ \texttt{type="traffic\_light"}. Die ID entspricht in der Regel der TLS-ID.
+
+  \item \textbf{\texttt{<connection>}} – Verbindet zwei Fahrstreifen (von \texttt{from} nach \texttt{to}). Wenn diese Verbindung durch eine Ampel kontrolliert wird, enthält sie die Attribute \texttt{tl="<tls\_id>"} und \texttt{linkIndex}. Die Reihenfolge der \texttt{linkIndex}-Werte bestimmt die Position im Phasen-String.
+
+  \item \textbf{Controlled Link} – Jede \texttt{<connection>} mit einem \texttt{tl}-Attribut zählt als „gesteuerte Verbindung“. Die Anzahl solcher Verbindungen bestimmt die Länge des Phasenstrings (\texttt{state}).
+
+  \item \textbf{\texttt{<tlLogic>}} – Enthält die Steuerungslogik einer TLS. Jede \texttt{<tlLogic>} hat eine eindeutige ID (i.d.R. identisch zur \texttt{junction}-ID) und eine Liste von \texttt{<phase>}-Elementen.
+
+  \item \textbf{\texttt{<phase>}} – Jede Phase ist ein String (z.B. \texttt{"Grgr"}), der den Zustand aller \texttt{linkIndex}-Verbindungen kodiert. Jeder Buchstabe (z.B. G = Grün, r = Rot) steht für den Status eines bestimmten kontrollierten Links.
+
+  \item \textbf{\texttt{<request>}} – Optionale Anforderungen einzelner Signalgruppen, meist bei aktuierten oder adaptiven TLS. Jeder Eintrag verweist über \texttt{index=} auf einen gesteuerten Link.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      font=\small,
+      node distance=1.2cm and 3cm,
+      every node/.style={align=center},
+      box/.style={draw, rounded corners, minimum width=3.2cm, minimum height=1cm}
+    ]
+
+    % Hauptknoten
+    \node[box] (junction) {\texttt{<junction>}\\ID = J1};
+    \node[box, right=4.5cm of junction] (tlLogic) {\texttt{<tlLogic>}\\ID = J1};
+
+    % Verbindungen unterhalb
+    \node[box, below left=1.7cm and 0.4cm of junction] (conn1) {\texttt{<connection>}\\\texttt{linkIndex=0}};
+    \node[box, below right=1.7cm and 0.4cm of junction] (conn2) {\texttt{<connection>}\\\texttt{linkIndex=1}};
+
+    % Phase
+    \node[box, below right=1.7cm and 0.4cm of conn1] (phase) {\texttt{<phase>}\\\texttt{state="Gr"}};
+
+    % Kanten
+    \draw[->] (junction.east) -- node[above] {\texttt{tl="J1"}} (tlLogic.west);
+    \draw[->] (junction.south west) -- (conn1.north);
+    \draw[->] (junction.south east) -- (conn2.north);
+    \draw[->] (conn1.south) -- ([xshift=-0.8cm]phase.north);
+    \draw[->] (conn2.south) -- ([xshift=+0.8cm]phase.north);
+
+  \end{tikzpicture}
+  \caption{Zusammenspiel von Kreuzung, Verbindungen und Ampellogik in SUMO}
+  \label{fig:tls_structure}
+\end{figure}
+
+\subsubsection{Typische Fehlerquellen nach OSM-Import}
+
+Die automatische Ableitung von Ampelsteuerungen aus OSM ist unvollständig und fehleranfällig. Im Zusammenspiel mit \texttt{sumo-rl} ergeben sich daraus mehrere konkrete Probleme:
+
+\begin{itemize}
+  \item \textbf{Fehlende oder unvollständige TLS-Definitionen:} In OSM sind Ampelanlagen in der Regel lediglich als Punktknoten mit dem Tag \texttt{highway=traffic\_signals} erfasst. Die genaue Schaltlogik (\texttt{tlLogic}) – inklusive Phasen und Zustände – fehlt vollständig. SUMO generiert daher beim Netzimport mit \texttt{--tls.guess-signals} heuristische Ampeldefinitionen, die jedoch oft lückenhaft oder unbrauchbar sind.
+
+  \item \textbf{TLS mit nur einer Phase:} Viele der generierten Ampeln besitzen lediglich eine einzige definierte Phase. Dies entspricht keinem realen Verhalten und führt zu Fehlern beim Training mit \texttt{sumo-rl}, da das Framework mindestens zwei steuerbare Phasen voraussetzt. Die betroffenen Knoten müssen daher identifiziert und aus der Simulation ausgeschlossen oder manuell korrigiert werden.
+
+  \item \textbf{Unstimmige Phasenlängen:} Jede Phase in SUMO ist ein Zeichenstring (\texttt{state}), dessen Länge der Anzahl der gesteuerten Verbindungen (sogenannte \textit{controlled links}) entsprechen muss. Bei fehlerhafter Generierung ist diese Bedingung oft verletzt – etwa wenn der \texttt{state} zu kurz oder zu lang ist. Dies führt in \texttt{sumo-rl} zu Indexfehlern oder undefiniertem Verhalten.
+
+  \item \textbf{Fehlerhafte oder überzählige \texttt{<request>}-Einträge:} Jede TLS enthält in der Netzdatei zusätzliche Steuerinformationen über \texttt{request}-Elemente. Diese verweisen auf spezifische Signale mittels eines Index. Häufig verweisen diese Einträge jedoch auf nicht vorhandene Verbindungen, da \texttt{netconvert} Signalverknüpfungen nicht korrekt zuordnet. SUMO ignoriert solche Fehler teilweise still – \texttt{sumo-rl} hingegen bricht mit Ausnahmen ab.
+
+  \item \textbf{Mehrdeutige oder verschachtelte Kreuzungen:} In komplexeren innerstädtischen Kreuzungen fasst SUMO mehrere OSM-Knoten zu einem „cluster“ zusammen, um den Verkehrsfluss abzubilden. Dies kann zu sehr großen TLS mit dutzenden Ein- und Ausfahrten führen, die übermäßig viele Phasen oder extrem lange Zustandsdefinitionen erzeugen. Solche TLS sind schwer zu debuggen und häufig inkompatibel mit den Erwartungen von \texttt{sumo-rl}.
+\end{itemize}
+
+\paragraph{Folgen für \texttt{sumo-rl}}
+
+Das Framework \texttt{sumo-rl} erwartet für jede zu steuernde TLS:
+
+\begin{itemize}
+  \item mindestens zwei valide Phasen,
+  \item konsistente Phasenzustände (\texttt{state}) mit korrekter Länge,
+  \item vollständige Verbindungen zu kontrollierten Links,
+  \item eindeutig identifizierbare TLS-IDs.
+\end{itemize}
+
+Sind diese Anforderungen nicht erfüllt, führt dies typischerweise zu einer der folgenden Fehlermeldungen:
+
+\begin{itemize}
+  \item \texttt{IndexError: string index out of range}
+  \item \texttt{ValueError: Invalid phase length}
+  \item \texttt{KeyError: TLS not found}
+\end{itemize}
+
+Da diese Probleme nicht durch SUMO selbst gemeldet, sondern erst zur Laufzeit in \texttt{sumo-rl} sichtbar werden, ist ein systematischer Debugging- und Reparaturprozess zwingend notwendig. Die Komplexität steigt dabei exponentiell mit der Anzahl der TLS im Netz.
+\paragraph{Erkenntnis}
+
+Der direkte Import von OSM-Daten in SUMO erzeugt ein formal nutzbares Verkehrsnetz – jedoch nicht automatisch ein für Reinforcement Learning (RL) geeignetes. Ohne zusätzliche Aufbereitung ist ein stabiler Trainingsbetrieb in \texttt{sumo-rl} nicht möglich. Im Rahmen dieser Arbeit wurde das reale OSM-Netz von Karlsruhe daher gezielt analysiert, bereinigt und überarbeitet, sodass es nun erfolgreich und stabil im RL-Kontext eingesetzt werden kann. Dazu wurden eigene Werkzeuge zur automatisierten Strukturprüfung und Reparatur entwickelt, die im folgenden Abschnitt näher beschrieben werden.
+
+\subsubsection{Problematik nicht-motorisierter Verkehrswege im OSM-Modell}
+
+Ein zentrales Problem beim ursprünglichen OSM-Import stellten die Strukturen nicht-motorisierter Verkehrsträger dar – insbesondere Fußwege, Überwege und Fahrradtrassen. Diese sind im OSM-Modell zwar detailliert erfasst, führen aber in SUMO häufig zu problematischen Simulationseffekten:
+
+\begin{itemize}
+  \item \textbf{Separate Fahrspuren für Radverkehr:} Zusätzliche Radstreifen erzeugen neue Kanten mit eigenen Abbiegebeziehungen, die von SUMO automatisch als TLS-relevant eingestuft werden – oft mit übermäßig vielen Signalgruppen.
+
+  \item \textbf{Fußgängerüberwege mit Konfliktzonen:} \texttt{highway=crossing}-Elemente erzeugen automatisch Übergänge mit Konfliktzonen, die eine Ampelregelung erfordern – auch wenn sie im Originalnetz nur symbolisch vorhanden sind.
+
+  \item \textbf{Komplexität beim Entfernen:} Die gezielte Entfernung solcher Elemente führte häufig zu inkonsistenten Junctions und Netzfragmentierung. Ein manuelles Vorgehen wäre fehleranfällig und kaum skalierbar gewesen.
+\end{itemize}
+
+Diese Herausforderungen machten eine rein automatische Nutzung des OSM-Imports zunächst unmöglich. Erst durch gezielte algorithmische Nachbearbeitung konnte das Karlsruher Netz so transformiert werden, dass es für die RL-Simulation zuverlässig nutzbar wurde.
+
+\subsubsection{Eingesetzte \texttt{netconvert}-Optionen und deren Grenzen}
+
+Zur automatisierten Aufbereitung kamen zahlreiche Optionen von \texttt{netconvert} zum Einsatz, um das aus OSM exportierte Netz anzupassen. Dabei zeigte sich jedoch, dass viele dieser Optionen nicht auf die hohen Anforderungen von RL-Umgebungen zugeschnitten sind:
+
+\begin{itemize}
+  \item \texttt{--tls.guess-signals}: Erzeugt Ampeln auf Basis der Netzstruktur – allerdings oft mit unrealistischen oder unbrauchbaren Phasen.
+
+  \item \texttt{--tls.join} und \texttt{--junctions.join}: Reduzieren Komplexität, erzeugen jedoch teils unübersichtliche Cluster, die schwer manuell kontrollierbar sind.
+
+  \item \texttt{--ramps.guess}: Für urbane Netze weitgehend irrelevant oder sogar kontraproduktiv.
+
+  \item \texttt{--remove-edges.isolated}, \texttt{--keep-edges.by-vclass} und \texttt{--discard-simple}: Dienen der Netzvereinfachung, führen aber oft zu strukturellen Problemen oder fehlenden funktionalen Verbindungen.
+\end{itemize}
+
+Obwohl diese Optionen wichtige Vorarbeiten leisteten, war ihre Wirkung für das RL-Zielmodell begrenzt. Erst durch zusätzliche Werkzeuge und maßgeschneiderte Filterlogik konnte das Netz gezielt bereinigt und optimiert werden.
+
+\subsubsection{Manuelle Eingriffe und strukturelle Rekonstruktionen}
+
+Neben automatisierten Bereinigungen waren auch gezielte manuelle Anpassungen notwendig. Insbesondere wurden mithilfe von \texttt{netedit} einzelne Kreuzungen vollständig neu aufgebaut, um \textbf{Deadlocks zu vermeiden}, die zwar in der realen Verkehrsführung nicht auftreten, jedoch in SUMO durch implizite Abbiegelogiken und Vorrangregeln entstehen können.
+
+Diese Rekonstruktionen erfolgten unter Beibehaltung der realweltlichen Topologie, jedoch mit einer technisch sauberen Definition aller Fahrbeziehungen und Signalisierungen. Damit konnte sichergestellt werden, dass auch komplexere Kreuzungen reproduzierbar, konfliktfrei und steuerbar bleiben.
+
+\subsubsection{Ergebnis: ein realistisches, RL-kompatibles Netz}
+
+Im Gegensatz zu einer synthetischen Umgebung basiert das nun eingesetzte Trainingsnetz auf realen topologischen Daten, wurde jedoch gezielt für den Einsatz mit \texttt{sumo-rl} überarbeitet. Es erfüllt folgende Eigenschaften:
+
+\begin{itemize}
+  \item \textbf{Hohe Realitätsnähe bei kontrollierter Komplexität:} Das Netz bildet reale Strukturen ab, wurde jedoch so bereinigt, dass es RL-kompatibel bleibt.
+
+  \item \textbf{Stabile TLS-Struktur:} Alle Kreuzungen mit Lichtsignalanlagen enthalten reproduzierbare und sinnvoll steuerbare Phasen.
+
+  \item \textbf{Fehlerminimierung und Modularität:} Durch gezielte Reduktion und Nachbearbeitung sind Trainingsläufe wiederholbar und ohne strukturelle Störungen durchführbar.
+
+  \item \textbf{Deadlock-Vermeidung durch gezielte Rekonstruktion:} Kritische Junctions wurden manuell so modelliert, dass sie SUMO-spezifische Blockadesituationen vermeiden, ohne die Realität zu verzerren.
+\end{itemize}
+
+Der Einsatz dieses verbesserten Karlsruher Netzes stellt einen zentralen methodischen Beitrag dieser Arbeit dar, da er demonstriert, wie reale OSM-Daten erfolgreich für das Reinforcement Learning nutzbar gemacht werden können – trotz ihrer ursprünglichen Limitierungen.

@@ -1,0 +1,227 @@
+
+\subsection{Netzprüfung, Reparatur und Toolchain}
+Aufgrund der oben beschriebenen strukturellen Schwächen im importierten OSM-Netz war eine manuelle Nachbearbeitung ineffizient und fehleranfällig. Daher wurden eigene Werkzeuge entwickelt, um eine systematische und automatisierte Reparatur zu ermöglichen.
+
+
+\subsubsection{Werkzeuge zur Netzprüfung und Reparatur}
+
+Um die Kompatibilität des aus OpenStreetMap abgeleiteten Verkehrsnetzes mit \texttt{sumo-rl} sicherzustellen, wurde eine Reihe eigenentwickelter Python-Skripte implementiert. Diese Werkzeuge automatisieren die Analyse, Validierung und Korrektur der Netzstruktur mit Fokus auf Lichtsignalanlagen (TLS). Der modulare Aufbau erlaubt es, problematische Netzbestandteile zu identifizieren und gezielt zu bereinigen.
+
+\paragraph{Prüfung der Signalverknüpfungen und Zustandslängen}
+
+Zwei zentrale Tools wurden entwickelt, um die Konsistenz zwischen kontrollierten Verbindungen (\textit{controlled links}) und Phasenzuständen (\texttt{state}) der TLS zu überprüfen:
+
+\begin{itemize}
+  \item \textbf{\texttt{check\_tls\_consistency.py}} prüft, ob die Länge jedes \texttt{state}-Strings in den \texttt{<phase>}-Elementen exakt der Anzahl der gesteuerten Signalindizes entspricht. Abweichungen werden detailliert gelistet, inklusive betroffener Phase und TLS-ID.
+        \begin{algorithm}[H]
+          \caption{CheckTLSLengths – Prüfung inkonsistenter Phasenlängen}
+          \begin{algorithmic}[1]
+            \Function{CheckTLSLengths}{net.xml}
+            \State Lade XML-Baum und extrahiere \texttt{<connection>}-Elemente
+            \State Erstelle Dictionary \texttt{tls\_controlled\_links} mit Anzahl gesteuerter Links pro TLS
+            \ForAll{\texttt{tlLogic}-Elemente im Netz}
+            \State \texttt{expectedLen} $\gets$ Anzahl \texttt{controlledLinks} aus Dictionary
+            \If{\texttt{expectedLen} = 0}
+            \State Gib Warnung: TLS hat keine gesteuerten Verbindungen
+            \State \textbf{continue}
+            \EndIf
+            \ForAll{Phasen $i$ in \texttt{tlLogic}}
+            \State \texttt{actualLen} $\gets$ Länge des \texttt{state}-Strings
+            \If{\texttt{actualLen} $\neq$ \texttt{expectedLen}}
+            \State Gib Warnung mit TLS-ID, Phase und \texttt{state}-Inhalt aus
+            \EndIf
+            \EndFor
+            \EndFor
+            \If{keine Abweichungen gefunden}
+            \State Gib Erfolgsmeldung aus
+            \EndIf
+            \EndFunction
+          \end{algorithmic}
+        \end{algorithm}
+
+  \item \textbf{\texttt{check\_tls\_requests.py}} validiert, ob alle \texttt{<request>}-Indizes innerhalb zulässiger Grenzen liegen. Falsch verknüpfte Einträge – z.\,B. \texttt{index > max(signalIndex)} – werden gemeldet.
+
+        \begin{algorithm}[H]
+          \caption{CheckTLSRequests – Prüfung ungültiger \texttt{request}-Indizes}
+          \begin{algorithmic}[1]
+            \Function{CheckTLSRequests}{net.xml}
+            \State Lade XML-Datei und parse Wurzelknoten
+            \State Erzeuge Dictionary \texttt{tls\_signal\_indices} mit Signalindizes je TLS aus \texttt{<connection>}-Elementen
+            \ForAll{\texttt{junction}-Elemente im Netz}
+            \State \texttt{tls\_id} $\gets$ ID der Junction
+            \If{\texttt{tls\_id} in \texttt{tls\_signal\_indices}}
+            \State \texttt{expected\_max} $\gets$ Länge der Signalindizes für dieses TLS
+            \ForAll{\texttt{request}-Elemente in Junction}
+            \State \texttt{index} $\gets$ Wert des \texttt{index}-Attributs
+            \If{\texttt{index} $\geq$ \texttt{expected\_max}}
+            \State Gib Warnung mit \texttt{tls\_id} und \texttt{index} aus
+            \EndIf
+            \EndFor
+            \EndIf
+            \EndFor
+            \If{keine Warnungen ausgegeben}
+            \State Gib Erfolgsmeldung aus
+            \EndIf
+            \EndFunction
+          \end{algorithmic}
+        \end{algorithm}
+\end{itemize}
+
+\paragraph{Automatische Reparaturwerkzeuge}
+
+Die folgenden Programme wurden zur strukturellen Korrektur entwickelt:
+
+\begin{itemize}
+  \item \textbf{\texttt{fix\_requests.py}} entfernt überzählige \texttt{<request>}-Einträge und kürzt \texttt{state}-Strings in Phasen auf die zulässige Länge. Die Bereinigung erfolgt anhand der tatsächlichen Anzahl gesteuerter Signalverbindungen (\texttt{linkIndex}).
+
+        \begin{algorithm}[H]
+          \caption{FixRequests – Bereinigung ungültiger \texttt{<request>}-Einträge und Anpassung der Phasen}
+          \begin{algorithmic}[1]
+            \Function{FixRequests}{net.xml}
+            \State Lade XML-Baum mit Netzstruktur
+            \State Initialisiere Dictionary \texttt{tls\_max\_index} für maximale Signalindices
+            \ForAll{\texttt{connection}-Elemente}
+            \If{TLS-ID und \texttt{linkIndex} vorhanden}
+            \State Aktualisiere \texttt{tls\_max\_index[tl]} mit höchstem Index
+            \EndIf
+            \EndFor
+
+            \ForAll{\texttt{junction}-Elemente}
+            \State Hole TLS-ID
+            \If{TLS nicht in \texttt{tls\_max\_index}}
+            \State \textbf{continue}
+            \EndIf
+            \State Bestimme erlaubten Maximalindex (\texttt{max\_idx})
+            \ForAll{\texttt{request}-Einträge}
+            \If{Index $>$ \texttt{max\_idx}}
+            \State Entferne ungültigen \texttt{request}
+            \EndIf
+            \EndFor
+
+            \ForAll{\texttt{tlLogic}-Elemente mit passender TLS-ID}
+            \ForAll{Phasen}
+            \If{\texttt{state}-String ist zu lang}
+            \State Kürze \texttt{state} auf \texttt{max\_idx + 1}
+            \EndIf
+            \EndFor
+            \EndFor
+            \EndFor
+
+            \State Speichere modifizierte XML-Datei
+            \State Gib Statistiken zu entfernten Requests und angepassten Phasen aus
+            \EndFunction
+          \end{algorithmic}
+        \end{algorithm}
+
+  \item \textbf{\texttt{repair-net.py}} nutzt ein manuell gepflegtes Dictionary mit TLS-IDs und deren erwarteter Phasenlänge (Anzahl kontrollierter Verbindungen). Alle Phasen, deren Länge abweicht, werden automatisch gekürzt oder aufgefüllt.
+
+        \begin{algorithm}[H]
+          \caption{RepairTLSStates – Korrektur der Phasenlängen anhand manuell gepflegter Referenz}
+          \begin{algorithmic}[1]
+            \Function{RepairTLSStates}{net.xml, referenz\_dictionary}
+            \State Lade Netzstruktur aus \texttt{net.xml}
+            \ForAll{\texttt{tlLogic}-Elemente im Netz}
+            \State \texttt{tls\_id} $\gets$ ID des Ampelknotens
+            \If{\texttt{tls\_id} nicht in referenz\_dictionary}
+            \State \textbf{continue}
+            \EndIf
+            \State \texttt{correctLen} $\gets$ erwartete Zustandslänge aus Referenz
+            \ForAll{Phasen des Knotens}
+            \State \texttt{state} $\gets$ Zeichenkette der Phase
+            \If{Länge(\texttt{state}) $\neq$ \texttt{correctLen}}
+            \State Kürze oder ergänze \texttt{state} auf \texttt{correctLen}
+            \State Markiere Netz als geändert
+            \EndIf
+            \EndFor
+            \EndFor
+            \If{Netz wurde geändert}
+            \State Speichere bereinigte Netzdatei als \texttt{karlsruhe\_fixed.net.xml}
+            \Else
+            \State Gib Hinweis: Alle Phasen bereits korrekt
+            \EndIf
+            \EndFunction
+          \end{algorithmic}
+        \end{algorithm}
+
+  \item \textbf{\texttt{statecheck.py}} gibt eine Liste aller TLS-Phasen mit ungewöhnlichen Längen aus. Dieses Tool wurde verwendet, um bei vereinheitlichten Netzen auf eine Ziel-Zustandslänge zu prüfen.
+
+        \begin{algorithm}[H]
+          \caption{StateCheck – Prüfung auf einheitliche Phasenlängen}
+          \begin{algorithmic}[1]
+            \Function{StateCheck}{net.xml}
+            \State Lade XML-Baum aus der Netzdatei
+            \ForAll{\texttt{tlLogic}-Elemente im Netz}
+            \State \texttt{tl\_id} $\gets$ ID des aktuellen TLS
+            \ForAll{Phasen $i$ in \texttt{tlLogic}}
+            \State \texttt{state} $\gets$ Zustand der Phase
+            \If{\texttt{len(state)} $\neq$ 57}
+            \State Gib Warnung mit \texttt{tl\_id}, Phasenindex und tatsächlicher Länge aus
+            \EndIf
+            \EndFor
+            \EndFor
+            \EndFunction
+          \end{algorithmic}
+        \end{algorithm}
+
+\end{itemize}
+
+\newpage
+\paragraph{Gültigkeitsprüfung für SUMO-RL}
+
+Zur Vorbereitung des Trainings wurden weitere Programme zur Identifikation funktionaler TLS entwickelt:
+
+\begin{itemize}
+  \item \textbf{\texttt{find\_valid\_tls.py}} iteriert über alle TLS im Netz und testet jede einzeln in einem minimalen \texttt{sumo-rl}-Lauf. TLS, bei denen die Umgebung erfolgreich initialisiert werden kann, gelten als kompatibel.
+
+        \begin{algorithm}[H]
+          \caption{FindValidTLS – Gültigkeitsprüfung aller TLS im Netz}
+          \label{alg:find_valid_tls}
+          \begin{algorithmic}[1]
+            \Function{TestTLS}{\texttt{tls\_id}}
+            \State Initialisiere \texttt{SumoEnvironment}
+            \State Setze \texttt{ts\_ids} auf \texttt{[tls\_id]}
+            \State Versuche: \texttt{env.reset()}
+            \If{kein Fehler}
+            \State \texttt{env.close()}
+            \State \Return \texttt{True}
+            \Else
+            \State Gib Fehlermeldung aus
+            \State \Return \texttt{False}
+            \EndIf
+            \EndFunction
+            \vspace{0.5em}
+            \State Initialisiere leere Liste \texttt{all\_tls}
+            \State Versuche: Umgebung mit \texttt{SumoEnvironment} zu starten
+            \If{erfolgreich}
+            \State Lese alle \texttt{ts\_ids}
+            \State Schließe Umgebung
+            \Else
+            \State Gib Fehler aus
+            \EndIf
+            \vspace{0.5em}
+            \State Initialisiere leere Liste \texttt{valid\_tls}
+            \ForAll{\texttt{tls\_id} in \texttt{all\_tls}}
+            \If{ \Call{TestTLS}{\texttt{tls\_id}} }
+            \State Füge \texttt{tls\_id} zu \texttt{valid\_tls} hinzu
+            \EndIf
+            \EndFor
+            \State Gib alle gültigen TLS aus
+          \end{algorithmic}
+        \end{algorithm}
+\end{itemize}
+
+\subsubsection{Auswahl eines bereinigten Netzes}
+
+Nach mehrfacher Iteration und Debugging wurde ein final bereinigtes Netz erzeugt: \texttt{karlsruhe.net.xml}. Dieses enthält ausschließlich überprüfte TLS mit konsistenten Phasenlängen und steuerbaren Verbindungen. Es bildet die Grundlage für alle nachfolgenden Reinforcement-Learning-Experimente.
+
+\subsubsection{Vorteil des automatisierten Workflows}
+
+Die entwickelte Toolchain ermöglicht:
+
+\begin{itemize}
+  \item eine strukturierte Diagnose typischer OSM-bedingter Netzprobleme,
+  \item reproduzierbare Netzreparaturen ohne reines manuelles Editieren in \texttt{netedit},
+  \item gezielte Selektion steuerbarer TLS für das Experiment.
+\end{itemize}
+
+Der Einsatz dieser Werkzeuge war unerlässlich, um ein funktionales, kompatibles und robusteres Simulationsnetz auf Basis realer OSM-Daten zu etablieren.
