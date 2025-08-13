@@ -55,22 +55,30 @@ Die Umgebung ist vollständig kompatibel mit \texttt{Gymnasium}, \texttt{Petting
 
 \subsubsection{Beobachtungen und Aktionsraum}
 
-Jeder Agent erhält eine lokale Beobachtung, die sich aus folgenden Informationen zusammensetzt:
-
+Jeder Agent erhält eine lokale Beobachtung, bestehend aus:
 \begin{itemize}
-  \item aktuelle Ampelphase (diskreter Index oder One-Hot-Encoding, dimensionslos),
-  \item Dauer der aktuellen Phase in Sekunden (zur Einhaltung von Mindestzeiten),
-  \item für jede anliegende Fahrspur:
+  \item \textbf{Aktuelle Ampelphase:} als diskreter Index oder One-Hot-Encoding (dimensionslos),
+  \item \textbf{Dauer der aktuellen Phase:} Sekunden seit Beginn der Phase [s],
+  \item \textbf{Spurmesswerte:} für jede anliegende Fahrspur
         \begin{itemize}
           \item Anzahl wartender Fahrzeuge [Fz],
           \item mittlere Geschwindigkeit [m/s],
-          \item Fahrdichte (Verhältnis belegter zu maximal möglicher Fahrzeuge pro Spur, dimensionslos, $0\text{–}1$).
+          \item Dichte (Verhältnis belegter zu maximal möglicher Fahrzeuge pro Spur, dimensionslos, $0\text{–}1$).
         \end{itemize}
 \end{itemize}
 
-Da Kreuzungen im Netz unterschiedlich viele anliegende Fahrspuren besitzen, variiert die Rohdimension des Beobachtungsvektors zwischen den Agenten. Um eine einheitliche Eingabelänge für die RL-Policy zu gewährleisten, werden alle Beobachtungsvektoren mittels \texttt{pad\_observations\_v0} (SuperSuit) auf die maximale Spuranzahl aller gesteuerten Kreuzungen gepaddet; nicht vorhandene Spuren werden dabei mit Nullwerten aufgefüllt. Dadurch ergibt sich für alle Agenten ein Beobachtungsvektor gleicher Dimension $(n_{\text{features}} \times n_{\text{max\_spuren}} + n_{\text{phasenfeatures}})$.
+Da sich die Anzahl an Fahrspuren pro Kreuzung unterscheidet, variiert die Rohdimension des Beobachtungsvektors.
+Um eine feste Eingabelänge für die Policy zu gewährleisten, werden alle Vektoren mittels \texttt{pad\_observations\_v0} auf die maximale Spuranzahl aller gesteuerten Kreuzungen gepaddet; fehlende Spurwerte werden mit Null belegt.
+Dadurch ergibt sich für alle Agenten eine identische Beobachtungsdimension von
+\[
+  n_{\text{features}} \times n_{\text{max\_spuren}} + n_{\text{phasenfeatures}}
+\]
+mit $n_{\text{features}} = 3$ (Queue, Geschwindigkeit, Dichte) und $n_{\text{phasenfeatures}} = 2$ (Phase, Phasendauer).
 
-Der Aktionsraum ist diskret und erlaubt die Auswahl der nächsten Signalphase. Ein Phasenwechsel wird durch SUMO automatisch mit einer Zwischenphase (Gelbphase) ergänzt. Die Entscheidung erfolgt synchron für alle Agenten in festen Intervallen von \texttt{delta\_time = 5\,s}.
+Der Aktionsraum ist diskret und erlaubt die Auswahl der nächsten Signalphase.
+Ein Phasenwechsel wird durch SUMO automatisch mit einer Zwischenphase (Gelbphase) ergänzt.
+Alle Agenten entscheiden synchron in Intervallen von \texttt{delta\_time = 5\,s}.
+
 
 \subsubsection{Belohnungsfunktionen}
 
@@ -111,14 +119,12 @@ Das Training der Agenten erfolgte mittels \texttt{PPO}, wobei folgende Hyperpara
 
 Beobachtungen und Rewards wurden über \texttt{VecNormalize} \cite{VecNormalize} normalisiert (\texttt{clip\_obs = 10.0}, \texttt{clip\_reward = 10.0}, \texttt{norm\_obs = True}, \texttt{norm\_reward = True}), die Umgebung zusätzlich mit \texttt{VecMonitor} \cite{VecMonitor} überwacht (\texttt{monitor.csv}). Pro Seed wurden $2\cdot10^6$ Trainingsschritte durchgeführt.
 
-\break
-
-\break
 
 Die Trainingsdauer pro Seed betrug im Mittel 2~Stunden für $2\cdot10^6$ Schritte
 bei einer Episodenlänge von \texttt{num\_seconds = 5000},
 inklusive periodischer Checkpoint-Speicherung und Logging. Dies variert mit der eingesetzten Belohnungsfunktion.
 Kürzere Vergleichsläufe mit $5\cdot10^5$ Schritten wurden in etwa 35~Minuten abgeschlossen.
+
 
 Die Wahl der Hyperparameter erfolgte auf Basis einer Kombination aus Literaturrecherche
 und empirischen Vorversuchen auf einem synthetischen Verkehrsnetz,
@@ -126,6 +132,8 @@ das strukturell an das finale Zielnetz angelehnt war.
 Die Netzarchitektur mit zwei Hidden-Layern à 128 Neuronen wurde gewählt,
 da sie in vergleichbaren SUMO-RL-Szenarien
 eine gute Balance zwischen Modellkapazität und Generalisierungsfähigkeit bietet \cite{Stable-Baselines3, PPO}.
+
+
 Die Batchgröße von 512 und die Rollout-Länge von 2048 Schritten stellen sicher,
 dass pro Policy-Update ausreichend diversifizierte Datenpunkte vorliegen,
 ohne den Speicherbedarf zu stark zu erhöhen.
