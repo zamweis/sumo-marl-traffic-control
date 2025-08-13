@@ -1,4 +1,3 @@
-
 \subsection{Einbindung des SUMO-Netzes in die RL-Umgebung}
 \label{sec:sumo-rl-architektur}
 
@@ -6,22 +5,20 @@ Nach Abschluss der Netzbereinigung, der strukturellen Validierung und der Identi
 
 \subsubsection{Gesamtsystem und Architektur}
 
-Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt, bei dem jede signalgesteuerte Kreuzung durch einen eigenständigen Agenten repräsentiert wird. Die Interaktion erfolgt über das TraCI-Protokoll von SUMO, das eine Echtzeitkommunikation zwischen Simulator und RL-Agenten ermöglicht. Die zentrale Steuerung und das Training der Agenten basiert auf der RL-Bibliothek \texttt{Stable-Baselines3}, konkret dem Algorithmus \texttt{Proximal Policy Optimization (PPO)}.
-
+Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt, bei dem jede signalgesteuerte Kreuzung durch einen eigenständigen Agenten repräsentiert wird. Die Interaktion erfolgt über das TraCI-Protokoll \cite{TraCI} von SUMO \cite{sumo-doc}, das eine Echtzeitkommunikation zwischen Simulator und RL-Agenten ermöglicht. Die zentrale Steuerung und das Training der Agenten basiert auf der RL-Bibliothek \texttt{Stable-Baselines3} \cite{Stable-Baselines3}, konkret dem Algorithmus \texttt{Proximal Policy Optimization (PPO) \cite{PPO}}. \cite{sumo-rl_docs}
 
 \begin{figure}[H]
   \centering
-  \begin{tikzpicture}[node distance=1.2cm]
+  \begin{tikzpicture}[node distance=1cm]
 
-    \node[box] (sim) {Verkehrssimulation\\\textbf{SUMO + Traci}};
-    \node[box, below=of sim] (mae) {Multi-Agent Environment (MAE)\\\texttt{sumo-rl.parallel\_env} + \texttt{custom\_reward}};
-    \node[box, below=of mae] (wrap) {Supersuit Wrappers\\\texttt{- pad\_obs / pad\_actions}\\\texttt{- pettingzoo\_to\_vec\_env}};
+    \node[box] (sim) {Verkehrssimulation\\\textbf{SUMO + TraCI}};
+    \node[box, below=of sim] (mae) {Multi-Agent Environment (MAE)\\\texttt{sumo-rl.parallel\_env} + \texttt{emissions\_with\_speed\_reward}};
+    \node[box, below=of mae] (wrap) {SuperSuit Wrappers\\\texttt{- pad\_obs / pad\_actions}\\\texttt{- pettingzoo\_to\_vec\_env}\\\texttt{- concat\_vec\_envs}};
     \node[box, below=of wrap] (vec) {VecNormalize + VecMonitor\\(Stable-Baselines3)};
-    \node[box, below=of vec] (ppo) {PPO Agent (Stable-Baselines3)\\\texttt{- MLPPolicy}\\\texttt{- Schedules: LR, Clip, Ent.}};
-    \node[box, below=of ppo] (cb) {Callbacks\\\texttt{- TimeBasedCheckpoint}\\\texttt{- BestModelSaver (mean\_reward)}\\\texttt{- LearningRateLogger}};
+    \node[box, below=of vec] (ppo) {PPO Agent (Stable-Baselines3)\\\texttt{- MLPPolicy}\\\texttt{- Schedules: LR (cosine warmup), Clip (cosine)}};
+    \node[box, below=of ppo] (cb) {Callbacks\\\texttt{- TimeBasedCheckpoint}\\\texttt{- EnvMetricsLogger}\\\texttt{- BestModelSaver}};
     \node[box, below=of cb] (log) {Modell- \& Log-Speicherung\\\texttt{(pro Seed in runs/)}};
 
-    % Arrows
     \draw[arrow] (sim) -- (mae);
     \draw[arrow] (mae) -- (wrap);
     \draw[arrow] (wrap) -- (vec);
@@ -34,23 +31,24 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
   \label{fig:rl_architektur}
 \end{figure}
 
-Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} und \texttt{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes API für Multiagenten-Umgebungen bereit – analog zu \texttt{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate, wie sie für paralleles Training mit \texttt{Stable-Baselines3} erforderlich sind.
+Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} \cite{PettingZoo} und \texttt{SuperSuit} \cite{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes API für Multiagenten-Umgebungen bereit – analog zu \texttt{Gymnasium} \cite{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist.
 
 \subsubsection{Konfiguration der Umgebung}
 
-Die Reinforcement-Learning-Umgebung wurde auf Basis der Klasse \texttt{SumoEnvironment} bzw. \texttt{parallel\_env} aus \texttt{sumo-rl} konfiguriert. Wichtige Parameter umfassen:
+Die Reinforcement-Learning-Umgebung wurde auf Basis der Klasse \texttt{parallel\_env} aus \texttt{sumo-rl} konfiguriert. Wichtige Parameter umfassen:
 
 \begin{itemize}
   \item \texttt{net\_file}, \texttt{route\_file}: Pfade zum bereinigten Verkehrsnetz und zugehöriger Routendatei.
-  \item \texttt{use\_gui}: Aktiviert die grafische Visualisierung von SUMO (zur Laufzeit abschaltbar für Trainingsgeschwindigkeit).
-  \item \texttt{num\_seconds}: Dauer einer Simulationsepisode in Sekunden.
-  \item \texttt{reward\_fn}: Referenz auf die benutzerdefinierte Belohnungsfunktion.
-  \item \texttt{min\_green}: Minimale Grünphasenlänge in Sekunden zur Sicherstellung realistischer Signalzyklen.
-  \item \texttt{max\_depart\_delay}: Maximale Verzögerung bei der Einfahrt eines Fahrzeugs (zur Kontrolle der Spawn-Zeit).
-  \item \texttt{sumo\_seed}: Zufalls-Seed zur Reproduzierbarkeit von Verkehrsflüssen und Routenentscheidungen.
-  \item \texttt{add\_system\_info}: Wenn aktiviert, werden systemweite Kennzahlen (z.\,B. durchschnittliche Wartezeit) in die Beobachtung eingebettet.
-  \item \texttt{add\_per\_agent\_info}: Ergänzt die lokale Beobachtung jedes Agenten um zusätzliche Kontextdaten (z.\,B. Verkehrsdichte im Knoten).
-  \item \texttt{single\_agent = False}: Aktiviert den Multiagentenmodus, bei dem jede steuerbare Ampel einen separaten Agenten darstellt.
+  \item \texttt{use\_gui}: Deaktiviert für schnelleres Training (\texttt{False}); bei Bedarf zur Laufzeit aktivierbar.
+  \item \texttt{num\_seconds}: Dauer einer Simulationsepisode in Sekunden (hier 5000\,s); das Episodenende wird unabhängig vom Verkehrsaufkommen nach Ablauf dieser Zeit ausgelöst.
+  \item \texttt{delta\_time}: Zeitabstand zwischen Agentenentscheidungen; nicht überschrieben, daher \textbf{Defaultwert 5\,s}.
+  \item \texttt{reward\_fn}: Referenz auf die aktive Belohnungsfunktion; im Haupttraining \texttt{emissions\_with\_speed\_reward}.
+  \item \texttt{min\_green}: Minimale Grünphasenlänge (5\,s) zur Sicherstellung realistischer Signalzyklen.
+  \item \texttt{max\_depart\_delay}: Maximale Verzögerung bei der Einfahrt eines Fahrzeugs (100\,s).
+  \item \texttt{sumo\_seed}: Fester Zufalls-Seed aus der Seedliste $\{546456, 678678, 234256, 678\}$ zur Reproduzierbarkeit von Verkehrsflüssen und Routenentscheidungen.
+  \item \texttt{add\_system\_info}: Wenn aktiviert, werden systemweite Kennzahlen in die \emph{Info}-Daten (\texttt{infos}) eingebettet (nicht Teil des Zustandsvektors).
+  \item \texttt{add\_per\_agent\_info}: Ergänzt die lokale Beobachtung jedes Agenten um zusätzliche Kontextdaten (hier deaktiviert).
+  \item \texttt{single\_agent = False}: Multiagentenmodus; jede steuerbare Ampel ist ein separater Agent.
 \end{itemize}
 
 Die Umgebung ist vollständig kompatibel mit \texttt{Gymnasium}, \texttt{PettingZoo} sowie den Wrapper-Bibliotheken \texttt{SuperSuit} und \texttt{VecEnv}, wodurch ein standardisiertes Interfacing mit RL-Algorithmen ermöglicht wird.
@@ -65,59 +63,94 @@ Jeder Agent erhält eine lokale Beobachtung, die sich aus folgenden Informatione
   \item für jede anliegende Spur: Anzahl wartender Fahrzeuge, durchschnittliche Geschwindigkeit, Dichte.
 \end{itemize}
 
-Der Aktionsraum ist diskret und erlaubt die Auswahl der nächsten Phase. Der Phasenwechsel wird durch SUMO automatisch mit einer Zwischenphase (Gelbphase) ergänzt. Die Entscheidung erfolgt synchron für alle Agenten alle \texttt{delta\_time} Sekunden.
+Der Aktionsraum ist diskret und erlaubt die Auswahl der nächsten Phase. Der Phasenwechsel wird durch SUMO automatisch mit einer Zwischenphase (Gelbphase) ergänzt. Die Entscheidung erfolgt synchron für alle Agenten im festen Intervall \texttt{delta\_time = 5\,s}.
 
 \subsubsection{Belohnungsfunktionen}
 
-\texttt{sumo-rl} unterstützt verschiedene standardisierte Reward-Funktionen:
+\texttt{sumo-rl} unterstützt verschiedene standardisierte Reward-Funktionen: \cite{sumo-rl_docs}
 
 \begin{itemize}
   \item \texttt{"diff-waiting-time"}: Reduktion der Differenz kumulierter Wartezeiten,
-  \item \texttt{\char`\"average-speed"}: Maximierung der mittleren Geschwindigkeit im Netz,
+  \item \texttt{"average-speed"}: Maximierung der mittleren Geschwindigkeit im Netz,
   \item \texttt{"queue"}: Minimierung der Gesamtlänge aller Warteschlangen.
 \end{itemize}
 
-Im Rahmen dieser Arbeit wurde zusätzlich eine eigene Reward-Funktion definiert, welche folgende Größen kombiniert:
+Im Rahmen dieser Arbeit wurden zusätzlich mehrere eigene Reward-Funktionen implementiert (siehe Abschnitt~\ref{sec:rl-konzept}).
+Für das Haupttraining wurde \texttt{realworld\_reward} eingesetzt, da diese ausschließlich auf Metriken basiert,
+die sich in der Praxis mit vergleichsweise einfacher Sensorik (z.\,B. Kameras, Induktionsschleifen, Lichtsensoren) erfassen lassen,
+wie Warteschlangenlänge, Anzahl anfahrender Fahrzeuge und durchschnittliche Geschwindigkeit.
 
-\begin{itemize}
-  \item aktuelle Warteschlangenlänge (negativ),
-  \item akkumulierte Wartezeiten (negativ),
-  \item Anzahl an Teleportationen und Kollisionen (stark negativ),
-  \item Anzahl neu eingetroffener Fahrzeuge (positiv),
-  \item Veränderung der Stauhöhe zur Vorperiode (positiv).
-\end{itemize}
-
-Die Belohnung wird nach jedem Simulationsschritt einzeln für jeden TLS-Agenten berechnet. Extreme Ereignisse (z.\,B. viele Teleports) führen zu stark negativen Strafwerten, um stabile Lernverläufe zu fördern.
+Für Vergleichsläufe wurden weitere Varianten eingesetzt, darunter \texttt{emissions\_with\_speed\_reward}
+(Kombination aus geglätteten, exponentiell gemittelten CO\(_2\)-Emissionen mit $\alpha=0.1$ (negativ), Geschwindigkeit (positiv),
+Fluss (positiv) sowie Warteschlangenlänge (negativ), mit \texttt{tanh}-Clamping),
+sowie \texttt{travel\_time\_reward}, \texttt{custom\_reward} und \texttt{travel\_time\_emissions\_reward} (siehe Anhang \ref{app:train_script}).
 
 \subsubsection{Trainingsalgorithmus und Hyperparameter}
 
-Das Training der Agenten erfolgte mittels \texttt{PPO}, wobei folgende Hyperparameter eingesetzt wurden:
+Das Training der Agenten erfolgte mittels \texttt{PPO}, wobei folgende Hyperparameter eingesetzt wurden (siehe Anhang \ref{app:train_script}):
 
 \begin{itemize}
-  \item \textbf{Policy-Architektur:} Zwei Hidden-Layer mit jeweils 128 Neuronen,
-  \item \textbf{Batchgröße:} 2048,
-  \item \textbf{Lernrate:} linear abnehmend von $3\cdot10^{-4}$,
-  \item \textbf{Clip-Range:} dynamisch, linear von 0.2 auf 0.1,
-  \item \textbf{Entropiekoeffizient:} $0.005$ zur Förderung explorativen Verhaltens,
-  \item \textbf{Discount-Faktor:} $\gamma = 0.99$,
-  \item \textbf{GAE-Lambda:} $0.95$ für stabilisierte Vorteilsschätzung.
+  \item \textbf{Policy-Architektur:} Zwei Hidden-Layer mit jeweils 128 Neuronen; getrennte Netze für \texttt{pi} und \texttt{vf} (\texttt{policy\_kwargs}).
+  \item \textbf{Batchgröße:} 512.
+  \item \textbf{Rollout-Länge (\texttt{n\_steps}):} 2048.
+  \item \textbf{Lernrate:} Cosine-Warmup über 5\,\% der Trainingszeit mit anschließendem Cosine-Decay auf 10\,\% des Startwerts ($3\cdot10^{-4}$).
+  \item \textbf{Clip-Range:} Cosine-Interpoliert von 0.2 auf 0.1.
+  \item \textbf{Entropiekoeffizient:} 0.01 (Exploration).
+  \item \textbf{Discount-Faktor:} $\gamma = 0.99$.
+  \item \textbf{GAE-Lambda:} 0.95.
+  \item \textbf{Device:} CPU (\texttt{torch.set\_num\_threads} auf Standard; SUMO-Simulation single-threaded).
 \end{itemize}
 
-Die Umgebung wurde über \texttt{VecNormalize} normalisiert und mit \texttt{VecMonitor} überwacht. Zusätzlich kamen Wrapper zur Aktion- und Beobachtungsstandardisierung (\texttt{pad\_observations\_v0}, \texttt{pad\_action\_space\_v0}) zum Einsatz, um variable TLS-Strukturen zu harmonisieren.
+Beobachtungen und Rewards wurden über \texttt{VecNormalize} \cite{VecNormalize} normalisiert (\texttt{clip\_obs = 10.0}, \texttt{clip\_reward = 10.0}, \texttt{norm\_obs = True}, \texttt{norm\_reward = True}), die Umgebung zusätzlich mit \texttt{VecMonitor} \cite{VecMonitor} überwacht (\texttt{monitor.csv}). Pro Seed wurden $2\cdot10^6$ Trainingsschritte durchgeführt.
 
 \subsubsection{Checkpoints, Monitoring und Logging}
 
-Zur Sicherstellung eines robusten Trainingsprozesses wurde eine Reihe von Callback-Mechanismen implementiert:
+Zur Sicherstellung eines robusten Trainingsprozesses wurde eine Reihe von Callback-Mechanismen implementiert (siehe Anhang \ref{app:train_script}):
 
 \begin{itemize}
-  \item \textbf{Checkpointing:} Zeitbasierte Sicherung des Modells alle 60 Minuten,
-  \item \textbf{Bestmodell-Erkennung:} Automatische Speicherung des jeweils besten Modells (höchste mittlere Reward),
-  \item \textbf{Adaptive Schedules:} Dynamische Anpassung von Lernrate und Clip-Range an den Trainingsfortschritt,
-  \item \textbf{Logging via TensorBoard:} Visualisierung von Reward-Kurven, Lernraten, Clip-Werten und Modellmetriken.
+  \item \textbf{TimeBasedCheckpointCallback:}
+        Zeitbasierte Sicherung des Modells und der Normalisierungsdaten in festen Intervallen
+        (standardmäßig stündlich). Gespeicherte Dateien:
+        \begin{itemize}
+          \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps.zip} – Modellparameter,
+          \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps\_vecnormalize.pkl} – Normalisierungszustand.
+        \end{itemize}
+
+  \item \textbf{EnvMetricsLoggerCallback:}
+        Aggregiert und loggt Umgebungsmetriken aus dem \texttt{infos}-Dictionary.
+        Schlüssel mit Präfix \texttt{system\_} werden in globale Mittelwerte umbenannt (\texttt{mean\_...}).
+        Geloggte Metriken umfassen:
+        \begin{itemize}
+          \item \texttt{mean\_arrived} – mittlere Anzahl neu eingetroffener Fahrzeuge,
+          \item \texttt{mean\_departed} – mittlere Anzahl abgefahrener Fahrzeuge,
+          \item \texttt{mean\_backlogged} – mittlere Anzahl nicht abgefertigter Fahrzeuge,
+          \item \texttt{mean\_running} – mittlere Anzahl aktuell fahrender Fahrzeuge,
+          \item \texttt{mean\_stopped} – mittlere Anzahl stehender Fahrzeuge,
+          \item \texttt{mean\_mean\_speed} – mittlere Durchschnittsgeschwindigkeit,
+          \item \texttt{mean\_mean\_waiting\_time} – mittlere mittlere Wartezeit pro Fahrzeug,
+          \item \texttt{mean\_waiting\_time} – mittlere Wartezeit (gesamt),
+          \item \texttt{mean\_teleported} – mittlere Anzahl Teleportationen pro Schritt,
+          \item \texttt{mean\_emissions\_per\_vehicle} – mittlere CO\textsubscript{2}-Emission pro Fahrzeug.
+        \end{itemize}
+
+  \item \textbf{BestModelSaverCallback:}
+        Automatische Speicherung des jeweils besten Modells (höchster mittlerer Episodenreward aus \texttt{ep\_info\_buffer}),
+        inklusive zugehöriger Normalisierungsdaten:
+        \begin{itemize}
+          \item \texttt{best\_model.zip} – bestes Modell,
+          \item \texttt{best\_model\_vecnormalize.pkl} – Normalisierungszustand des besten Modells.
+        \end{itemize}
 \end{itemize}
 
-Alle Modellartefakte (\texttt{.zip}, \texttt{vecnormalize.pkl}) sowie die TensorBoard-Logs wurden pro Seed-Version strukturiert gespeichert. Dadurch konnten sowohl Reproduzierbarkeit als auch vergleichende Auswertungen zwischen Trainingsläufen gewährleistet werden.
+
+Alle Modellartefakte (\texttt{.zip}, \texttt{vecnormalize.pkl}) sowie die TensorBoard-Logs wurden pro Seed-Version strukturiert gespeichert. Das Log-Verzeichnis folgt dem Schema \texttt{runs/ppo\_sumo\_<SEED>\_<YYYY-MM-DD\_HH-MM-SS>}. \texttt{tensorboard\_log} verweist auf diesen Ordner; \texttt{VecMonitor} schreibt zusätzlich \texttt{monitor.csv}.
+
+\paragraph{Reproduzierbarkeit und Laufverwaltung}
+Zur Sicherstellung der Reproduzierbarkeit wurden Seeds für NumPy, PyTorch und SUMO gesetzt; zusätzlich wird (falls verfügbar) die Umgebung selbst mit \texttt{env.seed(SEED)} initialisiert. Es wurden vier verschiedene Seed-Werte $\{546456, 678678, 234256, 678\}$ verwendet. Eine Hilfsroutine (\texttt{find\_latest\_complete\_run}) erlaubt die Identifikation des letzten vollständigen Laufs (finales Modell oder jüngster Checkpoint inkl. \texttt{VecNormalize}) zur Wiederaufnahme. Evaluationsläufe können nach dem Training mit deaktivierter Exploration (\texttt{deterministic=True}) gestartet werden.
+
+\paragraph{Fehler- und Abbruchbehandlung}
+Bei manuellem Abbruch (\texttt{KeyboardInterrupt}) werden der aktuelle Modellstand (\texttt{model\_interrupt.zip}) und Normalisierungsdaten (\texttt{vecnormalize\_interrupt.pkl}) gesichert. Im \texttt{finally}-Block wird die Normalisierung zusätzlich persistiert und die Umgebung sauber geschlossen.
 
 \subsubsection{Zusammenfassung}
 
-Die konfigurierte RL-Umgebung erlaubt eine modulare und flexible Steuerung realer Verkehrsnetze auf Basis von SUMO. Durch die Kombination aus systematischer TLS-Auswahl, stabiler Reward-Funktion, adaptiven Trainingsparametern und umfassendem Monitoring wurde eine solide Grundlage für die experimentelle Evaluation lernbasierter Verkehrssteuerung geschaffen.
+Die konfigurierte RL-Umgebung erlaubt eine modulare und flexible Steuerung realer Verkehrsnetze auf Basis von SUMO. Durch die Kombination aus systematischer TLS-Auswahl, stabiler und geglätteter Reward-Funktion, adaptiven Hyperparameter-Schedules, vorbereiteter Multi-Core-Parallellisierung, konsequenter Reproduzierbarkeit und umfassendem Monitoring (inkl. Checkpoints, Metriklogging und Bestmodell-Erkennung) wurde eine solide Grundlage für die experimentelle Evaluation lernbasierter Verkehrssteuerung geschaffen.
