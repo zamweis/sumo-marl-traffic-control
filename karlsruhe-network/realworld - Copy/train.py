@@ -13,7 +13,6 @@ import numpy as np
 
 # PyTorch für neuronale Netze und Reproduzierbarkeit
 import torch
-from collections import defaultdict
 
 # Stable-Baselines3 (RL-Algorithmen, hier PPO)
 from stable_baselines3 import PPO
@@ -37,57 +36,8 @@ from gymnasium import Wrapper
 
 
 # ====== Trainings-Setup ======
-SEEDS = [546456, 678678, 234256, 678]  # Verschiedene Zufalls-Seed-Werte für reproduzierbare Runs
+SEEDS = [143534, 456, 635768, 13755]  # Verschiedene Zufalls-Seed-Werte für reproduzierbare Runs
 
-_last_emission_step = None
-_last_mean_emission = 0.0
-_step_cache = {}
-
-_last_emission_step = None
-_step_cache = {}
-
-def emissions_with_speed_reward(ts):
-    """
-    Reward kombiniert niedrige Emissionen mit hohem Durchschnittstempo.
-    - Beide Werte nur 1× pro Sim-Step aus SUMO gelesen
-    - Normierung auf 0..1
-    - Mischung: weniger Emissionen + mehr Geschwindigkeit
-    """
-    global _last_emission_step, _step_cache
-
-    current_step = int(traci.simulation.getTime())
-
-    # Falls Wert für diesen Step schon berechnet → Cache zurück
-    if current_step == _last_emission_step:
-        return _step_cache["reward"]
-
-    vids = traci.vehicle.getIDList()
-    if vids:
-        # Mittelwert CO₂-Emissionen pro Fahrzeug (mg/s)
-        total_emis = sum(traci.vehicle.getCO2Emission(vid) for vid in vids)
-        mean_emis = total_emis / len(vids)
-
-        # Durchschnittsgeschwindigkeit (m/s)
-        total_speed = sum(traci.vehicle.getSpeed(vid) for vid in vids)
-        mean_speed = total_speed / len(vids)
-    else:
-        mean_emis = 0.0
-        mean_speed = 0.0
-
-    # Normierung
-    emis_norm = min(mean_emis / 2000.0, 1.0)    # 2000 mg/s als "schlecht"
-    speed_norm = min(mean_speed / 15.0, 1.0)    # 15 m/s (~54 km/h) als "gut"
-
-    # Kombination: weniger Emissionen → mehr Reward, mehr Speed → mehr Reward
-    w_speed = 0.5
-    w_emis = 0.5
-    reward = (w_speed * speed_norm) - (w_emis * emis_norm)
-
-    # Cache speichern
-    _step_cache["reward"] = reward
-    _last_emission_step = current_step
-
-    return reward
 
 # ====== Reward-Funktion: RealWorld-Variante ======
 def realworld_reward(traffic_signal):
@@ -304,79 +254,55 @@ class TimeBasedCheckpointCallback(BaseCallback):
             self.last_save_time = current_time
         return True
 
+
 # ====== Callback: Metriken aus der Env loggen ======
 class EnvMetricsLoggerCallback(BaseCallback):
+    """
+    Aggregiert und loggt zusätzliche Umgebungsmetriken während des Trainings.
+    Nützlich für die Analyse in TensorBoard.
+    """
     def __init__(self, prefix="env", verbose=0):
         super().__init__(verbose)
         self.prefix = prefix
-        self.sums = defaultdict(float)
-        self.counts = defaultdict(int)
-        self.key_map = {}  # Cache für umbenannte Keys
-        self._emi_sum = 0.0
-        self._emi_count = 0
-        self._last_logged_step = None
+        self.sums = {}
+        self.counts = {}
 
     def _on_rollout_start(self) -> None:
+        # Reset der Zähler zu Beginn jedes Rollouts
         self.sums.clear()
         self.counts.clear()
-        self.key_map.clear()
-        self._emi_sum = 0.0
-        self._emi_count = 0
-        self._last_logged_step = None
 
     def _on_step(self) -> bool:
+        # Zugriff auf 'infos' (zusätzliche Infos aus der Umgebung)
         infos = self.locals.get("infos")
-        if infos:
-            for info in infos:
-                if not isinstance(info, dict):
+        if not infos:
+            return True
+
+        # Werte aufsummieren und Anzahl zählen
+        for info in infos:
+            if not isinstance(info, dict):
+                continue
+            for orig_key, v in info.items():
+                if not isinstance(v, (int, float)) or not np.isfinite(v):
                     continue
-                for orig_key, v in info.items():
-                    # Schneller als np.isfinite()
-                    if not isinstance(v, (int, float)) or v != v or v in (float("inf"), float("-inf")):
-                        continue
-                    mapped_key = self.key_map.get(orig_key)
-                    if mapped_key is None:
-                        if orig_key.startswith("system_"):
-                            short_key = orig_key[len("system_"):]
-                            if short_key.startswith("total"):
-                                short_key = short_key[len("total_"):]
-                            short_key = "mean_" + short_key
-                        else:
-                            short_key = orig_key
-                        mapped_key = f"{self.prefix}/{short_key}"
-                        self.key_map[orig_key] = mapped_key
-                    self.sums[mapped_key] += float(v)
-                    self.counts[mapped_key] += 1
-
-        # Emissionslogging nur 1× pro Sim-Step
-        try:
-            current_step = int(traci.simulation.getTime())
-            if self._last_logged_step != current_step:
-                vids = traci.vehicle.getIDList()
-                n_veh = len(vids)
-                if n_veh:
-                    total_emis = sum(traci.vehicle.getCO2Emission(vid) for vid in vids)
-                    mean_emis = total_emis / n_veh
+                # Kürzung der Key-Namen
+                if orig_key.startswith("system_"):
+                    short_key = orig_key[len("system_"):]
+                    if short_key.startswith("total"):
+                        short_key = short_key[len("total_"):]
+                    short_key = "mean_" + short_key
                 else:
-                    mean_emis = 0.0
-                self._emi_sum += mean_emis
-                self._emi_count += 1
-                self._last_logged_step = current_step
-        except Exception:
-            pass
-
+                    short_key = orig_key
+                tag = f"{self.prefix}/{short_key}"
+                self.sums[tag] = self.sums.get(tag, 0.0) + float(v)
+                self.counts[tag] = self.counts.get(tag, 0) + 1
         return True
 
-    def _on_rollout_end(self):
+    def _on_rollout_end(self) -> None:
+        # Mittelwert berechnen und an SB3-Logger übergeben
         for tag, total in self.sums.items():
-            mean_val = total / max(1, self.counts[tag])
+            mean_val = total / max(1, self.counts.get(tag, 1))
             self.logger.record(tag, mean_val)
-
-        if self._emi_count > 0:
-            self.logger.record(
-                f"{self.prefix}/mean_emissions_per_vehicle",
-                self._emi_sum / self._emi_count
-            )
 
 
 # ====== Callback: Bestes Modell speichern ======
@@ -425,7 +351,7 @@ for SEED in SEEDS:
         route_file="map.rou.xml",
         use_gui=False,            # Kein GUI (schnelleres Training)
         num_seconds=5000,         # Episodenlänge in Simulationssekunden
-        reward_fn=emissions_with_speed_reward,  # Reward-Funktion
+        reward_fn=realworld_reward,  # Reward-Funktion
         min_green=5,              # Minimale Grünphase
         max_depart_delay=100,     # Max. Verzögerung bei Fahrzeugstart
         sumo_seed=SEED,           # Seed für SUMO
@@ -480,7 +406,7 @@ for SEED in SEEDS:
     try:
         time.sleep(3) # Kurze Pause für saubere Konsolenlogs
         model.learn(
-            total_timesteps=2_000_000,
+            total_timesteps=5_000_000,
             callback=callbacks,
         )
         # Nach Abschluss final speichern

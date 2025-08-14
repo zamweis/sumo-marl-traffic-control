@@ -39,142 +39,172 @@ from gymnasium import Wrapper
 # ====== Trainings-Setup ======
 SEEDS = [546456, 678678, 234256, 678]  # Verschiedene Zufalls-Seed-Werte für reproduzierbare Runs
 
-_last_emission_step = None
-_last_mean_emission = 0.0
-_step_cache = {}
+# ====== Gemeinsamer Step-Cache ======
+_STEP_CACHE = {"step": None}
 
-_last_emission_step = None
-_step_cache = {}
-
+# ====== Reward-Funktion: Emissions-Variante ======
 def emissions_with_speed_reward(ts):
-    """
-    Reward kombiniert niedrige Emissionen mit hohem Durchschnittstempo.
-    - Beide Werte nur 1× pro Sim-Step aus SUMO gelesen
-    - Normierung auf 0..1
-    - Mischung: weniger Emissionen + mehr Geschwindigkeit
-    """
-    global _last_emission_step, _step_cache
-
     current_step = int(traci.simulation.getTime())
+    if _STEP_CACHE.get("emis_step") != current_step:
+        vids = traci.vehicle.getIDList()
+        n_veh = len(vids)
 
-    # Falls Wert für diesen Step schon berechnet → Cache zurück
-    if current_step == _last_emission_step:
-        return _step_cache["reward"]
+        if n_veh:
+            total_emis = sum(traci.vehicle.getCO2Emission(v) for v in vids)
+            total_speed = sum(traci.vehicle.getSpeed(v) for v in vids)
+            flow = traci.simulation.getArrivedNumber()
+            queue = ts.get_total_queued()
+            mean_emis = total_emis / n_veh
+            mean_speed = total_speed / n_veh
+        else:
+            mean_emis = mean_speed = flow = queue = 0.0
 
-    vids = traci.vehicle.getIDList()
-    if vids:
-        # Mittelwert CO₂-Emissionen pro Fahrzeug (mg/s)
-        total_emis = sum(traci.vehicle.getCO2Emission(vid) for vid in vids)
-        mean_emis = total_emis / len(vids)
+        _STEP_CACHE.update({
+            "emis_step": current_step,
+            "mean_emis": mean_emis,
+            "mean_speed": mean_speed,
+            "flow": flow,
+            "queue": queue,
+        })
 
-        # Durchschnittsgeschwindigkeit (m/s)
-        total_speed = sum(traci.vehicle.getSpeed(vid) for vid in vids)
-        mean_speed = total_speed / len(vids)
-    else:
-        mean_emis = 0.0
-        mean_speed = 0.0
+    if not hasattr(ts, "_emis_state"):
+        ts._emis_state = {"ema_emis": 0.0, "ema_speed": 0.0, "ema_flow": 0.0}
 
-    # Normierung
-    emis_norm = min(mean_emis / 2000.0, 1.0)    # 2000 mg/s als "schlecht"
-    speed_norm = min(mean_speed / 15.0, 1.0)    # 15 m/s (~54 km/h) als "gut"
+    alpha = 0.3
+    ts._emis_state["ema_emis"]  = (1 - alpha) * ts._emis_state["ema_emis"]  + alpha * _STEP_CACHE["mean_emis"]
+    ts._emis_state["ema_speed"] = (1 - alpha) * ts._emis_state["ema_speed"] + alpha * _STEP_CACHE["mean_speed"]
+    ts._emis_state["ema_flow"]  = (1 - alpha) * ts._emis_state["ema_flow"]  + alpha * _STEP_CACHE["flow"]
 
-    # Kombination: weniger Emissionen → mehr Reward, mehr Speed → mehr Reward
-    w_speed = 0.5
-    w_emis = 0.5
-    reward = (w_speed * speed_norm) - (w_emis * emis_norm)
+    emis_term  = -np.tanh(ts._emis_state["ema_emis"] / 2000.0)
+    speed_term =  np.tanh(ts._emis_state["ema_speed"] / 15.0)
+    flow_term  =  np.tanh(ts._emis_state["ema_flow"] / 5.0)
+    queue_term = -np.tanh(_STEP_CACHE["queue"] / 30.0)
 
-    # Cache speichern
-    _step_cache["reward"] = reward
-    _last_emission_step = current_step
+    return float(np.clip(
+        0.4*emis_term + 0.3*speed_term + 0.2*flow_term + 0.1*queue_term,
+        -1.0, 1.0
+    ))
 
-    return reward
 
-# ====== Reward-Funktion: RealWorld-Variante ======
-def realworld_reward(traffic_signal):
-    """
-    Belohnt Verkehrsfluss, bestraft Stau und häufige Phasenwechsel.
-    Nutzt Exponentielles gleitendes Mittel (EMA) zur Glättung der Messwerte.
-    """
-    # Reset interner Zustände zu Beginn einer Episode
-    if hasattr(traffic_signal, "step_count") and traffic_signal.step_count == 0:
-        traffic_signal._rw_state = None
+# ====== Reward-Funktion: Reisezeit-Variante ======
+def travel_time_reward(ts):
+    current_step = int(traci.simulation.getTime())
+    if _STEP_CACHE.get("travel_step") != current_step:
+        vids = traci.vehicle.getIDList()
+        n_veh = len(vids)
+        if n_veh:
+            travel_times = [
+                traci.vehicle.getAccumulatedWaitingTime(v) + traci.vehicle.getTimeLoss(v)
+                for v in vids
+            ]
+            mean_time = float(np.mean(travel_times))
+        else:
+            mean_time = 0.0
+        _STEP_CACHE.update({
+            "travel_step": current_step,
+            "mean_travel_time": mean_time,
+            "n_veh": n_veh
+        })
 
-    # Initialisierung beim ersten Step
-    if not hasattr(traffic_signal, "_rw_state") or traffic_signal._rw_state is None:
-        q = int(traffic_signal.get_total_queued())   # Fahrzeuge in der Warteschlange
-        f = int(traci.simulation.getArrivedNumber()) # Fahrzeuge, die das Netz verlassen haben
-        traffic_signal._rw_state = {"prev_q": q, "ema_q": float(q), "ema_f": float(f)}
+    if _STEP_CACHE["n_veh"] <= 0:
         return 0.0
 
-    # Parameter für Normalisierung und Gewichtung
-    max_storage = 40               # Maximale Speicherkapazität der Kreuzung (Fahrzeuge)
-    max_outflow_per_step = 8       # Maximaler Ausfluss pro Step
+    return float(np.clip(np.tanh((60.0 - _STEP_CACHE["mean_travel_time"]) / 60.0), -1.0, 1.0))
+
+
+# ====== Reward-Funktion: RealWorld-Variante ======
+def realworld_reward(ts):
+    current_step = int(traci.simulation.getTime())
+    if _STEP_CACHE.get("rw_step") != current_step:
+        _STEP_CACHE["queue"] = ts.get_total_queued()
+        _STEP_CACHE["flow"] = traci.simulation.getArrivedNumber()
+        _STEP_CACHE["rw_step"] = current_step
+
+    # Reset bei neuem Episode
+    if getattr(ts, "step_count", 0) == 0:
+        ts._rw_state = None
+
+    q = _STEP_CACHE["queue"]
+    f = _STEP_CACHE["flow"]
+
+    if not hasattr(ts, "_rw_state") or ts._rw_state is None:
+        ts._rw_state = {"prev_q": q, "ema_q": float(q), "ema_f": float(f)}
+        return 0.0
+
+    # Konstanten
+    ema = 0.3
+    clip = 5.0
+    max_storage = 40.0
+    max_outflow_per_step = 8.0
     w_q, w_build, w_flow, w_switch = 1.0, 0.8, 0.7, 0.1
-    ema, clip = 0.3, 5.0           # EMA-Faktor und Reward-Clipping
 
-    # Aktuelle Messwerte
-    q = int(traffic_signal.get_total_queued())
-    f = int(traci.simulation.getArrivedNumber())
-    phase_sw = 1.0 if getattr(traffic_signal, "phase_changed", False) else 0.0
+    # Phase-Change (direkter Zugriff, falls Attribut immer existiert)
+    phase_sw = 1.0 if getattr(ts, "phase_changed", False) else 0.0
 
-    st = traffic_signal._rw_state
-
-    # EMA-Glättung für Queue und Fluss
+    st = ts._rw_state
     ema_q = (1 - ema) * st["ema_q"] + ema * q
     ema_f = (1 - ema) * st["ema_f"] + ema * f
 
-    # Aufbau neuer Warteschlangen
-    delta_q = q - st["prev_q"]
-    build = max(0, delta_q)
+    build = max(0, q - st["prev_q"])
 
-    # Normalisierung der Werte
-    q_norm = np.clip(ema_q / max(1.0, float(max_storage)), 0.0, 1.5)
-    b_norm = np.clip(build / max(1.0, float(max_storage) * 0.2), 0.0, 1.5)
-    f_norm = np.clip(ema_f / max(1.0, float(max_outflow_per_step)), 0.0, 1.5)
+    # Normierungen (inline clamping statt np.clip)
+    q_norm = ema_q / max_storage
+    if q_norm < 0.0: q_norm = 0.0
+    elif q_norm > 1.5: q_norm = 1.5
 
-    # Reward-Berechnung
+    b_norm = build / (max_storage * 0.2)
+    if b_norm < 0.0: b_norm = 0.0
+    elif b_norm > 1.5: b_norm = 1.5
+
+    f_norm = ema_f / max_outflow_per_step
+    if f_norm < 0.0: f_norm = 0.0
+    elif f_norm > 1.5: f_norm = 1.5
+
     r = -w_q*q_norm - w_build*b_norm + w_flow*f_norm - w_switch*phase_sw
-    r = float(np.clip(r, -clip, clip))
 
-    # Update interner Zustände
+    # Clip inline
+    if r < -clip: r = -clip
+    elif r > clip: r = clip
+
     st["prev_q"], st["ema_q"], st["ema_f"] = q, ema_q, ema_f
-    traffic_signal._rw_state = st
+    ts._rw_state = st
+    return float(r)
 
-    return r
 
+# ====== Reward-Funktion: Custom-Variante ======
+def custom_reward(ts):
+    current_step = int(traci.simulation.getTime())
+    if _STEP_CACHE.get("custom_step") != current_step:
+        queue = ts.get_total_queued()
+        wait_sum_total = float(np.sum(ts.get_accumulated_waiting_time_per_lane()))
+        arrived = traci.simulation.getArrivedNumber()
+        teleports = traci.simulation.getStartingTeleportNumber()
+        collisions = traci.simulation.getCollidingVehiclesNumber()
+        _STEP_CACHE.update({
+            "custom_step": current_step,
+            "queue": queue,
+            "wait_sum_total": wait_sum_total,
+            "arrived": arrived,
+            "teleports": teleports,
+            "collisions": collisions
+        })
 
-# ====== Reward-Funktion: Custom-Variante ([-1, 1] gebunden) ======
-def custom_reward(traffic_signal):
-    """
-    Ausgeglichene Reward-Funktion:
-    Bestraft Stau, Wartezeit, Teleports und Kollisionen,
-    belohnt Durchfluss.
-    Skaliert Werte mit tanh, um Extremwerte abzuflachen.
-    """
+    if not hasattr(ts, "_prev_queue"):
+        ts._prev_queue = 0
+    if not hasattr(ts, "_prev_wait_sum"):
+        ts._prev_wait_sum = 0.0
 
-    # Initialisierung von vorherigen Zuständen
-    if not hasattr(traffic_signal, "_prev_queue"):
-        traffic_signal._prev_queue = 0
-    if not hasattr(traffic_signal, "_prev_wait_sum"):
-        traffic_signal._prev_wait_sum = 0.0
+    queue = _STEP_CACHE["queue"]
+    wait_sum_total = _STEP_CACHE["wait_sum_total"]
+    arrived = _STEP_CACHE["arrived"]
+    teleports = _STEP_CACHE["teleports"]
+    collisions = _STEP_CACHE["collisions"]
 
-    # Live-Metriken aus SUMO
-    queue = traffic_signal.get_total_queued()
-    wait_sum_total = float(np.sum(traffic_signal.get_accumulated_waiting_time_per_lane()))
-    sim = traci.simulation
-    arrived = sim.getArrivedNumber()
-    teleports = sim.getStartingTeleportNumber()
-    collisions = sim.getCollidingVehiclesNumber()
+    delta_queue = queue - ts._prev_queue
+    delta_wait = max(0.0, wait_sum_total - ts._prev_wait_sum)
+    ts._prev_queue = queue
+    ts._prev_wait_sum = wait_sum_total
 
-    # Änderungen pro Step (Delta)
-    delta_queue = queue - traffic_signal._prev_queue
-    delta_wait = max(0.0, wait_sum_total - traffic_signal._prev_wait_sum)
-
-    # Update der gespeicherten Werte
-    traffic_signal._prev_queue = queue
-    traffic_signal._prev_wait_sum = wait_sum_total
-
-    # Skaliertes, glattes Mapping via tanh()
     q_term       = -np.tanh(queue / 30.0)
     dq_term      = -np.tanh(max(0, delta_queue) / 10.0)
     wait_term    = -np.tanh(delta_wait / 60.0)
@@ -182,28 +212,66 @@ def custom_reward(traffic_signal):
     tp_term      = -np.tanh(teleports / 1.0)
     col_term     = -np.tanh(collisions / 1.0)
 
-    # Gewichtung der einzelnen Komponenten
-    w_q, w_dq, w_wait = 0.35, 0.20, 0.45
-    w_arr, w_tp, w_col = 0.40, 0.90, 1.20
-
     raw = (
-        w_q   * q_term +
-        w_dq  * dq_term +
-        w_wait* wait_term +
-        w_arr * arrived_term +
-        w_tp  * tp_term +
-        w_col * col_term
+        0.35*q_term +
+        0.20*dq_term +
+        0.45*wait_term +
+        0.40*arrived_term +
+        0.90*tp_term +
+        1.20*col_term
     )
 
-    # Härtere Strafen für Teleports/Kollisionen
     if teleports > 0:
         raw -= 0.5
     if collisions > 0:
         raw -= 0.8
 
-    # Ergebnis in [-1, 1] begrenzen
-    reward = float(np.tanh(raw))
-    return reward
+    return float(np.tanh(raw))
+
+
+# ====== Reward-Funktion: Time-Emission-Variante ======
+def travel_time_emissions_reward(ts, w_emis=0.2):
+    """
+    Einfacher Mix aus Reisezeit-Reward und Emissions-Reward.
+    - w_emis: Gewicht der Emissionen (0 = ignorieren, 1 = nur Emissionen)
+    """
+    current_step = int(traci.simulation.getTime())
+    if _STEP_CACHE.get("tte_step") != current_step:
+        vids = traci.vehicle.getIDList()
+        n_veh = len(vids)
+
+        if n_veh:
+            total_time = 0.0
+            total_emis = 0.0
+            for v in vids:
+                total_time += traci.vehicle.getAccumulatedWaitingTime(v)
+                total_time += traci.vehicle.getTimeLoss(v)
+                total_emis += traci.vehicle.getCO2Emission(v)
+
+            mean_time = total_time / n_veh
+            mean_emis = total_emis / n_veh
+        else:
+            mean_time = 0.0
+            mean_emis = 0.0
+
+        _STEP_CACHE.update({
+            "tte_step": current_step,
+            "tte_n_veh": n_veh,
+            "tte_mean_time": mean_time,
+            "tte_mean_emis": mean_emis,
+        })
+
+    if _STEP_CACHE["tte_n_veh"] <= 0:
+        return 0.0
+
+    # Reisezeit-Reward
+    r_time = np.tanh((60.0 - _STEP_CACHE["tte_mean_time"]) / 60.0)
+
+    # Emissions-Reward: einfach skalieren, niedriger ist besser
+    r_emis = -np.tanh(_STEP_CACHE["tte_mean_emis"] / 2000.0)
+
+    # Kombinieren
+    return float((1 - w_emis) * r_time + w_emis * r_emis)
 
 
 # ====== Schedules für Hyperparameter-Anpassung ======

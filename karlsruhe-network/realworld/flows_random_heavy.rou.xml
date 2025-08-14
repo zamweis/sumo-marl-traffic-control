@@ -1,19 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-08-14 15:21:26.831289 by randomTrips.py v1_24_0+0000-b72eb3fabc8
-<configuration>
-    <net-file value="map.net.xml"/>
-    <output-trip-file value="trips_random_heavy.trips.xml"/>
-    <trip-attributes value="departLane=&quot;best&quot; departSpeed=&quot;max&quot; departPos=&quot;random&quot;"/>
-    <fringe-factor value="5.0"/>
-    <seed value="404"/>
-    <end value="5000.0"/>
-    <period value="1.5"/>
-    <random-depart value="True"/>
-</configuration>
--->
-
-<!-- generated on 2025-08-14 15:21:26 by Eclipse SUMO duarouter Version 1.24.0
+<!-- generated on 2025-08-14 15:21:33 by Eclipse SUMO duarouter Version 1.24.0
 <duarouterConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/duarouterConfiguration.xsd">
 
     <input>
@@ -22,20 +9,8 @@
     </input>
 
     <output>
-        <output-file value="routes.rou.xml"/>
-        <alternatives-output value="NUL"/>
+        <output-file value="flows_random_heavy.rou.xml"/>
     </output>
-
-    <time>
-        <begin value="0.0"/>
-        <end value="5000.0"/>
-    </time>
-
-    <report>
-        <no-warnings value="true"/>
-        <ignore-errors value="true"/>
-        <no-step-log value="true"/>
-    </report>
 
 </duarouterConfiguration>
 -->

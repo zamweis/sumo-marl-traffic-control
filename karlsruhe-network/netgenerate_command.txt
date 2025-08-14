@@ -5,3 +5,22 @@ python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o map.trips.xml --seed
 duarouter --net-file map.net.xml --route-files map.trips.xml --output-file map.rou.xml
 
 
+#scenarios
+
+python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o flows_morning.trips.xml --seed 11111 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 5000 -p 2 --fringe-factor 2.0 --validate && duarouter --net-file map.net.xml --route-files flows_morning.trips.xml --output-file flows_morning.rou.xml
+python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o flows_evening.trips.xml --seed 22222 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 5000 -p 2 --fringe-factor 2.0 --validate && duarouter --net-file map.net.xml --route-files flows_evening.trips.xml --output-file flows_evening.rou.xml
+python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o flows_uniform.trips.xml --seed 33333 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 5000 -p 2 --fringe-factor 1.5 --validate && duarouter --net-file map.net.xml --route-files flows_uniform.trips.xml --output-file flows_uniform.rou.xml
+python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o flows_random_heavy.trips.xml --seed 44444 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 5000 -p 2 --fringe-factor 2.0 --validate && duarouter --net-file map.net.xml --route-files flows_random_heavy.trips.xml --output-file flows_random_heavy.rou.xml
+
+Morning Peak
+python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o flows_morning.trips.xml --edges "56057361#0,-56057361#1,4211633,150078330,999241257#5,-999241257#5,4818835#0,-4818835#0,171423113#0,149399184,149399187#0,-428036775#2,428036775#2,261750866,-261750866,86548565#0,-384971139,384971139,4211384#1,-4212342,4212342,314456049,863412048,-864558904#0,864558904#0,160611126#5,-160611126#5,321883383#2,-321883383#2,154343753,-154343753,151549312,3454369#0,261418601,-261418601" --seed 11111 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 5000 -p 2 --fringe-factor 2.0 --validate && duarouter --net-file map.net.xml --route-files flows_morning.trips.xml --output-file flows_morning.rou.xml
+Evening Peak
+python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o flows_evening.trips.xml --destinations "56057361#0,-56057361#1,4211633,150078330,999241257#5,-999241257#5,4818835#0,-4818835#0,171423113#0,149399184,149399187#0,-428036775#2,428036775#2,261750866,-261750866,86548565#0,-384971139,384971139,4211384#1,-4212342,4212342,314456049,863412048,-864558904#0,864558904#0,160611126#5,-160611126#5,321883383#2,-321883383#2,154343753,-154343753,151549312,3454369#0,261418601,-261418601" --seed 22222 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 5000 -p 2 --fringe-factor 2.0 --validate && duarouter --net-file map.net.xml --route-files flows_evening.trips.xml --output-file flows_evening.rou.xml
+Uniform Flow
+python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o flows_uniform.trips.xml --seed 33333 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 5000 -p 2 --fringe-factor 1.0 --validate && duarouter --net-file map.net.xml --route-files flows_uniform.trips.xml --output-file flows_uniform.rou.xml
+Random Heavy Flow
+python "%SUMO_HOME%\tools\randomTrips.py" -n map.net.xml -o flows_random_heavy.trips.xml --seed 44444 --trip-attributes="departLane=\"best\" departSpeed=\"max\" departPos=\"random\"" -b 0 -e 5000 -p 1.5 --fringe-factor 2.0 --validate && duarouter --net-file map.net.xml --route-files flows_random_heavy.trips.xml --output-file flows_random_heavy.rou.xml
+
+
+# evaluation
+
