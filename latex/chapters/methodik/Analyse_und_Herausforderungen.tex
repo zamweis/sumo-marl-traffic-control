@@ -134,6 +134,35 @@ Neben automatisierten Bereinigungen waren auch gezielte manuelle Anpassungen not
 
 Diese Rekonstruktionen erfolgten unter Beibehaltung der realweltlichen Topologie, jedoch mit einer technisch sauberen Definition aller Fahrbeziehungen und Signalisierungen. Damit konnte sichergestellt werden, dass auch komplexere Kreuzungen reproduzierbar, konfliktfrei und steuerbar bleiben.
 
+\paragraph{Beseitigung von Deadlocks}
+Während der initialen Simulationen traten in SUMO wiederholt Deadlocks an komplexen Kreuzungen auf, die in der realen Verkehrsführung nicht vorkommen.
+Ursache waren insbesondere von OSM importierte Rampen- und Abbiegebeziehungen, die zu konfliktbehafteten Fahrbeziehungen führten.
+Diese Knoten wurden in \texttt{netedit} gezielt angepasst:
+\begin{itemize}
+  \item Anpassung der Geometrie, um SUMO-konforme Fahrspuren und eindeutige Vorrangregeln zu gewährleisten,
+  \item Entfernung redundanter oder fehlerhafter Rampenverbindungen,
+  \item Sicherstellung, dass jede Fahrbeziehung durch ein passendes Signal geregelt wird.
+\end{itemize}
+Die Änderungen wurden so umgesetzt, dass die realweltliche Topologie beibehalten wurde.
+Durch diese Eingriffe konnte die Simulation ohne Deadlocks und mit stabilen Verkehrsflüssen betrieben werden.
+
+\paragraph{Visualisierung manueller Anpassungen}
+Abbildung~\ref{fig:tls_fix} zeigt exemplarisch eine Kreuzung vor und nach der manuellen Anpassung in \texttt{netedit}.
+Links ist die fehlerhafte Geometrie mit konfliktbehafteten Rampenverbindungen zu sehen,
+die in SUMO zu Deadlocks führten.
+Rechts ist die angepasste Version dargestellt,
+bei der alle Fahrbeziehungen eindeutig definiert und den Signalgruppen korrekt zugeordnet sind.
+Die Topologie entspricht der realen Verkehrsführung, wurde jedoch so modelliert, dass SUMO sie fehlerfrei simulieren kann.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.45\textwidth]{junction_before.PNG}
+  \hfill
+  \includegraphics[width=0.45\textwidth]{junction_after.PNG}
+  \caption{Vorher-Nachher-Vergleich einer angepassten TLS-Kreuzung (netedit \cite{netedit})}
+  \label{fig:tls_fix}
+\end{figure}
+
 \subsubsection{Ergebnis: ein realistisches, RL-kompatibles Netz}
 
 Im Gegensatz zu einer synthetischen Umgebung basiert das nun eingesetzte Trainingsnetz auf realen topologischen Daten, wurde jedoch gezielt für den Einsatz mit \texttt{sumo-rl} überarbeitet. Es erfüllt folgende Eigenschaften:

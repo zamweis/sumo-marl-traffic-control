@@ -1,65 +1,115 @@
 \subsection{Reinforcement-Learning-Konzept}
 \label{sec:rl-konzept}
+
 \subsubsection{Formulierung des RL-Problems}
 Das Problem der Verkehrssteuerung wird als sequentielles Entscheidungsproblem \cite{sutton-barto} modelliert und mit Hilfe von Reinforcement Learning (RL) gelöst.
-Es wurden mehrere RL-Modelle trainiert, die sich in der verwendeten Belohnungsfunktion und den Hyperparameter-Strategien unterscheiden.
-Im Trainingsskript ist jede Belohnungsfunktion als eigene Python-Funktion implementiert, und die jeweils gewünschte Variante wird durch Setzen des Parameters \texttt{reward\_fn} im Aufruf der SUMO-Umgebung ausgewählt.
-So lassen sich einzelne Varianten gezielt ein- oder ausschalten.
-Die Umgebung besteht aus dem simulierten Straßennetz, wie es in SUMO definiert ist. \cite{TraCI}
-Die Interaktion erfolgt über das TraCI-Interface, das eine Laufzeitsteuerung der Ampelanlagen erlaubt.
+Ein Agent interagiert dabei mit der SUMO-Simulationsumgebung, welche den Verkehrsfluss in diskreten Zeitschritten abbildet.
+Der Agent beobachtet den aktuellen Zustand \(s_t\), wählt eine Aktion \(a_t\), erhält eine Belohnung \(r_t\) und beeinflusst dadurch den Folgezustand \(s_{t+1}\).
+Ziel ist es, eine Policy \(\pi(a|s)\) zu erlernen, die langfristig die erwartete kumulierte Belohnung maximiert.
 
-\paragraph{Zustände}
-Der Zustand \( s_t \) eines Reinforcement-Learning-Agenten beschreibt die Verkehrssituation an einer einzelnen Kreuzung zum Zeitpunkt \( t \). Ziel ist es, dem Agenten ausreichend Informationen über den lokalen Verkehrsfluss zur Verfügung zu stellen, damit er fundierte Entscheidungen über die Steuerung der Lichtsignalanlage treffen kann.
+Im Trainingsskript sind die verschiedenen Belohnungsfunktionen jeweils als eigene Python-Funktion implementiert und werden über den Parameter \texttt{reward\_fn} in der SUMO-Umgebung ausgewählt.
+Dadurch können unterschiedliche Optimierungsziele systematisch untersucht werden.
+Die Kommunikation mit der Simulation erfolgt über das TraCI-Interface \cite{TraCI}, welches eine Laufzeitsteuerung der Lichtsignalanlagen erlaubt.
 
-Die Zustandsrepräsentation basiert auf den folgenden Komponenten: \cite{sumo-doc}
+\subsubsection{Auswahl des RL-Algorithmus}
+Für das Training wurde der Algorithmus \textit{Proximal Policy Optimization} (PPO) eingesetzt.
+PPO ist ein \textit{on-policy} Policy-Gradient-Verfahren, das durch eine Clip-Funktion für Policy-Updates stabile Lernkurven und gute Sample-Effizienz ermöglicht~\cite{schulman2017ppo}.
+Der Algorithmus hat sich in zahlreichen Studien zur Verkehrsoptimierung mit SUMO als robust und leistungsfähig erwiesen, insbesondere im Multiagenten-Setting~\cite{sumorl2020,li2021multiagent}.
+
+\paragraph{Begründung der Algorithmuswahl}
+Alternative Verfahren wie \textit{Deep Q-Networks (DQN)} oder \textit{Advantage Actor-Critic (A2C)} wurden verworfen, da sie bei kontinuierlichen Zustandsräumen und in Multiagentenszenarien oft instabile Lernverläufe zeigen.
+\textit{Soft Actor-Critic (SAC)} gilt zwar als state-of-the-art für kontinuierliche Steuerungsprobleme, erfordert aber große Replay-Puffer und hohe Rechenressourcen.
+PPO stellt somit einen sinnvollen Kompromiss zwischen Stabilität, Implementationsaufwand und empirischer Leistungsfähigkeit dar und integriert sich nahtlos in die bestehende \texttt{sumo-rl}-Umgebung.
+
+\subsubsection{Zustände}
+Der Zustand \(s_t\) beschreibt die Verkehrssituation an einer Kreuzung zum Zeitpunkt \(t\).
+Die Zustandsrepräsentation umfasst: \cite{sumo-doc}
 \begin{itemize}
-  \item \textbf{Fahrzeuganzahl pro Zufahrtsspur:} Für jede dem Knoten zuführende Fahrspur wird die aktuelle Anzahl an Fahrzeugen ermittelt. Dies geschieht über sogenannte \texttt{laneAreaDetector}, die für jede Spur individuell in SUMO definiert werden. Die Werte werden periodisch über \texttt{TraCI} abgefragt.
-  \item \textbf{Warteschlangenlänge (queue length):} Gibt die Anzahl der Fahrzeuge an, die sich auf einer Spur mit Geschwindigkeit \texttt{< 0.1 m/s} befinden. Dies ist ein wichtiges Maß für Rückstaus an Kreuzungen.
-  \item \textbf{Durchschnittliche Geschwindigkeit pro Spur:} Diese Kenngröße erlaubt Rückschlüsse auf den Verkehrsfluss pro Richtung und ergänzt die reine Anzahlinformation.
-  \item \textbf{Ampelphase (TLS state):} Die aktuell geschaltete Ampelphase wird als diskrete Phase kodiert (z.\,B. 0, 1, 2, ...). In SUMO entspricht dies dem Index der aktiven Phase im Phasenplan der TLS.
-  \item \textbf{Dauer der aktuellen Phase:} Die Anzahl der Zeitschritte seit Beginn der aktuellen Phase. Diese Information ist notwendig, um Phasenlängen sinnvoll zu steuern (z.\,B. Mindestgrünzeit).
-  \item \textbf{Binärmasken zur Phasenwechselbarkeit:} Kodierung, ob ein Wechsel zur nächsten Phase gemäß Übergangsbedingungen (z.\,B. Mindestgrünzeit) aktuell möglich ist. Diese Information ist erforderlich, falls das Aktionsmodell auch direkte Sprünge zwischen nicht direkt benachbarten Phasen erlaubt.
-  \item \textbf{Optional – Nachbarschaftszustand:} In Multi-Agent-Settings kann es sinnvoll sein, zusätzlich aggregierte Zustandsinformationen benachbarter Knoten einzubeziehen (z.\,B. Gesamtwarteschlange auf ausgehenden Spuren, die zu benachbarten TLS führen).
+  \item Fahrzeuganzahl pro Spur (mittels \texttt{laneAreaDetector}),
+  \item Warteschlangenlänge (Anzahl Fahrzeuge mit \(v < 0.1 \,\mathrm{m/s}\)),
+  \item Durchschnittsgeschwindigkeit pro Spur,
+  \item aktuelle Ampelphase (TLS state),
+  \item Dauer der aktuellen Phase,
+  \item Binärmasken zur Phasenwechselbarkeit,
+  \item optional aggregierte Zustände benachbarter Kreuzungen (Multiagentensetting).
 \end{itemize}
+Die Merkmale werden normiert und als Eingabevektor an das neuronale Netz des Agenten übergeben.
 
-Die Zustände werden zu einem normierten Merkmalsvektor kombiniert und bilden damit die Eingabe für das neuronale Entscheidungsmodell des Agenten.
-
-\paragraph{Aktionen}
-Die Aktionsmenge \( A \) eines Agenten beschreibt die Eingriffsmöglichkeiten in den Steuerungsablauf der jeweiligen Ampelkreuzung. Dabei wird zwischen zwei gängigen Aktionsmodellen unterschieden: \cite{sumo-rl_docs}
+\subsubsection{Aktionen}
+Die Aktionsmenge \(A\) beschreibt die Eingriffsmöglichkeiten in die Steuerung der Lichtsignalanlage:
 \begin{enumerate}
-  \item \textbf{Phasenwechsel-Modell:} Der Agent entscheidet, ob die aktuelle Phase fortgesetzt oder zur nächsten gewechselt werden soll. Es handelt sich um ein binäres Aktionsmodell:
-        \[
-          A = \{ \texttt{keep},\ \texttt{switch} \}
-        \]
-        Diese Variante wird häufig in klassischen SUMO-RL-Implementierungen verwendet (z.\,B. \texttt{sumo-rl}). Die Reihenfolge der Phasen ist dabei festgelegt (z.\,B. zyklischer Übergang).
-  \item \textbf{Direktwahl-Modell:} Der Agent wählt direkt aus allen möglichen Phasen die nächste aus:
-        \[
-          A = \{ \texttt{phase}_0,\ \texttt{phase}_1,\ \ldots,\ \texttt{phase}_n \}
-        \]
-        Diese Variante erfordert eine eigene Definition der Übergangslogik in SUMO (z.\,B. über permissive TLS-Ketten), erlaubt aber größere Flexibilität und exploratives Verhalten.
+  \item \textbf{Phasenwechsel-Modell:} Der Agent entscheidet binär, ob die aktuelle Phase fortgesetzt oder gewechselt wird (\(A = \{\texttt{keep}, \texttt{switch}\}\)).
+  \item \textbf{Direktwahl-Modell:} Der Agent wählt direkt eine der möglichen Phasen (\(A = \{\texttt{phase}_0, \ldots, \texttt{phase}_n\}\)).
 \end{enumerate}
+Einschränkungen sind u.\,a. Mindestgrünzeiten, automatisch generierte Zwischenphasen (Gelb, Räumzeit) und die Synchronität mehrerer Agentenentscheidungen.
+Zur Vermeidung hektischer Schaltungen wird ein Action-Interval (z.\,B. 5\,s) definiert.
 
-Unabhängig vom Modell gelten folgende Einschränkungen: \cite{sumo-doc,sumo-rl_docs}
+\subsubsection{Belohnungsfunktionen}
+
+\texttt{sumo-rl} unterstützt verschiedene standardisierte Reward-Funktionen: \cite{sumo-rl_docs}
+
 \begin{itemize}
-  \item \textbf{Mindestgrünzeiten:} Ein Wechsel der Phase darf erst nach einer definierten Mindestgrünzeit erfolgen (z.\,B. 5\,s), um realistische Signalisierung und Verkehrssicherheit zu gewährleisten.
-  \item \textbf{Sicherheitsbedingte Zwischenphasen:} SUMO erzwingt automatisch Zwischenphasen wie Gelb- oder Räumzeiten. Der Agent gibt nur den Phasenwunsch an, die exakte Ablaufsteuerung erfolgt durch das TLS-Modell in SUMO.
-  \item \textbf{Simultane Agentenentscheidung:} Bei mehreren Knoten wird jeder TLS-Agent unabhängig gesteuert, es sei denn, ein zentrales Multi-Agent-Training wird implementiert.
+  \item \texttt{"diff-waiting-time"}: Reduktion der Differenz kumulierter Wartezeiten,
+  \item \texttt{"average-speed"}: Maximierung der mittleren Geschwindigkeit im Netz,
+  \item \texttt{"queue"}: Minimierung der Gesamtlänge aller Warteschlangen.
 \end{itemize}
 
-Zur Reduktion der Aktionsfrequenz wird häufig ein sogenanntes \textbf{Action Interval} festgelegt (z.\,B. alle 5\,s), sodass Entscheidungen nur in bestimmten Zeitschritten getroffen werden können. Dies verhindert zu hektisches Umschalten der Ampeln.
+Im Rahmen dieser Arbeit wurden zusätzlich mehrere eigene Reward-Funktionen implementiert.
+Eine Übersicht zeigt Tabelle~\ref{tab:reward-overview}.
 
-\paragraph{Belohnungsfunktionen}
-Es wurden mehrere alternative Belohnungsfunktionen implementiert, um unterschiedliche Optimierungsziele zu untersuchen:
+\begin{table}[H]
+  \centering
+  \begin{tabular}{p{3cm} p{5cm} p{3.5cm}}
+    \toprule
+    \textbf{Reward-Variante} & \textbf{Optimierungsziel}                   & \textbf{Bezug zur Literatur} \\ \midrule
+    Emissions-basiert        & Reduktion lokaler Emissionen                & \cite{mschrader15,zheng2022} \\
+    Reisezeit-basiert        & Minimierung mittlerer Reisezeit             & Eigene Erweiterung           \\
+    Realworld-Variante       & Praktisch messbare Größen (Queues, Fluss)   & Eigene Erweiterung           \\
+    Custom-Variante          & Kombination mehrerer Indikatoren            & Eigene Erweiterung           \\
+    Zeit-Emission-Mix        & Trade-off zwischen Zeit und Umweltbelastung & \cite{mschrader15}           \\ \bottomrule
+  \end{tabular}
+  \caption{Übersicht der implementierten Reward-Funktionen und deren theoretische Motivation.}
+  \label{tab:reward-overview}
+\end{table}
+
+Für das Haupttraining wurde die \texttt{realworld\_reward}-Funktion verwendet, da sie ausschließlich auf Metriken basiert,
+die in der Praxis mit vergleichsweise einfacher Sensorik (z.\,B. Kameras, Induktionsschleifen) erfasst werden können.
+Für Vergleichsläufe kamen die weiteren Varianten aus Tabelle~\ref{tab:reward-overview} zum Einsatz (siehe Anhang \ref{app:train_script}).
+
+\paragraph{Formale Definition der Realworld-Belohnungsfunktion}
+Die Belohnungsfunktion \texttt{realworld\_reward} berechnet für jede Zeiteinheit $t$ den Reward $R_t$ wie folgt:
+
+\begin{equation}
+  R_t = - w_q \cdot q_{\mathrm{norm}} - w_{\mathrm{build}} \cdot b_{\mathrm{norm}} + w_f \cdot f_{\mathrm{norm}} - w_{\mathrm{switch}} \cdot \mathrm{phase\_sw}
+\end{equation}
+
+mit:
+\begin{align}
+  q_{\mathrm{norm}} & = \frac{\mathrm{EMA}(Q_t)}{Q_{\max}}                \\
+  b_{\mathrm{norm}} & = \frac{\max(0, Q_t - Q_{t-1})}{0.2 \cdot Q_{\max}} \\
+  f_{\mathrm{norm}} & = \frac{\mathrm{EMA}(F_t)}{F_{\max}}
+\end{align}
+
+wobei gilt:
 \begin{itemize}
-  \item \textbf{Emissions-basiert mit Geschwindigkeit:} kombiniert mittlere CO\(_2\)-Emissionen, mittlere Geschwindigkeit, Fahrzeugfluss und Warteschlangenlänge.
-  \item \textbf{Reisezeit-basiert:} optimiert die mittlere Reisezeit aller Fahrzeuge.
-  \item \textbf{Realworld-Variante:} berücksichtigt u.\,a. Warteschlangenaufbau, Fahrzeugfluss und Phasenwechselkosten.
-  \item \textbf{Custom-Variante:} gewichtet Wartezeiten, Warteschlangenänderungen, Ankünfte, Teleports und Kollisionen.
-  \item \textbf{Zeit-Emission-Mix:} kombiniert Reisezeit- und Emissionsoptimierung.
+  \item $Q_t$: aktuelle Warteschlangenlänge
+  \item $F_t$: aktuelle Durchflussrate
+  \item $\mathrm{EMA}(\cdot)$: Exponentieller gleitender Mittelwert mit $\alpha = 0.3$
+  \item $Q_{\max} = 40$ Fahrzeuge
+  \item $F_{\max} = 8$ Fahrzeuge/Zeitschritt
+  \item $\mathrm{phase\_sw} \in \{0, 1\}$: Indikator für Phasenwechsel im aktuellen Schritt
+  \item Gewichtungen: $w_q = 1.0$, $w_{\mathrm{build}} = 0.8$, $w_f = 0.7$, $w_{\mathrm{switch}} = 0.1$
 \end{itemize}
-Die aktive Variante wird im Code durch Setzen von \texttt{reward\_fn} ausgewählt (siehe Anhang \ref{app:train_script}).
 
-\paragraph{Hyperparameter-Anpassung}
-Für die RL-Algorithmen (hier PPO) \cite{PPO} wurden neben festen Parametern auch zeitabhängige \emph{Schedules} eingesetzt, um Lernrate, Clip-Range oder Entropiekoeffizient während des Trainings dynamisch anzupassen.
-Umgesetzt wurden u.\,a. Cosine-Warmup-Strategien \cite{warmup} mit anschließendem Absenken, lineare Absenkung \cite{Adaptive_Exploration} und adaptive Entropie-Steuerung.
-Die jeweiligen Anpassungsfunktionen werden beim Erstellen des Modells übergeben und steuern die Werte abhängig vom Trainingsfortschritt (siehe Anhang \ref{app:train_script}).
+Der Reward wird auf $[-5, 5]$ geclippt, um Ausreißer zu begrenzen.
+Er belohnt hohe Durchflussraten und stabile Warteschlangen, während unnötige Phasenwechsel sowie starker Warteschlangenaufbau bestraft werden.
+
+
+\subsubsection{Hyperparameter-Anpassung}
+Für PPO wurden neben festen Werten auch dynamische \emph{Schedules} eingesetzt, um Lernrate, Clip-Range oder Entropiekoeffizient während des Trainings anzupassen.
+Implementiert wurden u.\,a. Cosine-Warmup mit anschließendem Absenken, lineare Absenkung und adaptive Entropie-Steuerung.
+
+\paragraph{Motivation der gewählten Schedules}
+Diese Schedules vermeiden typische Probleme wie frühes Overfitting oder stagnierende Exploration.
+Das Cosine-Warmup erlaubt eine initiale Erkundung bei hoher Lernrate, während der anschließende Cosine-Decay den Lernprozess stabilisiert.
+Die adaptive Entropiesteuerung sorgt dafür, dass zu Beginn stark exploriert wird und im weiteren Verlauf zunehmend exploitation-basiert gelernt wird – ein Vorgehen, das sich in verwandten Arbeiten bewährt hat~\cite{Adaptive_Exploration}.

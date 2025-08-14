@@ -33,21 +33,42 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
 
 Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} \cite{PettingZoo} und \texttt{SuperSuit} \cite{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes API für Multiagenten-Umgebungen bereit – analog zu \texttt{Gymnasium} \cite{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist.
 
+\subsubsection{Agentenzuordnung im Multiagentensystem}
+Jede steuerbare Lichtsignalanlage (TLS) wird einem eindeutigen Agenten zugeordnet.
+Die Zuordnung erfolgt deterministisch anhand der in der SUMO-Netzdatei vergebenen TLS-IDs.
+Die Agenten handeln vollständig lokal, es findet kein direkter Informationsaustausch zwischen ihnen statt.
+Jede Beobachtung wird vor der Weitergabe an die Policy mittels \texttt{VecNormalize} standardisiert,
+sodass alle Eingaben über verschiedene Kreuzungen hinweg vergleichbar sind.
+Die Beobachtungsvektoren werden mit \texttt{pad\_observations\_v0} auf eine feste Länge gebracht,
+die sich aus der maximalen Spuranzahl einer Kreuzung multipliziert mit der Anzahl Spurfeatures (Queue, Geschwindigkeit, Dichte)
+zuzüglich der Phasenfeatures (Phase, Phasendauer) ergibt.
+
+\subsubsection{Vermeidung von Überanpassung}
+Um zu verhindern, dass die trainierten Agenten lediglich auf wiederkehrende Verkehrsmuster optimiert werden,
+wurden die Routenflüsse mit \texttt{randomTrips.py} generiert.
+Dadurch variiert die Nutzung einzelner Strecken, und es entstehen unterschiedliche Verkehrsverteilungen innerhalb der Episoden.
+Zusätzlich wurden während des Trainings mit \texttt{TensorBoard} zentrale Leistungsmetriken (mittlere Geschwindigkeit, Wartezeit, CO$_2$-Emissionen, Durchsatz) in Echtzeit überwacht,
+um sicherzustellen, dass sich die Leistungsverbesserungen nicht nur auf die Trainingsdaten beziehen.
+Evaluationsläufe mit zuvor nicht genutzten Zufallsseeds dienen der abschließenden Validierung (siehe Kapitel~\ref{chap:validation}).
+
+
 \subsubsection{Konfiguration der Umgebung}
 
-Die Reinforcement-Learning-Umgebung wurde auf Basis der Klasse \texttt{parallel\_env} aus \texttt{sumo-rl} konfiguriert. Wichtige Parameter umfassen:
+Die Reinforcement-Learning-Umgebung wurde auf Basis der Klasse \texttt{parallel\_env} aus \texttt{sumo-rl} konfiguriert.
+Wichtige Parameter umfassen:
 
 \begin{itemize}
   \item \texttt{net\_file}, \texttt{route\_file}: Pfade zum bereinigten Verkehrsnetz und zugehöriger Routendatei.
   \item \texttt{use\_gui}: Deaktiviert für schnelleres Training (\texttt{False}); bei Bedarf zur Laufzeit aktivierbar.
-  \item \texttt{num\_seconds}: Dauer einer Simulationsepisode in Sekunden (hier 5000\,s); das Episodenende wird unabhängig vom Verkehrsaufkommen nach Ablauf dieser Zeit ausgelöst.
-  \item \texttt{delta\_time}: Zeitabstand zwischen Agentenentscheidungen; nicht überschrieben, daher \textbf{Defaultwert 5\,s}.
-  \item \texttt{reward\_fn}: Referenz auf die aktive Belohnungsfunktion; im Haupttraining \texttt{realworld\_reward}.
-  \item \texttt{min\_green}: Minimale Grünphasenlänge (5\,s) zur Sicherstellung realistischer Signalzyklen.
+  \item \texttt{num\_seconds}: Dauer einer Simulationsepisode in Sekunden (hier 5000\,s).
+  \item \texttt{delta\_time}: Zeitabstand zwischen Agentenentscheidungen (Default: 5\,s).
+  \item \texttt{reward\_fn}: Referenz auf die aktive Belohnungsfunktion.
+        Für das Haupttraining wurde \texttt{realworld\_reward} verwendet (Details siehe Abschnitt~\ref{sec:rl-konzept}).
+  \item \texttt{min\_green}: Minimale Grünphasenlänge (5\,s).
   \item \texttt{max\_depart\_delay}: Maximale Verzögerung bei der Einfahrt eines Fahrzeugs (100\,s).
-  \item \texttt{sumo\_seed}: Fester Zufalls-Seed aus der Seedliste $\{546456, 678678, 234256, 678\}$ zur Reproduzierbarkeit von Verkehrsflüssen und Routenentscheidungen.
-  \item \texttt{add\_system\_info}: Wenn aktiviert, werden systemweite Kennzahlen in die \emph{Info}-Daten (\texttt{infos}) eingebettet (nicht Teil des Zustandsvektors).
-  \item \texttt{add\_per\_agent\_info}: Ergänzt die lokale Beobachtung jedes Agenten um zusätzliche Kontextdaten (hier deaktiviert).
+  \item \texttt{sumo\_seed}: Fester Zufalls-Seed aus der Seedliste $\{546456, 678678, 234256, 678\}$.
+  \item \texttt{add\_system\_info}: Ergänzt systemweite Kennzahlen in den \texttt{infos}.
+  \item \texttt{add\_per\_agent\_info}: Kontextdaten pro Agent (hier deaktiviert).
   \item \texttt{single\_agent = False}: Multiagentenmodus; jede steuerbare Ampel ist ein separater Agent.
 \end{itemize}
 
@@ -79,26 +100,6 @@ Der Aktionsraum ist diskret und erlaubt die Auswahl der nächsten Signalphase.
 Ein Phasenwechsel wird durch SUMO automatisch mit einer Zwischenphase (Gelbphase) ergänzt.
 Alle Agenten entscheiden synchron in Intervallen von \texttt{delta\_time = 5\,s}.
 
-
-\subsubsection{Belohnungsfunktionen}
-
-\texttt{sumo-rl} unterstützt verschiedene standardisierte Reward-Funktionen: \cite{sumo-rl_docs}
-
-\begin{itemize}
-  \item \texttt{"diff-waiting-time"}: Reduktion der Differenz kumulierter Wartezeiten,
-  \item \texttt{"average-speed"}: Maximierung der mittleren Geschwindigkeit im Netz,
-  \item \texttt{"queue"}: Minimierung der Gesamtlänge aller Warteschlangen.
-\end{itemize}
-
-Im Rahmen dieser Arbeit wurden zusätzlich mehrere eigene Reward-Funktionen implementiert (siehe Abschnitt~\ref{sec:rl-konzept}).
-Für das Haupttraining wurde \texttt{realworld\_reward} eingesetzt, da diese ausschließlich auf Metriken basiert,
-die sich in der Praxis mit vergleichsweise einfacher Sensorik (z.\,B. Kameras, Induktionsschleifen, Lichtsensoren) erfassen lassen,
-wie Warteschlangenlänge, Anzahl anfahrender Fahrzeuge und durchschnittliche Geschwindigkeit.
-
-Für Vergleichsläufe wurden weitere Varianten eingesetzt, darunter \texttt{emissions\_with\_speed\_reward}
-(Kombination aus geglätteten, exponentiell gemittelten CO\(_2\)-Emissionen mit $\alpha=0.3$ (negativ), Geschwindigkeit (positiv),
-Fluss (positiv) sowie Warteschlangenlänge (negativ), mit \texttt{tanh}-Clamping),
-sowie \texttt{travel\_time\_reward}, \texttt{custom\_reward} und \texttt{travel\_time\_emissions\_reward} (siehe Anhang \ref{app:train_script}).
 
 \subsubsection{Trainingsalgorithmus und Hyperparameter}
 
@@ -195,6 +196,9 @@ sowie die Analyse des Lernfortschritts in unterschiedlichen Trainingsphasen.
 Die Visualisierungen wurden zudem genutzt, um Hyperparameter-Anpassungen
 in Vorversuchen gezielt zu validieren.
 
+\subsubsection{Systemumgebung und Durchführung}
+
+
 \paragraph{Hardware-Setup}
 Alle Trainingsläufe wurden auf einem System mit
 Intel\textsuperscript{\textregistered} Core\textsuperscript{TM} i7-6700K Prozessor
@@ -228,6 +232,36 @@ Zur Sicherstellung der Reproduzierbarkeit wurden Seeds für NumPy, PyTorch und S
 \paragraph{Fehler- und Abbruchbehandlung}
 Bei manuellem Abbruch (\texttt{KeyboardInterrupt}) werden der aktuelle Modellstand (\texttt{model\_interrupt.zip}) und Normalisierungsdaten (\texttt{vecnormalize\_interrupt.pkl}) gesichert. Im \texttt{finally}-Block wird die Normalisierung zusätzlich persistiert und die Umgebung sauber geschlossen.
 
+\paragraph{Simulationsgeschwindigkeit und Parallelität}
+Die Trainingsdauer für ein vollständiges Haupttraining mit $2 \times 10^6$ Schritten beträgt im Mittel etwa zwei Stunden pro Seed,
+wobei die genaue Laufzeit stark von der Komplexität der verwendeten Reward-Funktion abhängt.
+Eine Parallelisierung über mehrere CPU-Kerne wurde nicht umgesetzt,
+da \texttt{sumo-rl} in der genutzten Version nicht vollständig thread-sicher ist
+und \texttt{TraCI} keine automatisierte Portzuweisung für parallele SUMO-Instanzen erlaubt.
+Der durchschnittliche Simulationsdurchsatz lag bei etwa $700$--$800$ Simulationsschritten pro realer Sekunde im \texttt{meso}-Modus
+und $250$--$300$ Schritten/s im \texttt{default}-Modus (ohne GUI).
+
+
 \subsubsection{Zusammenfassung}
 
 Die konfigurierte RL-Umgebung erlaubt eine modulare und flexible Steuerung realer Verkehrsnetze auf Basis von SUMO. Durch die Kombination aus systematischer TLS-Auswahl, stabiler und geglätteter Reward-Funktion, adaptiven Hyperparameter-Schedules, vorbereiteter Multi-Core-Parallellisierung, konsequenter Reproduzierbarkeit und umfassendem Monitoring (inkl. Checkpoints, Metriklogging und Bestmodell-Erkennung) wurde eine solide Grundlage für die experimentelle Evaluation lernbasierter Verkehrssteuerung geschaffen.
+
+\subsubsection{Evaluationsstrategie}
+\label{sec:evaluation-strategy}
+
+Zur abschließenden Bewertung der trainierten Modelle wird ein systematischer Evaluationsplan verfolgt (Details und Ergebnisse siehe Kapitel~\ref{chap:validation}).
+Dabei wird stets das gleiche, bereinigte Verkehrsnetz verwendet, um die Vergleichbarkeit zu gewährleisten.
+Variiert werden hingegen die folgenden Dimensionen:
+
+\begin{itemize}
+  \item \textbf{Trainierte Modelle:} Es werden mehrere Varianten von Agenten getestet, die sich durch unterschiedliche Belohnungsfunktionen unterscheiden (vgl. Abschnitt~\ref{sec:rl-konzept}).
+  \item \textbf{Verkehrsszenarien:} Für die Simulation werden sowohl deterministisch definierte Routenflüsse (Trips) als auch stochastisch generierte Verkehrsmuster (RandomTrips) genutzt.
+        Zusätzlich wird die Verkehrsstärke variiert, sodass Szenarien mit geringer, mittlerer und hoher Anzahl an Fahrzeugen betrachtet werden.
+  \item \textbf{Baselines:} Als Vergleich dienen Referenzszenarien mit statischen Signalsteuerungen (z.\,B. feste Zykluszeiten, Zufallssteuerung).
+\end{itemize}
+
+Die Leistungsbewertung erfolgt anhand zentraler Verkehrs- und Umweltmetriken, darunter mittlere Reisezeit, mittlere Geschwindigkeit, Gesamtlänge der Warteschlangen sowie aggregierte CO\textsubscript{2}-Emissionen pro Fahrzeug und Zeiteinheit.
+Alle Ergebnisse werden über mehrere unabhängige Seeds gemittelt, um die Robustheit der Aussagen zu erhöhen.
+Darüber hinaus werden Evaluationsläufe mit zuvor nicht genutzten Seeds durchgeführt, um eine Überanpassung auf spezifische Verkehrsmuster auszuschließen.
+
+Diese Strategie stellt sicher, dass die in Kapitel~\ref{chap:validation} präsentierten Ergebnisse reproduzierbar, belastbar und auf unterschiedliche Verkehrssituationen übertragbar sind.
