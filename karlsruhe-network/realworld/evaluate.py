@@ -13,7 +13,7 @@ RUNS = sorted(glob.glob(os.path.join("runs", "ppo_sumo_*")))
 MODEL_NAME  = "best_model.zip"
 N_EPISODES  = 10
 EP_LENGTH_S = 5000
-SEEDS       = [546456, 678678, 234256, 678, 10101]
+SEEDS       = [1111, 2222, 3333, 4444]
 SCENARIOS   = [
     {"name": "morning_peak", "route_file": "flows_morning.rou.xml"},
     {"name": "evening_peak", "route_file": "flows_evening.rou.xml"},
@@ -154,41 +154,73 @@ def rollout(model, env):
 
     return mean_metrics
 
+def shorten_key(orig_key: str) -> str:
+    """
+    Kürzt SUMO-Systemmetriken für TensorBoard-Logs.
+    - 'system_total_waiting_time' → 'mean_waiting_time'
+    - 'system_mean_speed' → 'mean_speed'
+    - andere Keys bleiben gleich
+    """
+    if orig_key.startswith("system_"):
+        short_key = orig_key[len("system_"):]   # z.B. 'total_waiting_time'
+        if short_key.startswith("total_"):
+            short_key = short_key[len("total_"):]  # 'waiting_time'
+        short_key = "mean_" + short_key            # 'mean_waiting_time'
+        return short_key
+    else:
+        return orig_key
+
+
 # ----- Evaluation Loop -----
 def evaluate():
     results = []
-    log_dir = os.path.join("evaluation", "logs",
-                           f"eval_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}")
-    os.makedirs(log_dir, exist_ok=True)
-    logger = configure(log_dir, ["tensorboard", "stdout"])
+    log_dir_root = os.path.join("evaluation", "logs")
+    total_episodes = len(RUNS) * len(SCENARIOS) * len(SEEDS) * N_EPISODES
+    ep_counter = 0
 
     for run_dir in RUNS:
-        print(f"[INFO] Evaluating run: {run_dir}")
         for sc in SCENARIOS:
             for seed in SEEDS:
-                print(f"[INFO] Scenario={sc['name']} | Seed={seed}")
+                # Logdir hängt Seed und Szenario an
+                log_dir = os.path.join(
+                    log_dir_root,
+                    f"eval_{os.path.basename(run_dir)}_{sc['name']}_seed{seed}"
+                )
+                os.makedirs(log_dir, exist_ok=True)
+                logger = configure(log_dir, ["tensorboard", "stdout"])
+
+                print(f"[INFO] Evaluating run={run_dir}, scenario={sc['name']}, seed={seed}")
                 env_raw = make_env(sc["route_file"], sumo_seed=seed)
                 model, env = load_model_and_norm(env_raw, run_dir)
 
                 for ep in range(N_EPISODES):
-                    print(f"[DEBUG] Episode {ep+1}/{N_EPISODES} starting...")
+                    ep_counter += 1
+                    print(f"[PROGRESS] Run={os.path.basename(run_dir)} | "
+                        f"Scenario={sc['name']} | Seed={seed} | "
+                        f"Episode {ep+1}/{N_EPISODES} "
+                        f"(global {ep_counter}/{total_episodes})")
+
                     m = rollout(model, env)
                     m.update({
                         "scenario": sc["name"],
                         "seed": seed,
                         "episode": ep,
                         "method": "RL",
-                        "run_dir": os.path.basename(run_dir)
+                        "run_dir": os.path.basename(run_dir),
                     })
                     results.append(m)
 
+                    # --- nur SUMO-Metriken loggen ---
                     for k, v in m.items():
-                        if isinstance(v, (int, float)):
-                            logger.record(f"{m['method']}/{sc['name']}/{k}", v)
-                    logger.record("rollout/ep_rew_mean", m["ep_rew"])
-                    logger.record("rollout/ep_len", m["ep_len"])
+                        if isinstance(v, (int, float)) and k not in ["ep_rew", "ep_len", "seed", "episode"]:
+                            short_key = shorten_key(k)
+                            logger.record(f"{m['method']}/{sc['name']}/{short_key}", v)
+
+                    # --- Episodenstatistiken separat ---
+                    logger.record(f"rollout/{sc['name']}/ep_rew_mean", m["ep_rew"])
+                    logger.record(f"rollout/{sc['name']}/ep_len", m["ep_len"])
+
                     logger.dump(step=len(results))
-                    print(f"[DEBUG] Episode {ep+1} finished. Metrics: {m}")
 
                 env.close()
 
