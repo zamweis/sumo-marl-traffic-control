@@ -49,7 +49,7 @@ wurden die Routenflüsse mit \texttt{randomTrips.py} generiert.
 Dadurch variiert die Nutzung einzelner Strecken, und es entstehen unterschiedliche Verkehrsverteilungen innerhalb der Episoden.
 Zusätzlich wurden während des Trainings mit \texttt{TensorBoard} zentrale Leistungsmetriken (mittlere Geschwindigkeit, Wartezeit, CO$_2$-Emissionen, Durchsatz) in Echtzeit überwacht,
 um sicherzustellen, dass sich die Leistungsverbesserungen nicht nur auf die Trainingsdaten beziehen.
-Evaluationsläufe mit zuvor nicht genutzten Zufallsseeds dienen der abschließenden Validierung (siehe Kapitel~\ref{chap:validation}).
+Evaluationsläufe mit zuvor nicht genutzten Zufallsseeds dienen der abschließenden Validierung (siehe Kapitel~\ref{sec:validation}).
 
 
 \subsubsection{Konfiguration der Umgebung}
@@ -249,7 +249,7 @@ Die konfigurierte RL-Umgebung erlaubt eine modulare und flexible Steuerung reale
 \subsubsection{Evaluationsstrategie}
 \label{sec:evaluation-strategy}
 
-Zur abschließenden Bewertung der trainierten Modelle wird ein systematischer Evaluationsplan verfolgt (Details und Ergebnisse siehe Kapitel~\ref{chap:validation}).
+Zur abschließenden Bewertung der trainierten Modelle wird ein systematischer Evaluationsplan verfolgt (Details und Ergebnisse siehe Kapitel~\ref{sec:validation}).
 Dabei wird stets das gleiche, bereinigte Verkehrsnetz verwendet, um die Vergleichbarkeit zu gewährleisten.
 Variiert werden hingegen die folgenden Dimensionen:
 
@@ -264,4 +264,4 @@ Die Leistungsbewertung erfolgt anhand zentraler Verkehrs- und Umweltmetriken, da
 Alle Ergebnisse werden über mehrere unabhängige Seeds gemittelt, um die Robustheit der Aussagen zu erhöhen.
 Darüber hinaus werden Evaluationsläufe mit zuvor nicht genutzten Seeds durchgeführt, um eine Überanpassung auf spezifische Verkehrsmuster auszuschließen.
 
-Diese Strategie stellt sicher, dass die in Kapitel~\ref{chap:validation} präsentierten Ergebnisse reproduzierbar, belastbar und auf unterschiedliche Verkehrssituationen übertragbar sind.
+Diese Strategie stellt sicher, dass die in Kapitel~\ref{sec:validation} präsentierten Ergebnisse reproduzierbar, belastbar und auf unterschiedliche Verkehrssituationen übertragbar sind.

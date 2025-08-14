@@ -13,8 +13,8 @@ Die Kommunikation mit der Simulation erfolgt über das TraCI-Interface \cite{Tra
 
 \subsubsection{Auswahl des RL-Algorithmus}
 Für das Training wurde der Algorithmus \textit{Proximal Policy Optimization} (PPO) eingesetzt.
-PPO ist ein \textit{on-policy} Policy-Gradient-Verfahren, das durch eine Clip-Funktion für Policy-Updates stabile Lernkurven und gute Sample-Effizienz ermöglicht~\cite{schulman2017ppo}.
-Der Algorithmus hat sich in zahlreichen Studien zur Verkehrsoptimierung mit SUMO als robust und leistungsfähig erwiesen, insbesondere im Multiagenten-Setting~\cite{sumorl2020,li2021multiagent}.
+PPO ist ein \textit{on-policy} Policy-Gradient-Verfahren, das durch eine Clip-Funktion für Policy-Updates stabile Lernkurven und gute Sample-Effizienz ermöglicht~\cite{PPO}.
+Der Algorithmus hat sich in zahlreichen Studien zur Verkehrsoptimierung mit SUMO als robust und leistungsfähig erwiesen, insbesondere im Multiagenten-Setting~\cite{PPO,zheng2022}.
 
 \paragraph{Begründung der Algorithmuswahl}
 Alternative Verfahren wie \textit{Deep Q-Networks (DQN)} oder \textit{Advantage Actor-Critic (A2C)} wurden verworfen, da sie bei kontinuierlichen Zustandsräumen und in Multiagentenszenarien oft instabile Lernverläufe zeigen.
