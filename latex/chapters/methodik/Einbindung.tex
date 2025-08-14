@@ -249,19 +249,19 @@ Die konfigurierte RL-Umgebung erlaubt eine modulare und flexible Steuerung reale
 \subsubsection{Evaluationsstrategie}
 \label{sec:evaluation-strategy}
 
-Zur abschließenden Bewertung der trainierten Modelle wird ein systematischer Evaluationsplan verfolgt (Details und Ergebnisse siehe Kapitel~\ref{sec:validation}).
-Dabei wird stets das gleiche, bereinigte Verkehrsnetz verwendet, um die Vergleichbarkeit zu gewährleisten.
-Variiert werden hingegen die folgenden Dimensionen:
+Zur Bewertung der trainierten Modelle wird ein systematischer, skriptbasierter Evaluationsplan verfolgt (Details und Ergebnisse siehe Kapitel~\ref{sec:validation}).
+Dabei wird stets dasselbe, bereinigte Verkehrsnetz (\texttt{map.net.xml}) verwendet, um die Vergleichbarkeit zu gewährleisten; variiert werden Signalsteuerung, Routenbelegung und Seeds.
+Im Gegensatz zu früheren Ansätzen werden \emph{statische Baselines direkt im Evaluationslauf} mitgeführt (fester Phasenplan und aktuiert).
 
+Folgende Dimensionen werden berücksichtigt:
 \begin{itemize}
-  \item \textbf{Trainierte Modelle:} Es werden mehrere Varianten von Agenten getestet, die sich durch unterschiedliche Belohnungsfunktionen unterscheiden (vgl. Abschnitt~\ref{sec:rl-konzept}).
-  \item \textbf{Verkehrsszenarien:} Für die Simulation werden sowohl deterministisch definierte Routenflüsse (Trips) als auch stochastisch generierte Verkehrsmuster (RandomTrips) genutzt.
-        Zusätzlich wird die Verkehrsstärke variiert, sodass Szenarien mit geringer, mittlerer und hoher Anzahl an Fahrzeugen betrachtet werden.
-  \item \textbf{Baselines:} Als Vergleich dienen Referenzszenarien mit statischen Signalsteuerungen (z.\,B. feste Zykluszeiten, Zufallssteuerung).
+  \item \textbf{Trainierte Modelle:} Es werden mehrere Varianten von RL-Agenten getestet, die sich durch unterschiedliche Belohnungsfunktionen unterscheiden (vgl. Abschnitt~\ref{sec:rl-konzept}).
+        Die Evaluationslogik ist so gestaltet, dass beliebig viele Reward-Varianten unter identischen Bedingungen eingebunden werden können.
+  \item \textbf{Verkehrsszenarien:} Für die Simulation werden verschiedene Routenprofile genutzt (z.\,B.\ deterministische Flüsse, stochastisch generierte Muster) mit unterschiedlichen Verkehrsstärken (gering, mittel, hoch).
+  \item \textbf{Baselines:} Als Referenz dienen SUMO-interne Steuerungen: ein fester Signalplan (Fixed-Time) und eine aktuiert gesteuerte Variante (Actuated).
 \end{itemize}
 
 Die Leistungsbewertung erfolgt anhand zentraler Verkehrs- und Umweltmetriken, darunter mittlere Reisezeit, mittlere Geschwindigkeit, Gesamtlänge der Warteschlangen sowie aggregierte CO\textsubscript{2}-Emissionen pro Fahrzeug und Zeiteinheit.
-Alle Ergebnisse werden über mehrere unabhängige Seeds gemittelt, um die Robustheit der Aussagen zu erhöhen.
-Darüber hinaus werden Evaluationsläufe mit zuvor nicht genutzten Seeds durchgeführt, um eine Überanpassung auf spezifische Verkehrsmuster auszuschließen.
+Alle Ergebnisse werden über mehrere Seeds und Episoden gemittelt, um die Robustheit der Aussagen zu erhöhen; für die stochastische Variation werden ausschließlich \emph{zuvor ungenutzte} Episoden-Seeds eingesetzt, sodass eine Überanpassung auf spezifische Muster ausgeschlossen wird.
 
-Diese Strategie stellt sicher, dass die in Kapitel~\ref{sec:validation} präsentierten Ergebnisse reproduzierbar, belastbar und auf unterschiedliche Verkehrssituationen übertragbar sind.
+Diese Strategie stellt sicher, dass die in Kapitel~\ref{sec:validation} präsentierten Ergebnisse reproduzierbar, belastbar und sowohl zwischen RL-Varianten als auch im Vergleich zu Baselines aussagekräftig sind.

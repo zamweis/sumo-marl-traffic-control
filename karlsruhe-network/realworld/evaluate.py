@@ -12,8 +12,8 @@ from supersuit import pettingzoo_env_to_vec_env_v1, concat_vec_envs_v1
 RUNS = sorted(glob.glob(os.path.join("runs", "ppo_sumo_*")))
 MODEL_NAME  = "best_model.zip"
 N_EPISODES  = 10
-EP_LENGTH_S = 5000
-SEEDS       = [1111, 2222, 3333, 4444]
+EP_LENGTH_S = 2500
+EP_SEEDS    = [12345, 67890, 13579, 24680, 11223, 44556, 77889, 99100, 31415, 27182]
 SCENARIOS   = [
     {"name": "morning_peak", "route_file": "flows_morning.rou.xml"},
     {"name": "evening_peak", "route_file": "flows_evening.rou.xml"},
@@ -109,19 +109,18 @@ def load_model_and_norm(env, run_dir):
     vecnorm_path = os.path.join(run_dir, "vecnormalize.pkl")
     model_path   = os.path.join(run_dir, MODEL_NAME)
 
-    print(f"[DEBUG] Loading VecNormalize from {vecnorm_path}")
+    #print(f"[DEBUG] Loading VecNormalize from {vecnorm_path}")
     env = VecNormalize.load(vecnorm_path, env)
     env.training = False
     env.norm_reward = False
 
-    print(f"[DEBUG] Loading PPO model from {model_path}")
+    #print(f"[DEBUG] Loading PPO model from {model_path}")
     model = PPO.load(model_path, env=env, device="cpu")
     return model, env
 
 # ----- Rollout -----
-# ----- Rollout -----
 def rollout(model, env):
-    print(f"[DEBUG] Starting rollout...")
+    #print(f"[DEBUG] Starting rollout...")
     obs = env.reset()
     dones = [False]
     info_acc = []
@@ -139,7 +138,7 @@ def rollout(model, env):
             filtered = {k: float(v) for k, v in info.items() if isinstance(v, (int, float))}
             info_acc.append(filtered)
 
-    print(f"[DEBUG] Rollout finished after {step_count} steps with reward {ep_reward:.2f}")
+    #print(f"[DEBUG] Rollout finished after {step_count} steps with reward {ep_reward:.2f}")
     mean_metrics = {}
     if info_acc:
         keys = set().union(*[set(d.keys()) for d in info_acc])
@@ -170,69 +169,159 @@ def shorten_key(orig_key: str) -> str:
     else:
         return orig_key
 
+# ----- Env Factory für Baselines -----
+def make_env_baseline(route_file, sumo_seed, fixed_time=True):
+    """
+    Erstellt eine SUMO-Umgebung, die den internen Controller verwendet.
+    fixed_time=True  -> Fester Phasenplan aus net.xml
+    fixed_time=False -> SUMO Actuated Control (falls in net.xml konfiguriert)
+    """
+    env = parallel_env(
+        net_file="map.net.xml",
+        route_file=route_file,
+        use_gui=False,
+        num_seconds=EP_LENGTH_S,
+        reward_fn=dummy_reward,            # Kein RL-Reward
+        fixed_ts=fixed_time,       # True = fixed, False = actuated
+        sumo_seed=sumo_seed,
+        add_system_info=True,
+        add_per_agent_info=False,
+    )
+    env = pad_observations_v0(env)
+    env = pad_action_space_v0(env)
+    env = pettingzoo_env_to_vec_env_v1(env)
+    env = concat_vec_envs_v1(env, num_vec_envs=1, num_cpus=1, base_class="stable_baselines3")
+    env = VecMonitor(env)
+    return env
+
+def dummy_reward(_ts):
+    return 0.0
+
+def rollout_baseline(env):
+    obs = env.reset()
+    dones = [False]
+    info_acc = []
+    ep_reward = 0.0
+    step_count = 0
+
+    # gültige Dummy-Aktion aus dem Action Space
+    dummy_action = np.array([env.action_space.sample() for _ in range(env.num_envs)])
+
+    while not dones[0]:
+        obs, rewards, dones, infos = env.step(dummy_action)
+        step_count += 1
+        ep_reward += rewards[0] if rewards is not None else 0.0
+
+        if infos:
+            info = infos[0] if isinstance(infos, list) else infos
+            filtered = {k: float(v) for k, v in info.items() if isinstance(v, (int, float))}
+            info_acc.append(filtered)
+
+    mean_metrics = {}
+    if info_acc:
+        keys = set().union(*[set(d.keys()) for d in info_acc])
+        for k in keys:
+            vals = [d[k] for d in info_acc if k in d]
+            if vals:
+                mean_metrics[k] = float(np.mean(vals))
+
+    mean_metrics["ep_rew"] = ep_reward
+    mean_metrics["ep_len"] = step_count
+    return mean_metrics
+
+def to_serializable(obj):
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    elif isinstance(obj, (np.floating,)):
+        return float(obj)
+    elif isinstance(obj, (np.ndarray,)):
+        return obj.tolist()
+    return str(obj)
 
 # ----- Evaluation Loop -----
 def evaluate():
     results = []
     log_dir_root = os.path.join("evaluation", "logs")
-    total_episodes = len(RUNS) * len(SCENARIOS) * len(SEEDS) * N_EPISODES
+    total_episodes = len(RUNS) * len(SCENARIOS) * N_EPISODES * 3
     ep_counter = 0
 
-    for run_dir in RUNS:
+    for run_i, run_dir in enumerate(RUNS):
         for sc in SCENARIOS:
-            for seed in SEEDS:
-                # Logdir hängt Seed und Szenario an
-                log_dir = os.path.join(
-                    log_dir_root,
-                    f"eval_{os.path.basename(run_dir)}_{sc['name']}_seed{seed}"
-                )
-                os.makedirs(log_dir, exist_ok=True)
-                logger = configure(log_dir, ["tensorboard", "stdout"])
+            log_dir = os.path.join(
+                log_dir_root,
+                f"eval_run{run_i}_{os.path.basename(run_dir)}_{sc['name']}"
+            )
+            os.makedirs(log_dir, exist_ok=True)
+            logger = configure(log_dir, ["tensorboard", "stdout"])
 
-                print(f"[INFO] Evaluating run={run_dir}, scenario={sc['name']}, seed={seed}")
-                env_raw = make_env(sc["route_file"], sumo_seed=seed)
+            print(f"[INFO] Evaluating run={run_dir}, scenario={sc['name']}")
+
+            for ep in range(N_EPISODES):
+                ep_seed = EP_SEEDS[ep]
+
+                # --- 1) Fixed-Time ---
+                env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=True)
+                ep_counter += 1
+                print(f"[PROGRESS] FixedTime | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
+                      f"({ep_counter}/{total_episodes})")
+                m = rollout_baseline(env)
+                m.update({
+                    "scenario": sc["name"],
+                    "ep_seed": ep_seed,
+                    "episode": ep,
+                    "method": "Baseline_FixedTime",
+                    "run_dir": os.path.basename(run_dir)
+                })
+                results.append(m)
+
+                # --- 2) Actuated ---
+                env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=False)
+                ep_counter += 1
+                print(f"[PROGRESS] Actuated | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
+                      f"({ep_counter}/{total_episodes})")
+                m = rollout_baseline(env)
+                m.update({
+                    "scenario": sc["name"],
+                    "ep_seed": ep_seed,
+                    "episode": ep,
+                    "method": "Baseline_Actuated",
+                    "run_dir": os.path.basename(run_dir)
+                })
+                results.append(m)
+
+                # --- 3) RL ---
+                env_raw = make_env(sc["route_file"], sumo_seed=ep_seed)
                 model, env = load_model_and_norm(env_raw, run_dir)
+                ep_counter += 1
+                print(f"[PROGRESS] RL | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
+                      f"({ep_counter}/{total_episodes})")
+                m = rollout(model, env)
+                m.update({
+                    "scenario": sc["name"],
+                    "ep_seed": ep_seed,
+                    "episode": ep,
+                    "method": "RL",
+                    "run_dir": os.path.basename(run_dir)
+                })
+                results.append(m)
 
-                for ep in range(N_EPISODES):
-                    ep_counter += 1
-                    print(f"[PROGRESS] Run={os.path.basename(run_dir)} | "
-                        f"Scenario={sc['name']} | Seed={seed} | "
-                        f"Episode {ep+1}/{N_EPISODES} "
-                        f"(global {ep_counter}/{total_episodes})")
-
-                    m = rollout(model, env)
-                    m.update({
-                        "scenario": sc["name"],
-                        "seed": seed,
-                        "episode": ep,
-                        "method": "RL",
-                        "run_dir": os.path.basename(run_dir),
-                    })
-                    results.append(m)
-
-                    # --- nur SUMO-Metriken loggen ---
-                    for k, v in m.items():
-                        if isinstance(v, (int, float)) and k not in ["ep_rew", "ep_len", "seed", "episode"]:
+                # Logging für alle drei Varianten
+                for entry in results[-3:]:
+                    for k, v in entry.items():
+                        if isinstance(v, (int, float)) and k not in ["ep_rew", "ep_len", "episode", "ep_seed"]:
                             short_key = shorten_key(k)
-                            logger.record(f"{m['method']}/{sc['name']}/{short_key}", v)
-
-                    # --- Episodenstatistiken separat ---
-                    logger.record(f"rollout/{sc['name']}/ep_rew_mean", m["ep_rew"])
-                    logger.record(f"rollout/{sc['name']}/ep_len", m["ep_len"])
-
-                    logger.dump(step=len(results))
-
-                env.close()
+                            logger.record(f"{entry['method']}/{short_key}", v)
+                    logger.record(f"{entry['method']}/ep_rew_mean", entry["ep_rew"])
+                    logger.record(f"{entry['method']}/ep_len", entry["ep_len"])
+                    logger.dump(step=ep)
 
     results_path = os.path.join("evaluation", "eval_results.json")
     os.makedirs(os.path.dirname(results_path), exist_ok=True)
     with open(results_path, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(results, f, indent=2, default=to_serializable)
 
-    print(f"[INFO] Evaluation abgeschlossen.")
-    print(f"      Ergebnisse gespeichert unter: {results_path}")
-    print(f"      TensorBoard-Logs gespeichert unter: {log_dir}")
+    print(f"[INFO] Evaluation abgeschlossen. Ergebnisse: {results_path}")
+
 
 if __name__ == "__main__":
-    np.random.seed(0); torch.manual_seed(0)
     evaluate()
