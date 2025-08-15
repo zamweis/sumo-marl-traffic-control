@@ -6,18 +6,18 @@ Die Evaluation der RL-Agenten und der Baselines erfolgt vollautomatisch über \t
 Es wird stets \texttt{map.net.xml} verwendet; Unterschiede resultieren ausschließlich aus der Steuerungslogik, den Routen-Dateien und den Seeds.
 Vier Szenarien decken typische Lastprofile ab:
 \begin{itemize}
-  \item \textbf{morning\_peak} (\texttt{flows\_morning.rou.xml}): morgendliche Lastspitze,
-  \item \textbf{evening\_peak} (\texttt{flows\_evening.rou.xml}): abendliche Lastspitze,
-  \item \textbf{uniform} (\texttt{flows\_uniform.rou.xml}): gleichmäßige Zuflüsse,
-  \item \textbf{random\_heavy} (\texttt{flows\_random\_heavy.rou.xml}): stochastisch dichter Verkehr.
+    \item \textbf{morning\_peak} (\texttt{flows\_morning.rou.xml}): morgendliche Lastspitze,
+    \item \textbf{evening\_peak} (\texttt{flows\_evening.rou.xml}): abendliche Lastspitze,
+    \item \textbf{uniform} (\texttt{flows\_uniform.rou.xml}): gleichmäßige Zuflüsse,
+    \item \textbf{random\_heavy} (\texttt{flows\_random\_heavy.rou.xml}): stochastisch dichter Verkehr.
 \end{itemize}
 Alle Runs werden ohne GUI ausgeführt (\texttt{use\_gui=False}).
 
 \subsection{Bewertete Modelle (Läufe)}
 Die zu evaluierenden RL-Modelle werden automatisch aus \texttt{runs/} ermittelt:
 \begin{itemize}
-  \item Alle Unterordner mit Präfix \texttt{ppo\_sumo\_*} (\texttt{RUNS}).
-  \item Aus jedem Lauf wird das \textbf{beste Modell} \texttt{best\_model.zip} sowie die zugehörige \textbf{Normalisierung} \texttt{vecnormalize.pkl} geladen.
+    \item Alle Unterordner mit Präfix \texttt{ppo\_sumo\_*} (\texttt{RUNS}).
+    \item Aus jedem Lauf wird das \textbf{beste Modell} \texttt{best\_model.zip} sowie die zugehörige \textbf{Normalisierung} \texttt{vecnormalize.pkl} geladen.
 \end{itemize}
 Die Modelle unterscheiden sich in ihrer Reward-Funktion.
 Aktuell wird die Variante \texttt{realworld\_reward} evaluiert; weitere Belohnungsfunktionen (z.\,B.\ \texttt{pressure}, \texttt{throughput}) können identisch eingebunden werden.
@@ -25,18 +25,18 @@ Die Evaluationslogik ist generisch und unabhängig von der gewählten Reward-Fun
 
 Zusätzlich zu den RL-Läufen werden im selben Skript zwei Baselines ausgeführt:
 \begin{enumerate}
-  \item \textbf{Fixed-Time}: fester Phasenplan aus der \texttt{net.xml}.
-  \item \textbf{Actuated}: SUMO-aktuiert (sofern in \texttt{net.xml} konfiguriert).
+    \item \textbf{Fixed-Time}: fester Phasenplan aus der \texttt{net.xml}.
+    \item \textbf{Actuated}: SUMO-aktuiert.
 \end{enumerate}
 
 \subsection{Simulations- und Umgebungsparameter}
 Für alle Simulationen (RL und Baselines) gelten konsistente Parameter:
 \begin{itemize}
-  \item Episodenlänge: \texttt{EP\_LENGTH\_S = 3000}~s,
-  \item Minimaldauer Grünphase: \texttt{min\_green = 5}~s,
-  \item Maximaler Abfahrtsverzug: \texttt{max\_depart\_delay = 100}~s,
-  \item Zusätzliche Systemmetriken: \texttt{add\_system\_info = True},
-  \item Pro-Agent-Infos: \texttt{add\_per\_agent\_info = False}.
+    \item Episodenlänge: \texttt{EP\_LENGTH\_S = 2500}~s,
+    \item Minimaldauer Grünphase: \texttt{min\_green = 5}~s,
+    \item Maximaler Abfahrtsverzug: \texttt{max\_depart\_delay = 100}~s,
+    \item Zusätzliche Systemmetriken: \texttt{add\_system\_info = True},
+    \item Pro-Agent-Infos: \texttt{add\_per\_agent\_info = False}.
 \end{itemize}
 
 \paragraph{RL-Umgebung.}
@@ -52,11 +52,11 @@ Für RL-Läufe können verschiedene Reward-Funktionen genutzt werden.
 Aktuell ist \texttt{realworld\_reward} implementiert, die Durchfluss belohnt und Stauaufbau sowie häufige Phasenwechsel bestraft.
 Kernpunkte:
 \begin{itemize}
-  \item EMA-Glättung mit Faktor \(\alpha=0{,}3\),
-  \item Normierung mit \texttt{max\_storage=40}, \texttt{max\_outflow\_per\_step=8},
-  \item Gewichtungen: \(w_q=1{,}0\), \(w_{\text{build}}=0{,}8\), \(w_{\text{flow}}=0{,}7\), \(w_{\text{switch}}=0{,}1\),
-  \item Clipping auf \(\pm 5\),
-  \item Step-Cache reduziert TraCI-Aufrufe pro Zeitschritt.
+    \item EMA-Glättung mit Faktor \(\alpha=0{,}3\),
+    \item Normierung mit \texttt{max\_storage=40}, \texttt{max\_outflow\_per\_step=8},
+    \item Gewichtungen: \(w_q=1{,}0\), \(w_{\text{build}}=0{,}8\), \(w_{\text{flow}}=0{,}7\), \(w_{\text{switch}}=0{,}1\),
+    \item Clipping auf \(\pm 5\),
+    \item Step-Cache reduziert TraCI-Aufrufe pro Zeitschritt.
 \end{itemize}
 Weitere Reward-Funktionen (z.\,B.\ \texttt{pressure}, \texttt{throughput}) können identisch eingebunden werden.
 Die Evaluationslogik bleibt unverändert.
@@ -64,65 +64,64 @@ Die Evaluationslogik bleibt unverändert.
 \subsection{Ablauf je Episode (\texttt{rollout()})}
 Der Ablauf ist für RL und Baselines einheitlich:
 \begin{enumerate}
-  \item Reset der Umgebung,
-  \item Simulation bis zum Terminalzustand,
-  \item Pro Schritt: (i) Aktion (bei RL deterministisch via \texttt{model.predict}), (ii) \texttt{env.step}, (iii) Metrik-Sampling aus \texttt{infos},
-  \item Episodenende: Mittelwerte aller numerischen Keys sowie \texttt{ep\_rew} (kumuliert) und \texttt{ep\_len} (Schritte).
+    \item Reset der Umgebung,
+    \item Simulation bis zum Terminalzustand,
+    \item Pro Schritt: (i) Aktion (bei RL deterministisch via \texttt{model.predict}), (ii) \texttt{env.step}, (iii) Metrik-Sampling aus \texttt{infos},
+    \item Episodenende: Mittelwerte aller numerischen Keys sowie \texttt{ep\_rew} (kumuliert) und \texttt{ep\_len} (Schritte).
 \end{enumerate}
 Baselines führen Dummy-Aktionen aus, die Steuerungslogik stammt jedoch aus SUMO.
 
 \subsection{Seeds und Replikationsdesign}
-Das Seed-Design ist zweistufig:
-\begin{itemize}
-  \item \textbf{Evaluationsgruppen-Seeds} (\texttt{SEEDS=\{1111,2222\}}): Labeln die Auswertung pro Modell–Szenario-Kombination.
-  \item \textbf{Episoden-Seeds} (\texttt{EP\_SEEDS}, zehn disjunkte Werte, aktuell fünf genutzt): steuern \emph{pro Episode} den SUMO-Zufallsgenerator und sind vom Training entkoppelt.
-\end{itemize}
-Pro Kombination von \emph{Modell}, \emph{Reward-Funktion}, \emph{Szenario}, \emph{Seed} und \emph{Methode} (Fixed-Time, Actuated, RL) werden identische Replikationen ausgeführt:
+Das Seed-Design ist eindimensional: Es wird eine feste Menge von zehn \emph{Episoden-Seeds} (\texttt{EP\_SEEDS}) verwendet, die den SUMO-Zufallsgenerator \emph{pro Episode} steuern und vom Training entkoppelt sind.
+Pro Kombination aus \emph{Modell} (Trainingslauf), \emph{Szenario} und \emph{Methode} (Fixed-Time, Actuated, RL) werden \texttt{N\_EPISODES = 10} Episoden mit diesen Seeds ausgewertet.
+
+Damit ergibt sich die Gesamtzahl der Episoden zu:
 \[
-  \#\text{Episoden} = |\texttt{RUNS}| \cdot |\texttt{Rewards}| \cdot 4 \;(\text{Szenarien}) \cdot 2 \;(\text{Seeds}) \cdot 5 \;(\text{Episoden}) \cdot 3 \;(\text{Methoden}).
+    \#\text{Episoden} = |\texttt{RUNS}| \cdot 4 \;(\text{Szenarien}) \cdot 10 \;(\text{Episoden/Seeds}) \cdot 3 \;(\text{Methoden}).
 \]
 
 \subsection{Metriken, Key-Normalisierung und Logging}
 Alle numerischen \texttt{infos}-Keys werden gesammelt, umbenannt und protokolliert:
 \begin{itemize}
-  \item \texttt{system\_*} und \texttt{system\_total\_*} werden zu \texttt{mean\_*} gekürzt (z.\,B.\ \texttt{system\_total\_waiting\_time} $\rightarrow$ \texttt{mean\_waiting\_time}).
-  \item Episodenstatistiken \texttt{ep\_rew} und \texttt{ep\_len} werden zusätzlich erfasst.
+    \item \texttt{system\_*} und \texttt{system\_total\_*} werden zu \texttt{mean\_*} gekürzt (z.\,B.\ \texttt{system\_total\_waiting\_time} $\rightarrow$ \texttt{mean\_waiting\_time}).
+    \item Episodenstatistiken \texttt{ep\_rew} und \texttt{ep\_len} werden zusätzlich erfasst.
 \end{itemize}
 TensorBoard-Logs liegen je Kombination in
-\texttt{evaluation/logs/eval\_\{run\_dir\}\_\{scenario\}\_seed\{seed\}}.
-Die Metriken werden nach \texttt{Baseline\_FixedTime/}, \texttt{Baseline\_Actuated/} und \texttt{RL\_<RewardName>/} getrennt protokolliert.
+\texttt{evaluation/logs/eval\_run\{run\_idx\}\_\{run\_dir\}\_\{scenario\}}.
+Die Metriken werden getrennt unter den Methodennamen
+\texttt{Baseline\_FixedTime}, \texttt{Baseline\_Actuated} und \texttt{RL} protokolliert.
 
 \subsection{Ergebnisdatei und Datenstruktur}
 Alle Episoden werden als Liste in \texttt{evaluation/eval\_results.json} gespeichert.
 Jeder Eintrag enthält:
 \begin{itemize}
-  \item aggregierte Mittelwerte der \texttt{infos}-Keys (z.\,B.\ \texttt{mean\_waiting\_time}, \texttt{mean\_speed}, \dots),
-  \item \texttt{ep\_rew}, \texttt{ep\_len},
-  \item Metadaten: \texttt{scenario}, \texttt{seed}, \texttt{ep\_seed}, \texttt{episode}, \texttt{method} $\in$ \{\texttt{Baseline\_FixedTime}, \texttt{Baseline\_Actuated}, \texttt{RL\_realworld}, \texttt{RL\_pressure}, \texttt{RL\_throughput}, \dots\}, \texttt{run\_dir}.
+    \item aggregierte Mittelwerte der numerischen \texttt{infos}-Keys (z.\,B.\ \texttt{mean\_waiting\_time}, \texttt{mean\_speed}, \dots),
+    \item \texttt{ep\_rew}, \texttt{ep\_len},
+    \item Metadaten: \texttt{scenario}, \texttt{ep\_seed}, \texttt{episode}, \texttt{method} $\in$ \{\texttt{Baseline\_FixedTime}, \texttt{Baseline\_Actuated}, \texttt{RL}\}, \texttt{run\_dir}.
 \end{itemize}
 
 \subsection{Reproduzierbarkeit und Determinismus}
 Die Evaluation ist durch folgende Maßnahmen deterministisch:
 \begin{enumerate}
-  \item feste \texttt{EP\_SEEDS},
-  \item deterministische Aktionswahl bei RL (\texttt{deterministic=True}),
-  \item eingefrorene \texttt{VecNormalize}-Parameter,
-  \item feste Simulationsdauer, identische Netz- und Routen-Dateien.
+    \item feste \texttt{EP\_SEEDS},
+    \item deterministische Aktionswahl bei RL (\texttt{deterministic=True}),
+    \item eingefrorene \texttt{VecNormalize}-Parameter,
+    \item feste Simulationsdauer, identische Netz- und Routen-Dateien.
 \end{enumerate}
 
 \subsection{Simulationsergebnisse (Darstellung)}
 Die Ergebnisse basieren direkt auf \texttt{evaluation/eval\_results.json}.
 Plots werden pro Szenario und Methode aggregiert (Mittelwerte oder Verteilungen über Episoden und Seeds).
-Die Struktur erlaubt es, RL-Varianten mit unterschiedlichen Reward-Funktionen direkt gegenüber Fixed-Time und Actuated zu stellen.
+Die Struktur erlaubt eine direkte Gegenüberstellung der drei Methoden (\texttt{Baseline\_FixedTime}, \texttt{Baseline\_Actuated}, \texttt{RL}) über alle Szenarien.
 
 % --- Platzhalter für Diagramme ---
 
 \subsection{Interpretation und Diskussion}
 Die Analyse fokussiert auf:
 \begin{itemize}
-  \item Robustheit über verschiedene \texttt{EP\_SEEDS},
-  \item Konsistenz zwischen Szenarien,
-  \item Trade-offs zwischen Durchfluss (\texttt{mean\_speed}, \texttt{flow}) und Stau (\texttt{mean\_queue\_length}, \texttt{mean\_waiting\_time}),
-  \item ökologische Effekte (CO\textsubscript{2}).
+    \item Robustheit über verschiedene \texttt{EP\_SEEDS},
+    \item Konsistenz zwischen Szenarien,
+    \item Trade-offs zwischen Durchfluss (\texttt{mean\_speed}, \texttt{flow}) und Stau (\texttt{mean\_queue\_length}, \texttt{mean\_waiting\_time}),
+    \item ökologische Effekte (CO\textsubscript{2}).
 \end{itemize}
-Die deterministische Politik im RL und eingefrorene Normalisierung reduzieren Varianz und erlauben einen klaren Vergleich zwischen allen Methoden (\texttt{RL\_<Reward>}, \texttt{Baseline\_FixedTime}, \texttt{Baseline\_Actuated}).
+Die deterministische Politik im RL und eingefrorene Normalisierung reduzieren Varianz und erlauben einen klaren Vergleich zwischen allen Methoden (\texttt{RL}, \texttt{Baseline\_FixedTime}, \texttt{Baseline\_Actuated}).

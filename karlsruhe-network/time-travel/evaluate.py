@@ -12,7 +12,7 @@ from supersuit import pettingzoo_env_to_vec_env_v1, concat_vec_envs_v1
 RUNS = sorted(glob.glob(os.path.join("runs", "ppo_sumo_*")))
 MODEL_NAME  = "best_model.zip"
 N_EPISODES  = 10
-EP_LENGTH_S = 3500
+EP_LENGTH_S = 2500
 EP_SEEDS    = [12345, 67890, 13579, 24680, 11223, 44556, 77889, 99100, 31415, 27182]
 SCENARIOS   = [
     {"name": "morning_peak", "route_file": "flows_morning.rou.xml"},
