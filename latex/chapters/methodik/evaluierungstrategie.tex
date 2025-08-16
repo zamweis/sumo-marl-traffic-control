@@ -1,0 +1,89 @@
+\subsection{Evaluationsstrategie}
+\label{sec:evaluation-strategy}
+
+Zur Bewertung der trainierten Modelle wird ein systematischer, skriptbasierter Evaluationsplan verfolgt (Details und Ergebnisse siehe Kapitel~\ref{sec:validation}).
+Dabei wird stets dasselbe, bereinigte Verkehrsnetz (\texttt{map.net.xml}) verwendet, um die Vergleichbarkeit zu gewährleisten; variiert werden Signalsteuerung, Routenbelegung und Seeds.
+Statische Baselines werden direkt im Evaluationslauf mitgeführt (fester Phasenplan und aktuiert).
+
+\subsubsection{Vergleichsszenarien}
+Die Evaluation der RL-Agenten und der Baselines erfolgt vollautomatisch über \texttt{evaluate.py}.
+Vier Szenarien decken typische Lastprofile ab:
+\begin{itemize}
+    \item \textbf{morning\_peak} (\texttt{flows\_morning.rou.xml}): morgendliche Lastspitze,
+    \item \textbf{evening\_peak} (\texttt{flows\_evening.rou.xml}): abendliche Lastspitze,
+    \item \textbf{uniform} (\texttt{flows\_uniform.rou.xml}): gleichmäßige Zuflüsse,
+    \item \textbf{random\_heavy} (\texttt{flows\_random\_heavy.rou.xml}): stochastisch dichter Verkehr.
+\end{itemize}
+
+\subsubsection{Bewertete Modelle}
+Die zu evaluierenden RL-Modelle werden automatisch aus \texttt{runs/} ermittelt:
+\begin{itemize}
+    \item Alle Unterordner mit Präfix \texttt{ppo\_sumo\_*}.
+    \item Aus jedem Lauf wird das \textbf{beste Modell} \texttt{best\_model.zip} sowie die zugehörige \textbf{Normalisierung} \texttt{vecnormalize.pkl} geladen.
+\end{itemize}
+Zusätzlich zu den RL-Läufen werden im selben Skript die Baselines (Fixed-Time, Actuated) ausgeführt.
+
+\subsubsection{Reward-Funktionen}
+Aktuell wird \texttt{realworld\_reward} verwendet, die den Durchfluss belohnt und Stauaufbau sowie häufige Phasenwechsel bestraft:
+\begin{itemize}
+    \item EMA-Glättung mit Faktor \(\alpha=0{,}3\),
+    \item Normalisierung: \texttt{max\_storage=40}, \texttt{max\_outflow\_per\_step=8},
+    \item Gewichtungen: \(w_q=1{,}0\), \(w_{\text{build}}=0{,}8\), \(w_{\text{flow}}=0{,}7\), \(w_{\text{switch}}=0{,}1\),
+    \item Reward-Clipping auf \(\pm 5\),
+    \item Step-Cache reduziert TraCI-Aufrufe pro Zeitschritt.
+\end{itemize}
+Weitere Reward-Varianten (z.\,B.\ \texttt{pressure}, \texttt{throughput}) können identisch eingebunden werden; die Evaluationslogik bleibt unverändert.
+
+\subsubsection{Simulations- und Umgebungsparameter}
+Für alle Simulationen (RL und Baselines) gelten konsistente Parameter:
+\begin{itemize}
+    \item Episodenlänge: \texttt{EP\_LENGTH\_S = 3500}~s,
+    \item Minimaldauer Grünphase: \texttt{min\_green = 5}~s,
+    \item Maximaler Abfahrtsverzug: \texttt{max\_depart\_delay = 100}~s,
+    \item Zusätzliche Systemmetriken: \texttt{add\_system\_info = True},
+    \item Pro-Agent-Infos: \texttt{add\_per\_agent\_info = False},
+    \item SUMO läuft ohne GUI (\texttt{use\_gui=False}).
+\end{itemize}
+
+\paragraph{RL-Umgebung.}
+Die PettingZoo-Umgebung wird mit SuperSuit vorbereitet (\texttt{pad\_observations\_v0}, \texttt{pad\_action\_space\_v0}, \texttt{pettingzoo\_env\_to\_vec\_env\_v1}, \texttt{concat\_vec\_envs\_v1}) und mit \texttt{VecMonitor} versehen.
+Die Normalisierung wird aus \texttt{vecnormalize.pkl} geladen und eingefroren (\texttt{training=False}, \texttt{norm\_reward=False}); die Modelle werden deterministisch ausgeführt.
+
+\paragraph{Baselines.}
+Für die Baselines wird die SUMO-interne Steuerung genutzt (\texttt{fixed\_ts=True} für Fixed-Time, \texttt{fixed\_ts=False} für Actuated).
+Ein \emph{Dummy-Reward} (\texttt{0.0}) stellt sicher, dass kein RL-Einfluss auf die Steuerung erfolgt; Aktionen sind gültige Platzhalter aus dem Action Space.
+
+\subsubsection{Ablauf je Episode}
+Der Ablauf ist für RL und Baselines einheitlich:
+\begin{enumerate}
+    \item Reset der Umgebung,
+    \item Simulation bis zum Terminalzustand,
+    \item Pro Schritt: (i) Aktion (bei RL deterministisch via \texttt{model.predict}), (ii) \texttt{env.step}, (iii) Metrik-Sampling aus \texttt{infos},
+    \item Episodenende: Mittelwerte aller numerischen Keys sowie \texttt{ep\_rew} (kumuliert) und \texttt{ep\_len} (Schritte).
+\end{enumerate}
+Baselines führen Dummy-Aktionen aus, die Steuerungslogik stammt jedoch aus SUMO.
+
+\subsubsection{Seeds und Replikationsdesign}
+Das Seed-Design ist eindimensional: Es wird eine feste Menge von zehn \emph{Episoden-Seeds} (\texttt{EP\_SEEDS}) verwendet, die vom Training entkoppelt sind.
+Pro Kombination aus \emph{Modell}, \emph{Szenario} und \emph{Methode} werden \texttt{N\_EPISODES = 10} Episoden mit diesen Seeds ausgewertet. Damit ergibt sich:
+\[
+    \#\text{Episoden} = |\texttt{RUNS}| \cdot 4 \cdot 10 \cdot 3.
+\]
+
+\subsubsection{Metriken und Logging}
+Alle numerischen \texttt{infos}-Keys werden über die Episoden gemittelt.
+Für die Visualisierung werden Präfixe teilweise entfernt (\texttt{system\_*} $\rightarrow$ ohne Präfix).
+Pro Kombination werden Metriken für \texttt{Baseline\_FixedTime}, \texttt{Baseline\_Actuated} und \texttt{RL} geloggt (\texttt{tensorboard} und \texttt{stdout}); die Logs liegen unter
+\texttt{evaluation/logs/eval\_run\{run\_idx\}\_\{run\_dir\}\_\{scenario\}}.
+Die aggregierten Ergebnisse werden zusätzlich in \texttt{evaluation/eval\_results.json} persistiert.
+
+\subsubsection{Reproduzierbarkeit}
+Die Evaluation ist deterministisch durch:
+\begin{enumerate}
+    \item feste \texttt{EP\_SEEDS},
+    \item deterministische Aktionswahl bei RL (\texttt{deterministic=True}),
+    \item eingefrorene \texttt{VecNormalize}-Parameter,
+    \item feste Simulationsdauer, identische Netz- und Routen-Dateien.
+\end{enumerate}
+
+Diese Strategie stellt sicher, dass die in Kapitel~\ref{sec:validation} präsentierten Ergebnisse reproduzierbar, belastbar und zwischen RL-Varianten sowie Baselines vergleichbar sind.

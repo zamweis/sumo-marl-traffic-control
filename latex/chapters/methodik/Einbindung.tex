@@ -8,27 +8,27 @@ Nach Abschluss der Netzbereinigung, der strukturellen Validierung und der Identi
 Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt, bei dem jede signalgesteuerte Kreuzung durch einen eigenständigen Agenten repräsentiert wird. Die Interaktion erfolgt über das TraCI-Protokoll \cite{TraCI} von SUMO \cite{sumo-doc}, das eine Echtzeitkommunikation zwischen Simulator und RL-Agenten ermöglicht. Die zentrale Steuerung und das Training der Agenten basiert auf der RL-Bibliothek \texttt{Stable-Baselines3} \cite{Stable-Baselines3}, konkret dem Algorithmus \texttt{Proximal Policy Optimization (PPO) \cite{PPO}}. \cite{sumo-rl_docs}
 
 \begin{figure}[H]
-  \centering
-  \begin{tikzpicture}[node distance=1cm]
+    \centering
+    \begin{tikzpicture}[node distance=1cm]
 
-    \node[box] (sim) {Verkehrssimulation\\\textbf{SUMO + TraCI}};
-    \node[box, below=of sim] (mae) {Multi-Agent Environment (MAE)\\\texttt{sumo-rl.parallel\_env} + \texttt{emissions\_with\_speed\_reward}};
-    \node[box, below=of mae] (wrap) {SuperSuit Wrappers\\\texttt{- pad\_obs / pad\_actions}\\\texttt{- pettingzoo\_to\_vec\_env}\\\texttt{- concat\_vec\_envs}};
-    \node[box, below=of wrap] (vec) {VecNormalize + VecMonitor\\(Stable-Baselines3)};
-    \node[box, below=of vec] (ppo) {PPO Agent (Stable-Baselines3)\\\texttt{- MLPPolicy}\\\texttt{- Schedules: LR (cosine warmup), Clip (cosine)}};
-    \node[box, below=of ppo] (cb) {Callbacks\\\texttt{- TimeBasedCheckpoint}\\\texttt{- EnvMetricsLogger}\\\texttt{- BestModelSaver}};
-    \node[box, below=of cb] (log) {Modell- \& Log-Speicherung\\\texttt{(pro Seed in runs/)}};
+        \node[box] (sim) {Verkehrssimulation\\\textbf{SUMO + TraCI}};
+        \node[box, below=of sim] (mae) {Multi-Agent Environment (MAE)\\\texttt{sumo-rl.parallel\_env} + \texttt{emissions\_with\_speed\_reward}};
+        \node[box, below=of mae] (wrap) {SuperSuit Wrappers\\\texttt{- pad\_obs / pad\_actions}\\\texttt{- pettingzoo\_to\_vec\_env}\\\texttt{- concat\_vec\_envs}};
+        \node[box, below=of wrap] (vec) {VecNormalize + VecMonitor\\(Stable-Baselines3)};
+        \node[box, below=of vec] (ppo) {PPO Agent (Stable-Baselines3)\\\texttt{- MLPPolicy}\\\texttt{- Schedules: LR (cosine warmup), Clip (cosine)}};
+        \node[box, below=of ppo] (cb) {Callbacks\\\texttt{- TimeBasedCheckpoint}\\\texttt{- EnvMetricsLogger}\\\texttt{- BestModelSaver}};
+        \node[box, below=of cb] (log) {Modell- \& Log-Speicherung\\\texttt{(pro Seed in runs/)}};
 
-    \draw[arrow] (sim) -- (mae);
-    \draw[arrow] (mae) -- (wrap);
-    \draw[arrow] (wrap) -- (vec);
-    \draw[arrow] (vec) -- (ppo);
-    \draw[arrow] (ppo) -- (cb);
-    \draw[arrow] (cb) -- (log);
+        \draw[arrow] (sim) -- (mae);
+        \draw[arrow] (mae) -- (wrap);
+        \draw[arrow] (wrap) -- (vec);
+        \draw[arrow] (vec) -- (ppo);
+        \draw[arrow] (ppo) -- (cb);
+        \draw[arrow] (cb) -- (log);
 
-  \end{tikzpicture}
-  \caption{Architektur der RL-Trainingspipeline mit SUMO, MAE und Stable-Baselines3}
-  \label{fig:rl_architektur}
+    \end{tikzpicture}
+    \caption{Architektur der RL-Trainingspipeline mit SUMO, MAE und Stable-Baselines3}
+    \label{fig:rl_architektur}
 \end{figure}
 
 Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} \cite{PettingZoo} und \texttt{SuperSuit} \cite{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes API für Multiagenten-Umgebungen bereit – analog zu \texttt{Gymnasium} \cite{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist.
@@ -58,18 +58,18 @@ Die Reinforcement-Learning-Umgebung wurde auf Basis der Klasse \texttt{parallel\
 Wichtige Parameter umfassen:
 
 \begin{itemize}
-  \item \texttt{net\_file}, \texttt{route\_file}: Pfade zum bereinigten Verkehrsnetz und zugehöriger Routendatei.
-  \item \texttt{use\_gui}: Deaktiviert für schnelleres Training (\texttt{False}); bei Bedarf zur Laufzeit aktivierbar.
-  \item \texttt{num\_seconds}: Dauer einer Simulationsepisode in Sekunden (hier 5000\,s).
-  \item \texttt{delta\_time}: Zeitabstand zwischen Agentenentscheidungen (Default: 5\,s).
-  \item \texttt{reward\_fn}: Referenz auf die aktive Belohnungsfunktion.
-        Für das Haupttraining wurde \texttt{realworld\_reward} verwendet (Details siehe Abschnitt~\ref{sec:rl-konzept}).
-  \item \texttt{min\_green}: Minimale Grünphasenlänge (5\,s).
-  \item \texttt{max\_depart\_delay}: Maximale Verzögerung bei der Einfahrt eines Fahrzeugs (100\,s).
-  \item \texttt{sumo\_seed}: Fester Zufalls-Seed aus der Seedliste $\{546456, 678678, 234256, 678\}$.
-  \item \texttt{add\_system\_info}: Ergänzt systemweite Kennzahlen in den \texttt{infos}.
-  \item \texttt{add\_per\_agent\_info}: Kontextdaten pro Agent (hier deaktiviert).
-  \item \texttt{single\_agent = False}: Multiagentenmodus; jede steuerbare Ampel ist ein separater Agent.
+    \item \texttt{net\_file}, \texttt{route\_file}: Pfade zum bereinigten Verkehrsnetz und zugehöriger Routendatei.
+    \item \texttt{use\_gui}: Deaktiviert für schnelleres Training (\texttt{False}); bei Bedarf zur Laufzeit aktivierbar.
+    \item \texttt{num\_seconds}: Dauer einer Simulationsepisode in Sekunden (hier 5000\,s).
+    \item \texttt{delta\_time}: Zeitabstand zwischen Agentenentscheidungen (Default: 5\,s).
+    \item \texttt{reward\_fn}: Referenz auf die aktive Belohnungsfunktion.
+          Für das Haupttraining wurde \texttt{realworld\_reward} verwendet (Details siehe Abschnitt~\ref{sec:rl-konzept}).
+    \item \texttt{min\_green}: Minimale Grünphasenlänge (5\,s).
+    \item \texttt{max\_depart\_delay}: Maximale Verzögerung bei der Einfahrt eines Fahrzeugs (100\,s).
+    \item \texttt{sumo\_seed}: Fester Zufalls-Seed aus der Seedliste $\{546456, 678678, 234256, 678\}$.
+    \item \texttt{add\_system\_info}: Ergänzt systemweite Kennzahlen in den \texttt{infos}.
+    \item \texttt{add\_per\_agent\_info}: Kontextdaten pro Agent (hier deaktiviert).
+    \item \texttt{single\_agent = False}: Multiagentenmodus; jede steuerbare Ampel ist ein separater Agent.
 \end{itemize}
 
 Die Umgebung ist vollständig kompatibel mit \texttt{Gymnasium}, \texttt{PettingZoo} sowie den Wrapper-Bibliotheken \texttt{SuperSuit} und \texttt{VecEnv}, wodurch ein standardisiertes Interfacing mit RL-Algorithmen ermöglicht wird.
@@ -78,21 +78,21 @@ Die Umgebung ist vollständig kompatibel mit \texttt{Gymnasium}, \texttt{Petting
 
 Jeder Agent erhält eine lokale Beobachtung, bestehend aus:
 \begin{itemize}
-  \item \textbf{Aktuelle Ampelphase:} als diskreter Index oder One-Hot-Encoding (dimensionslos),
-  \item \textbf{Dauer der aktuellen Phase:} Sekunden seit Beginn der Phase [s],
-  \item \textbf{Spurmesswerte:} für jede anliegende Fahrspur
-        \begin{itemize}
-          \item Anzahl wartender Fahrzeuge [Fz],
-          \item mittlere Geschwindigkeit [m/s],
-          \item Dichte (Verhältnis belegter zu maximal möglicher Fahrzeuge pro Spur, dimensionslos, $0\text{–}1$).
-        \end{itemize}
+    \item \textbf{Aktuelle Ampelphase:} als diskreter Index oder One-Hot-Encoding (dimensionslos),
+    \item \textbf{Dauer der aktuellen Phase:} Sekunden seit Beginn der Phase [s],
+    \item \textbf{Spurmesswerte:} für jede anliegende Fahrspur
+          \begin{itemize}
+              \item Anzahl wartender Fahrzeuge [Fz],
+              \item mittlere Geschwindigkeit [m/s],
+              \item Dichte (Verhältnis belegter zu maximal möglicher Fahrzeuge pro Spur, dimensionslos, $0\text{–}1$).
+          \end{itemize}
 \end{itemize}
 
 Da sich die Anzahl an Fahrspuren pro Kreuzung unterscheidet, variiert die Rohdimension des Beobachtungsvektors.
 Um eine feste Eingabelänge für die Policy zu gewährleisten, werden alle Vektoren mittels \texttt{pad\_observations\_v0} auf die maximale Spuranzahl aller gesteuerten Kreuzungen gepaddet; fehlende Spurwerte werden mit Null belegt.
 Dadurch ergibt sich für alle Agenten eine identische Beobachtungsdimension von
 \[
-  n_{\text{features}} \times n_{\text{max\_spuren}} + n_{\text{phasenfeatures}}
+    n_{\text{features}} \times n_{\text{max\_spuren}} + n_{\text{phasenfeatures}}
 \]
 mit $n_{\text{features}} = 3$ (Queue, Geschwindigkeit, Dichte) und $n_{\text{phasenfeatures}} = 2$ (Phase, Phasendauer).
 
@@ -106,15 +106,15 @@ Alle Agenten entscheiden synchron in Intervallen von \texttt{delta\_time = 5\,s}
 Das Training der Agenten erfolgte mittels \texttt{PPO}, wobei folgende Hyperparameter eingesetzt wurden (siehe Anhang \ref{app:train_script}):
 
 \begin{itemize}
-  \item \textbf{Policy-Architektur:} Zwei Hidden-Layer mit jeweils 128 Neuronen; getrennte Netze für \texttt{pi} und \texttt{vf} (\texttt{policy\_kwargs}).
-  \item \textbf{Batchgröße:} 512.
-  \item \textbf{Rollout-Länge (\texttt{n\_steps}):} 2048.
-  \item \textbf{Lernrate:} Cosine-Warmup über 5\,\% der Trainingszeit mit anschließendem Cosine-Decay auf 10\,\% des Startwerts ($3\cdot10^{-4}$).
-  \item \textbf{Clip-Range:} Cosine-Interpoliert von 0.2 auf 0.1.
-  \item \textbf{Entropiekoeffizient:} 0.01 (Exploration).
-  \item \textbf{Discount-Faktor:} $\gamma = 0.99$.
-  \item \textbf{GAE-Lambda:} 0.95.
-  \item \textbf{Device:} CPU (\texttt{torch.set\_num\_threads} auf Standard; SUMO-Simulation single-threaded).
+    \item \textbf{Policy-Architektur:} Zwei Hidden-Layer mit jeweils 128 Neuronen; getrennte Netze für \texttt{pi} und \texttt{vf} (\texttt{policy\_kwargs}).
+    \item \textbf{Batchgröße:} 512.
+    \item \textbf{Rollout-Länge (\texttt{n\_steps}):} 2048.
+    \item \textbf{Lernrate:} Cosine-Warmup über 5\,\% der Trainingszeit mit anschließendem Cosine-Decay auf 10\,\% des Startwerts ($3\cdot10^{-4}$).
+    \item \textbf{Clip-Range:} Cosine-Interpoliert von 0.2 auf 0.1.
+    \item \textbf{Entropiekoeffizient:} 0.01 (Exploration).
+    \item \textbf{Discount-Faktor:} $\gamma = 0.99$.
+    \item \textbf{GAE-Lambda:} 0.95.
+    \item \textbf{Device:} CPU (\texttt{torch.set\_num\_threads} auf Standard; SUMO-Simulation single-threaded).
 \end{itemize}
 
 
@@ -149,38 +149,38 @@ dass auch in späten Trainingsphasen eine gewisse Exploration erhalten bleibt.
 Zur Sicherstellung eines robusten Trainingsprozesses wurde eine Reihe von Callback-Mechanismen implementiert (siehe Anhang \ref{app:train_script}):
 
 \begin{itemize}
-  \item \textbf{TimeBasedCheckpointCallback:}
-        Zeitbasierte Sicherung des Modells und der Normalisierungsdaten in festen Intervallen
-        (standardmäßig stündlich). Gespeicherte Dateien:
-        \begin{itemize}
-          \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps.zip} – Modellparameter,
-          \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps\_vecnormalize.pkl} – Normalisierungszustand.
-        \end{itemize}
+    \item \textbf{TimeBasedCheckpointCallback:}
+          Zeitbasierte Sicherung des Modells und der Normalisierungsdaten in festen Intervallen
+          (standardmäßig stündlich). Gespeicherte Dateien:
+          \begin{itemize}
+              \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps.zip} – Modellparameter,
+              \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps\_vecnormalize.pkl} – Normalisierungszustand.
+          \end{itemize}
 
-  \item \textbf{EnvMetricsLoggerCallback:}
-        Aggregiert und loggt Umgebungsmetriken aus dem \texttt{infos}-Dictionary.
-        Schlüssel mit Präfix \texttt{system\_} werden in globale Mittelwerte umbenannt (\texttt{mean\_...}).
-        Geloggte Metriken umfassen:
-        \begin{itemize}
-          \item \texttt{mean\_arrived} – mittlere Anzahl neu eingetroffener Fahrzeuge,
-          \item \texttt{mean\_departed} – mittlere Anzahl abgefahrener Fahrzeuge,
-          \item \texttt{mean\_backlogged} – mittlere Anzahl nicht abgefertigter Fahrzeuge,
-          \item \texttt{mean\_running} – mittlere Anzahl aktuell fahrender Fahrzeuge,
-          \item \texttt{mean\_stopped} – mittlere Anzahl stehender Fahrzeuge,
-          \item \texttt{mean\_mean\_speed} – mittlere Durchschnittsgeschwindigkeit,
-          \item \texttt{mean\_mean\_waiting\_time} – mittlere mittlere Wartezeit pro Fahrzeug,
-          \item \texttt{mean\_waiting\_time} – mittlere Wartezeit (gesamt),
-          \item \texttt{mean\_teleported} – mittlere Anzahl Teleportationen pro Schritt,
-          \item \texttt{mean\_emissions\_per\_vehicle} – mittlere CO\textsubscript{2}-Emission pro Fahrzeug.
-        \end{itemize}
+    \item \textbf{EnvMetricsLoggerCallback:}
+          Aggregiert und loggt Umgebungsmetriken aus dem \texttt{infos}-Dictionary.
+          Schlüssel mit Präfix \texttt{system\_} werden in globale Mittelwerte umbenannt (\texttt{mean\_...}).
+          Geloggte Metriken umfassen:
+          \begin{itemize}
+              \item \texttt{mean\_arrived} – mittlere Anzahl neu eingetroffener Fahrzeuge,
+              \item \texttt{mean\_departed} – mittlere Anzahl abgefahrener Fahrzeuge,
+              \item \texttt{mean\_backlogged} – mittlere Anzahl nicht abgefertigter Fahrzeuge,
+              \item \texttt{mean\_running} – mittlere Anzahl aktuell fahrender Fahrzeuge,
+              \item \texttt{mean\_stopped} – mittlere Anzahl stehender Fahrzeuge,
+              \item \texttt{mean\_mean\_speed} – mittlere Durchschnittsgeschwindigkeit,
+              \item \texttt{mean\_mean\_waiting\_time} – mittlere mittlere Wartezeit pro Fahrzeug,
+              \item \texttt{mean\_waiting\_time} – mittlere Wartezeit (gesamt),
+              \item \texttt{mean\_teleported} – mittlere Anzahl Teleportationen pro Schritt,
+              \item \texttt{mean\_emissions\_per\_vehicle} – mittlere CO\textsubscript{2}-Emission pro Fahrzeug.
+          \end{itemize}
 
-  \item \textbf{BestModelSaverCallback:}
-        Automatische Speicherung des jeweils besten Modells (höchster mittlerer Episodenreward aus \texttt{ep\_info\_buffer}),
-        inklusive zugehöriger Normalisierungsdaten:
-        \begin{itemize}
-          \item \texttt{best\_model.zip} – bestes Modell,
-          \item \texttt{best\_model\_vecnormalize.pkl} – Normalisierungszustand des besten Modells.
-        \end{itemize}
+    \item \textbf{BestModelSaverCallback:}
+          Automatische Speicherung des jeweils besten Modells (höchster mittlerer Episodenreward aus \texttt{ep\_info\_buffer}),
+          inklusive zugehöriger Normalisierungsdaten:
+          \begin{itemize}
+              \item \texttt{best\_model.zip} – bestes Modell,
+              \item \texttt{best\_model\_vecnormalize.pkl} – Normalisierungszustand des besten Modells.
+          \end{itemize}
 \end{itemize}
 
 
@@ -214,15 +214,15 @@ Während des Trainings wurde eine durchschnittliche CPU-Auslastung von 60\,\%–
 \paragraph{Versionen und Systemumgebung}
 Die Experimente wurden unter folgender Systemumgebung durchgeführt:
 \begin{itemize}
-  \item \textbf{Betriebssystem:} Windows~10~Pro~(64-Bit)
-  \item \textbf{Python:}~3.10.12
-  \item \textbf{SUMO:}~1.18.0 (mit HBEFA~4.1-Emissionsmodell)
-  \item \textbf{Stable-Baselines3:}~2.1.0
-  \item \textbf{Gymnasium:}~0.29.1
-  \item \textbf{PettingZoo:}~1.23.0
-  \item \textbf{SuperSuit:}~3.9.0
-  \item \textbf{PyTorch:}~2.1.2+cpu
-  \item \textbf{sumo-rl:}~1.4.5
+    \item \textbf{Betriebssystem:} Windows~10~Pro~(64-Bit)
+    \item \textbf{Python:}~3.10.12
+    \item \textbf{SUMO:}~1.18.0 (mit HBEFA~4.1-Emissionsmodell)
+    \item \textbf{Stable-Baselines3:}~2.1.0
+    \item \textbf{Gymnasium:}~0.29.1
+    \item \textbf{PettingZoo:}~1.23.0
+    \item \textbf{SuperSuit:}~3.9.0
+    \item \textbf{PyTorch:}~2.1.2+cpu
+    \item \textbf{sumo-rl:}~1.4.5
 \end{itemize}
 Die Pfade zu SUMO wurden über die Umgebungsvariable \texttt{SUMO\_HOME} gesetzt. Alle Experimente wurden mit deaktiviertem GUI-Modus gestartet, um den Simulationsfaktor zu maximieren.
 
@@ -246,22 +246,3 @@ und $250$--$300$ Schritten/s im \texttt{default}-Modus (ohne GUI).
 
 Die konfigurierte RL-Umgebung erlaubt eine modulare und flexible Steuerung realer Verkehrsnetze auf Basis von SUMO. Durch die Kombination aus systematischer TLS-Auswahl, stabiler und geglätteter Reward-Funktion, adaptiven Hyperparameter-Schedules, vorbereiteter Multi-Core-Parallellisierung, konsequenter Reproduzierbarkeit und umfassendem Monitoring (inkl. Checkpoints, Metriklogging und Bestmodell-Erkennung) wurde eine solide Grundlage für die experimentelle Evaluation lernbasierter Verkehrssteuerung geschaffen.
 
-\subsubsection{Evaluationsstrategie}
-\label{sec:evaluation-strategy}
-
-Zur Bewertung der trainierten Modelle wird ein systematischer, skriptbasierter Evaluationsplan verfolgt (Details und Ergebnisse siehe Kapitel~\ref{sec:validation}).
-Dabei wird stets dasselbe, bereinigte Verkehrsnetz (\texttt{map.net.xml}) verwendet, um die Vergleichbarkeit zu gewährleisten; variiert werden Signalsteuerung, Routenbelegung und Seeds.
-Im Gegensatz zu früheren Ansätzen werden \emph{statische Baselines direkt im Evaluationslauf} mitgeführt (fester Phasenplan und aktuiert).
-
-Folgende Dimensionen werden berücksichtigt:
-\begin{itemize}
-  \item \textbf{Trainierte Modelle:} Es werden mehrere Varianten von RL-Agenten getestet, die sich durch unterschiedliche Belohnungsfunktionen unterscheiden (vgl. Abschnitt~\ref{sec:rl-konzept}).
-        Die Evaluationslogik ist so gestaltet, dass beliebig viele Reward-Varianten unter identischen Bedingungen eingebunden werden können.
-  \item \textbf{Verkehrsszenarien:} Für die Simulation werden verschiedene Routenprofile genutzt (z.\,B.\ deterministische Flüsse, stochastisch generierte Muster) mit unterschiedlichen Verkehrsstärken (gering, mittel, hoch).
-  \item \textbf{Baselines:} Als Referenz dienen SUMO-interne Steuerungen: ein fester Signalplan (Fixed-Time) und eine aktuiert gesteuerte Variante (Actuated).
-\end{itemize}
-
-Die Leistungsbewertung erfolgt anhand zentraler Verkehrs- und Umweltmetriken, darunter mittlere Reisezeit, mittlere Geschwindigkeit, Gesamtlänge der Warteschlangen sowie aggregierte CO\textsubscript{2}-Emissionen pro Fahrzeug und Zeiteinheit.
-Alle Ergebnisse werden über mehrere Seeds und Episoden gemittelt, um die Robustheit der Aussagen zu erhöhen; für die stochastische Variation werden ausschließlich \emph{zuvor ungenutzte} Episoden-Seeds eingesetzt, sodass eine Überanpassung auf spezifische Muster ausgeschlossen wird.
-
-Diese Strategie stellt sicher, dass die in Kapitel~\ref{sec:validation} präsentierten Ergebnisse reproduzierbar, belastbar und sowohl zwischen RL-Varianten als auch im Vergleich zu Baselines aussagekräftig sind.

@@ -24,6 +24,13 @@ SCENARIOS   = [
 # ====== Gemeinsamer Step-Cache ======
 _STEP_CACHE = {"step": None}
 
+def queue_reward(self):
+    return -self.get_total_queued()
+
+def get_total_queued(self) -> int:
+        """Returns the total number of vehicles halting in the intersection."""
+        return sum(self.sumo.lane.getLastStepHaltingNumber(lane) for lane in self.lanes)
+
 # ====== Reward-Funktion: Reisezeit-Variante ======
 def travel_time_reward(ts):
     current_step = int(traci.simulation.getTime())
@@ -115,7 +122,7 @@ def make_env(route_file, sumo_seed):
         route_file=route_file,
         use_gui=False,
         num_seconds=EP_LENGTH_S,
-        reward_fn=travel_time_reward,
+        reward_fn=dummy_reward,
         min_green=5,
         max_depart_delay=100,
         sumo_seed=sumo_seed,
@@ -137,7 +144,7 @@ def load_model_and_norm(env, run_dir):
     #print(f"[DEBUG] Loading VecNormalize from {vecnorm_path}")
     env = VecNormalize.load(vecnorm_path, env)
     env.training = False
-    env.norm_reward = True
+    env.norm_reward = False
 
     #print(f"[DEBUG] Loading PPO model from {model_path}")
     model = PPO.load(model_path, env=env, device="cpu")
