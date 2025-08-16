@@ -37,3 +37,55 @@ Abschließend werden die wichtigsten Beobachtungen zusammengefasst:
     \item Einflüsse verschiedener Reward-Funktionen,
     \item Stabilität der Ergebnisse über Seeds und Episoden.
 \end{itemize}
+
+
+\begin{tikzpicture}
+    \begin{axis}[
+            ybar,
+            bar width=0.25cm,
+            width=14cm,
+            height=8cm,
+            enlarge x limits=0.15,
+            ylabel={Mean Wait},
+            xlabel={Scenario},
+            symbolic x coords={evening_peak,morning_peak,random_heavy,uniform}, % wie in CSV
+            xtick=data,
+            xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},     % Anzeige hübsch
+            x tick label style={rotate=45,anchor=east},
+            legend style={at={(0.5,-0.2)}, anchor=north, legend columns=-1},
+            ymajorgrids=true,
+            grid style=dashed
+        ]
+
+        % Baseline Actuated
+        \addplot+[ybar] table [
+                x=scenario, y=mean_wait, col sep=comma,
+                row predicate/.code={%
+                        \ifnum\pdfstrcmp{\thisrow{method}}{Baseline_Actuated}=0
+                        \else \pgfplotstableuserowfalse \fi
+                    }
+            ] {chapters/evaluation/results/eval_results_agg.csv};
+        \addlegendentry{Baseline Actuated}
+
+        % Baseline FixedTime
+        \addplot+[ybar] table [
+                x=scenario, y=mean_wait, col sep=comma,
+                row predicate/.code={%
+                        \ifnum\pdfstrcmp{\thisrow{method}}{Baseline_FixedTime}=0
+                        \else \pgfplotstableuserowfalse \fi
+                    }
+            ] {chapters/evaluation/results/eval_results_agg.csv};
+        \addlegendentry{Baseline FixedTime}
+
+        % RL
+        \addplot+[ybar] table [
+                x=scenario, y=mean_wait, col sep=comma,
+                row predicate/.code={%
+                        \ifnum\pdfstrcmp{\thisrow{method}}{RL}=0
+                        \else \pgfplotstableuserowfalse \fi
+                    }
+            ] {chapters/evaluation/results/eval_results_agg.csv};
+        \addlegendentry{RL}
+
+    \end{axis}
+\end{tikzpicture}

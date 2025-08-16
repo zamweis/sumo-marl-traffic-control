@@ -40,6 +40,11 @@
 \usepackage{array}
 \usepackage{float}
 
+% Diagramme
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.18}
+
 \tikzset{
   box/.style={
     rectangle,
@@ -66,6 +71,7 @@
   filecolor=magenta,      
   urlcolor=cyan,
 }
+
 
 \title{Optimierung einer Verkehrssimulation mit KI-basierten Agenten in SUMO}
 \author{Sam Weiler}
@@ -107,7 +113,7 @@
 \input{chapters/methodik/Einbindung.tex}
 \input{chapters/methodik/evaluierungstrategie.tex}
 
-\input{chapters/evaluation.tex}
+\input{chapters/evaluation/evaluation.tex}
 
 \section{Herausforderungen und Limitationen}
 \subsection{Technische und methodische Hürden}
