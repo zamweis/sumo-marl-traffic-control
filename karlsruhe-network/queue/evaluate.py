@@ -261,78 +261,79 @@ def to_serializable(obj):
 def evaluate():
     results = []
     log_dir_root = os.path.join("evaluation", "logs")
-    total_episodes = len(RUNS) * len(SCENARIOS) * N_EPISODES * 3
+
+    # Zählung: 2 Baselines + len(RUNS) RL pro (scenario × episode)
+    total_episodes = (2 + len(RUNS)) * len(SCENARIOS) * N_EPISODES
     ep_counter = 0
 
-    for run_i, run_dir in enumerate(RUNS):
-        for sc in SCENARIOS:
-            log_dir = os.path.join(
-                log_dir_root,
-                f"eval_run{run_i}_{os.path.basename(run_dir)}_{sc['name']}"
-            )
-            os.makedirs(log_dir, exist_ok=True)
-            logger = configure(log_dir, ["tensorboard", "stdout"])
+    for sc in SCENARIOS:
+        # Eigenes Log-Verzeichnis pro Szenario
+        scen_log_dir = os.path.join(log_dir_root, f"eval_{sc['name']}")
+        os.makedirs(scen_log_dir, exist_ok=True)
+        logger = configure(scen_log_dir, ["tensorboard", "stdout"])
 
-            print(f"[INFO] Evaluating run={run_dir}, scenario={sc['name']}")
+        print(f"[INFO] Evaluating scenario={sc['name']}")
 
-            for ep in range(N_EPISODES):
-                ep_seed = EP_SEEDS[ep]
+        for ep in range(N_EPISODES):
+            ep_seed = EP_SEEDS[ep]
 
-                # --- 1) Fixed-Time ---
-                env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=True)
-                ep_counter += 1
-                print(f"[PROGRESS] FixedTime | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
-                      f"({ep_counter}/{total_episodes})")
-                m = rollout_baseline(env)
-                m.update({
-                    "scenario": sc["name"],
-                    "ep_seed": ep_seed,
-                    "episode": ep,
-                    "method": "Baseline_FixedTime",
-                    "run_dir": os.path.basename(run_dir)
-                })
-                results.append(m)
+            # ---------- 1) Fixed-Time (einmal pro scenario×seed) ----------
+            env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=True)
+            ep_counter += 1
+            print(f"[PROGRESS] FixedTime | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
+                  f"({ep_counter}/{total_episodes})")
+            m = rollout_baseline(env)
+            m.update({
+                "scenario": sc["name"],
+                "ep_seed": ep_seed,
+                "episode": ep,
+                "method": "Baseline_FixedTime",
+                "run_dir": "baseline",
+            })
+            results.append(m)
 
-                # --- 2) Actuated ---
-                env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=False)
-                ep_counter += 1
-                print(f"[PROGRESS] Actuated | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
-                      f"({ep_counter}/{total_episodes})")
-                m = rollout_baseline(env)
-                m.update({
-                    "scenario": sc["name"],
-                    "ep_seed": ep_seed,
-                    "episode": ep,
-                    "method": "Baseline_Actuated",
-                    "run_dir": os.path.basename(run_dir)
-                })
-                results.append(m)
+            # ---------- 2) Actuated (einmal pro scenario×seed) ----------
+            env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=False)
+            ep_counter += 1
+            print(f"[PROGRESS] Actuated | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
+                  f"({ep_counter}/{total_episodes})")
+            m = rollout_baseline(env)
+            m.update({
+                "scenario": sc["name"],
+                "ep_seed": ep_seed,
+                "episode": ep,
+                "method": "Baseline_Actuated",
+                "run_dir": "baseline",
+            })
+            results.append(m)
 
-                # --- 3) RL ---
+            # ---------- 3) RL: jetzt über ALLE Modelle loopen ----------
+            for run_dir in RUNS:
                 env_raw = make_env(sc["route_file"], sumo_seed=ep_seed)
                 model, env = load_model_and_norm(env_raw, run_dir)
                 ep_counter += 1
-                print(f"[PROGRESS] RL | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
-                      f"({ep_counter}/{total_episodes})")
+                print(f"[PROGRESS] RL | {sc['name']} | {os.path.basename(run_dir)} "
+                      f"| Ep {ep+1}/{N_EPISODES} ({ep_counter}/{total_episodes})")
                 m = rollout(model, env)
                 m.update({
                     "scenario": sc["name"],
                     "ep_seed": ep_seed,
                     "episode": ep,
                     "method": "RL",
-                    "run_dir": os.path.basename(run_dir)
+                    "run_dir": os.path.basename(run_dir),
                 })
                 results.append(m)
 
-                # Logging für alle drei Varianten
-                for entry in results[-3:]:
-                    for k, v in entry.items():
-                        if isinstance(v, (int, float)) and k not in ["ep_rew", "ep_len", "episode", "ep_seed"]:
-                            short_key = shorten_key(k)
-                            logger.record(f"{entry['method']}/{short_key}", v)
-                    logger.record(f"{entry['method']}/ep_rew_mean", entry["ep_rew"])
-                    logger.record(f"{entry['method']}/ep_len", entry["ep_len"])
-                    logger.dump(step=ep)
+            # ---------- Logging (die letzte Runde Baselines + alle RL der Episode) ----------
+            # Anzahl Einträge in dieser Ep.: 2 Baselines + len(RUNS) RL
+            for entry in results[-(2 + len(RUNS)):]:
+                for k, v in entry.items():
+                    if isinstance(v, (int, float)) and k not in ["ep_rew", "ep_len", "episode", "ep_seed"]:
+                        short_key = shorten_key(k)
+                        logger.record(f"{entry['method']}/{short_key}", v)
+                logger.record(f"{entry['method']}/ep_rew_mean", entry["ep_rew"])
+                logger.record(f"{entry['method']}/ep_len", entry["ep_len"])
+            logger.dump(step=ep)
 
     results_path = os.path.join("evaluation", "eval_results.json")
     os.makedirs(os.path.dirname(results_path), exist_ok=True)
