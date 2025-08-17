@@ -202,7 +202,7 @@ def make_env(seed, route_files):
             net_file="map.net.xml",
             route_file=route_files[0],  # Platzhalter
             use_gui=False,
-            num_seconds=1000,
+            num_seconds=4096,
             reward_fn=realworld_reward,
             min_green=5,
             max_depart_delay=100,
@@ -398,7 +398,7 @@ for SEED in SEEDS:
         verbose=1,               # Ausführliches Logging
         tensorboard_log=log_dir, # TensorBoard-Pfad
         batch_size=256,          # Minibatch-Größe für PPO
-        n_steps=4096,            # Rollout-Länge
+        n_steps=2048,            # Rollout-Länge
         learning_rate=cosine_warmup_floor(start=3e-4, warmup_frac=0.05, min_lr_frac=0.1),
         clip_range=cosine_clip(), # Clipping-Range dynamisch
         ent_coef=0.01,            # Entropie-Koeffizient (Exploration)
