@@ -265,11 +265,12 @@ class TimeBasedCheckpointCallback(BaseCallback):
 # ====== Callback: Metriken aus der Env loggen ======
 class EpisodeMetricsLoggerCallback(BaseCallback):
     """
-    Loggt Episodenmetriken nach dem gleichen Schema wie rollout_baseline:
-    - system_mean_* → Werte über Episode mitteln
+    Loggt Episodenmetriken nach rollout_baseline-Strategie:
+    - system_mean_* → über Episode mitteln
     - system_total_* → nur letzten gültigen Wert merken
-    - finale Totals (aus final_info/terminal_info) haben Vorrang
+    - finale Totals (aus final_info/terminal_info) oder letzter Info-State
     """
+
     def __init__(self, prefix="episode", verbose=0):
         super().__init__(verbose)
         self.prefix = prefix
@@ -277,6 +278,45 @@ class EpisodeMetricsLoggerCallback(BaseCallback):
         self.sums = {}
         self.counts = {}
         self.last_totals = {}
+        self.last_info_before_done = None  # <- merken
+
+    def _process_info(self, info, is_final=False):
+        for k, v in info.items():
+            if not isinstance(v, (int, float)) or not np.isfinite(v):
+                continue
+            if k.startswith("system_mean_") or k in [
+                "system_total_waiting_time",
+                "system_total_stopped",
+                "system_total_running",
+            ]:
+                # Momentanwerte -> mitteln
+                self.sums[k] = self.sums.get(k, 0.0) + float(v)
+                self.counts[k] = self.counts.get(k, 0) + 1
+            elif k.startswith("system_total_"):
+                # Totals -> letzten Wert merken
+                self.last_totals[k] = float(v)
+
+    def _finalize_episode(self):
+        # Mittelwerte berechnen
+        for k, total in self.sums.items():
+            mean_val = total / max(1, self.counts.get(k, 1))
+            short = shorten_key(k)
+            self.logger.record(f"{self.prefix}/{short}", mean_val)
+            if self.verbose:
+                print(f"[EpisodeMetrics] {short} (mean) = {mean_val:.3f}")
+
+        # letzte Totals übernehmen
+        for k, v in self.last_totals.items():
+            short = shorten_key(k)
+            self.logger.record(f"{self.prefix}/{short}", v)
+            if self.verbose:
+                print(f"[EpisodeMetrics] {short} (total) = {v:.0f}")
+
+        # Reset
+        self.sums.clear()
+        self.counts.clear()
+        self.last_totals.clear()
+        self.last_info_before_done = None
 
     def _on_step(self) -> bool:
         dones = self.locals.get("dones")
@@ -288,59 +328,23 @@ class EpisodeMetricsLoggerCallback(BaseCallback):
             if not isinstance(info, dict):
                 continue
 
-            # Episode vorbei? Dann evtl. final_info/terminal_info auswerten
+            # Merken, falls letzte gültige Info gebraucht wird
+            self.last_info_before_done = info
+
+            # Episode vorbei?
             if dones is not None and dones[i]:
                 fin = info.get("final_info") or info.get("terminal_info")
                 if isinstance(fin, dict):
-                    for k, v in fin.items():
-                        if not isinstance(v, (int, float)) or not np.isfinite(v):
-                            continue
-                        if k.startswith("system_mean_"):
-                            self.sums[k] = self.sums.get(k, 0.0) + float(v)
-                            self.counts[k] = self.counts.get(k, 0) + 1
-                    for k, v in fin.items():
-                        if (
-                            k.startswith("system_total_")
-                            and isinstance(v, (int, float))
-                            and np.isfinite(v)
-                        ):
-                            self.last_totals[k] = float(v)
+                    self._process_info(fin, is_final=True)
+                elif self.last_info_before_done is not None:
+                    # Fallback: letzter gültiger Info-State
+                    self._process_info(self.last_info_before_done, is_final=True)
 
-            # Normaler Zwischenschritt
-            for k, v in info.items():
-                if not isinstance(v, (int, float)) or not np.isfinite(v):
-                    continue
-                if k.startswith("system_mean_") or k in [
-                    "system_total_waiting_time",
-                    "system_total_stopped",
-                    "system_total_running",
-                ]:
-                    self.sums[k] = self.sums.get(k, 0.0) + float(v)
-                    self.counts[k] = self.counts.get(k, 0) + 1
-                elif k.startswith("system_total_"):
-                    self.last_totals[k] = float(v)
+                self._finalize_episode()
+                return True  # WICHTIG: sofort zurück, keine Reset-Werte mehr verarbeiten
 
-        # Wenn Episode zu Ende, berechnen + loggen
-        if dones is not None and any(dones):
-            # Mittelwerte berechnen
-            for k, total in self.sums.items():
-                mean_val = total / max(1, self.counts.get(k, 1))
-                short_key = shorten_key(k)
-                self.logger.record(f"{self.prefix}/{short_key}", mean_val)
-                if self.verbose:
-                    print(f"[EpisodeMetrics] {short_key} (mean) = {mean_val:.3f}")
-
-            # letzte Totals übernehmen
-            for k, v in self.last_totals.items():
-                short_key = shorten_key(k)
-                self.logger.record(f"{self.prefix}/{short_key}", v)
-                if self.verbose:
-                    print(f"[EpisodeMetrics] {short_key} (total) = {v:.0f}")
-
-            # Reset für nächste Episode
-            self.sums.clear()
-            self.counts.clear()
-            self.last_totals.clear()
+            # Normaler Step
+            self._process_info(info)
 
         return True
 
