@@ -241,7 +241,7 @@ def make_env(seed, route_files):
             net_file="map.net.xml",
             route_file=route_files[0],  # Platzhalter
             use_gui=False,
-            num_seconds=4096,
+            num_seconds=1000,
             reward_fn="diff-waiting-time",
             min_green=5,
             max_depart_delay=100,
@@ -304,56 +304,95 @@ class TimeBasedCheckpointCallback(BaseCallback):
 # ====== Callback: Metriken aus der Env loggen ======
 class EpisodeMetricsLoggerCallback(BaseCallback):
     """
-    Loggt Episodenmetriken:
-    - mean_*  → Episodenmittelwerte
-    - total_* → Summen über die Episode
+    Loggt Episodenmetriken am Episodenende:
+    - Endstand: total_arrived, total_departed, total_teleported, total_backlogged
+    - Durchschnitt: total_running, total_stopped, total_waiting_time,
+                    mean_waiting_time, mean_speed
+    Zusätzlich: alle 100 Steps werden aktuelle Zwischenwerte ausgegeben.
     """
+
+    END_KEYS = {
+        "system_total_arrived",
+        "system_total_departed",
+        "system_total_teleported",
+        "system_total_backlogged",
+    }
+    MEAN_KEYS = {
+        "system_total_running",
+        "system_total_stopped",
+        "system_total_waiting_time",
+        "system_mean_waiting_time",
+        "system_mean_speed",
+    }
+
     def __init__(self, prefix="episode", verbose=0):
         super().__init__(verbose)
         self.prefix = prefix
         self.verbose = verbose
-        self.sums = {}
-        self.counts = {}
+        self.mean_sums = {}
+        self.mean_counts = {}
+        self.last_totals = {}
+        self.step_count = 0
+
+    @staticmethod
+    def _is_num(x):
+        return isinstance(x, (int, float, np.floating, np.integer)) and np.isfinite(x)
+
+    def _accumulate_info_dict(self, info: dict, is_final=False):
+        if not isinstance(info, dict):
+            return
+        for k, v in info.items():
+            if not self._is_num(v):
+                continue
+            v = float(v)
+
+            if k in self.MEAN_KEYS:
+                # Momentanwerte sammeln
+                self.mean_sums[k] = self.mean_sums.get(k, 0.0) + v
+                self.mean_counts[k] = self.mean_counts.get(k, 0) + 1
+            elif k in self.END_KEYS:
+                # Totals: immer den letzten gültigen Wert merken
+                self.last_totals[k] = v
+
+    def _finalize_episode(self):
+        # Mittelwerte loggen
+        for k, s in self.mean_sums.items():
+            cnt = max(1, self.mean_counts.get(k, 0))
+            mean_val = s / cnt
+            short = k.replace("system_", "")
+            self.logger.record(f"{self.prefix}/{short}", mean_val)
+            if self.verbose:
+                print(f"[EpisodeMetrics] {short} (mean) = {mean_val:.3f}")
+
+        # Endstände loggen
+        for k, v in self.last_totals.items():
+            short = k.replace("system_", "")
+            self.logger.record(f"{self.prefix}/{short}", v)
+            if self.verbose:
+                print(f"[EpisodeMetrics] {short} (end) = {v:.3f}")
+
+        # Reset
+        self.mean_sums.clear()
+        self.mean_counts.clear()
+        self.last_totals.clear()
+        self.step_count = 0
 
     def _on_step(self) -> bool:
-        dones = self.locals.get("dones")
+        self.step_count += 1
         infos = self.locals.get("infos")
-        if infos is None:
-            return True
+        dones = self.locals.get("dones")
 
-        for info in infos:
-            if not isinstance(info, dict):
-                continue
-            for key, v in info.items():
-                if not isinstance(v, (int, float)) or not np.isfinite(v):
-                    continue
+        if infos is not None:
+            for info in infos:
+                self._accumulate_info_dict(info)
 
-                if key.startswith("system_mean_"):
-                    # Mittelwert → akkumulieren und später mitteln
-                    self.sums[key] = self.sums.get(key, 0.0) + float(v)
-                    self.counts[key] = self.counts.get(key, 0) + 1
+                # End-Infos separat behandeln (damit nicht Nullwerte vom Reset gezählt werden)
+                fin = info.get("final_info") or info.get("terminal_info") if isinstance(info, dict) else None
+                if isinstance(fin, dict):
+                    self._accumulate_info_dict(fin, is_final=True)
 
-                elif key.startswith("system_total_"):
-                    # Totals → über Episode aufsummieren
-                    self.sums[key] = self.sums.get(key, 0.0) + float(v)
-
-        # Episode zu Ende?
-        if dones is not None and any(dones):
-            for k, total in self.sums.items():
-                short_key = shorten_key(k)
-                if k.startswith("system_mean_"):
-                    mean_val = total / max(1, self.counts.get(k, 1))
-                    self.logger.record(f"{self.prefix}/{short_key}", mean_val)
-                    if self.verbose:
-                        print(f"[EpisodeMetrics] {short_key} (mean) = {mean_val:.3f}")
-                elif k.startswith("system_total_"):
-                    self.logger.record(f"{self.prefix}/{short_key}", total)
-                    if self.verbose:
-                        print(f"[EpisodeMetrics] {short_key} (total) = {total:.0f}")
-
-            # Reset für nächste Episode
-            self.sums.clear()
-            self.counts.clear()
+        if isinstance(dones, (list, tuple, np.ndarray)) and any(dones):
+            self._finalize_episode()
 
         return True
 

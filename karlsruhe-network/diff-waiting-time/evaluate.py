@@ -1,6 +1,5 @@
-import os, json, numpy as np, torch, datetime
+import os, json, numpy as np
 import glob
-import traci
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import VecNormalize, VecMonitor
 from stable_baselines3.common.logger import configure
@@ -20,99 +19,6 @@ SCENARIOS   = [
     {"name": "uniform",      "route_file": "flows_uniform.rou.xml"},
     {"name": "random_heavy", "route_file": "flows_random_heavy.rou.xml"},
 ]
-
-# ====== Gemeinsamer Step-Cache ======
-_STEP_CACHE = {"step": None}
-
-def queue_reward(self):
-    return -self.get_total_queued()
-
-def get_total_queued(self) -> int:
-        """Returns the total number of vehicles halting in the intersection."""
-        return sum(self.sumo.lane.getLastStepHaltingNumber(lane) for lane in self.lanes)
-
-# ====== Reward-Funktion: Reisezeit-Variante ======
-def travel_time_reward(ts):
-    current_step = int(traci.simulation.getTime())
-    if _STEP_CACHE.get("travel_step") != current_step:
-        vids = traci.vehicle.getIDList()
-        n_veh = len(vids)
-        if n_veh:
-            travel_times = [
-                traci.vehicle.getAccumulatedWaitingTime(v) + traci.vehicle.getTimeLoss(v)
-                for v in vids
-            ]
-            mean_time = float(np.mean(travel_times))
-        else:
-            mean_time = 0.0
-        _STEP_CACHE.update({
-            "travel_step": current_step,
-            "mean_travel_time": mean_time,
-            "n_veh": n_veh
-        })
-
-    if _STEP_CACHE["n_veh"] <= 0:
-        return 0.0
-
-    return float(np.clip(np.tanh((60.0 - _STEP_CACHE["mean_travel_time"]) / 60.0), -1.0, 1.0))
-
-# ====== Reward-Funktion: RealWorld-Variante ======
-def realworld_reward(traffic_signal):
-    """
-    Belohnt Verkehrsfluss, bestraft Stau und häufige Phasenwechsel.
-    Nutzt Exponentielles gleitendes Mittel (EMA) zur Glättung der Messwerte.
-    Mit einfachem Cache, um TraCI-Calls pro Step zu reduzieren.
-    """
-    current_step = int(traci.simulation.getTime())
-    if _STEP_CACHE["rw_step"] != current_step:
-        _STEP_CACHE["queue"] = int(traffic_signal.get_total_queued())
-        _STEP_CACHE["flow"] = int(traci.simulation.getArrivedNumber())
-        _STEP_CACHE["rw_step"] = current_step
-
-    q = _STEP_CACHE["queue"]
-    f = _STEP_CACHE["flow"]
-
-    # Reset interner Zustände zu Beginn einer Episode
-    if hasattr(traffic_signal, "step_count") and traffic_signal.step_count == 0:
-        traffic_signal._rw_state = None
-
-    # Initialisierung beim ersten Step
-    if not hasattr(traffic_signal, "_rw_state") or traffic_signal._rw_state is None:
-        traffic_signal._rw_state = {"prev_q": q, "ema_q": float(q), "ema_f": float(f)}
-        return 0.0
-
-    # Parameter für Normalisierung und Gewichtung
-    max_storage = 40               # Maximale Speicherkapazität der Kreuzung (Fahrzeuge)
-    max_outflow_per_step = 8       # Maximaler Ausfluss pro Step
-    w_q, w_build, w_flow, w_switch = 1.0, 0.8, 0.7, 0.1
-    ema, clip = 0.3, 5.0           # EMA-Faktor und Reward-Clipping
-
-    # Aktuelle Messwerte
-    phase_sw = 1.0 if getattr(traffic_signal, "phase_changed", False) else 0.0
-    st = traffic_signal._rw_state
-
-    # EMA-Glättung für Queue und Fluss
-    ema_q = (1 - ema) * st["ema_q"] + ema * q
-    ema_f = (1 - ema) * st["ema_f"] + ema * f
-
-    # Aufbau neuer Warteschlangen
-    delta_q = q - st["prev_q"]
-    build = max(0, delta_q)
-
-    # Normalisierung der Werte
-    q_norm = np.clip(ema_q / max(1.0, float(max_storage)), 0.0, 1.5)
-    b_norm = np.clip(build / max(1.0, float(max_storage) * 0.2), 0.0, 1.5)
-    f_norm = np.clip(ema_f / max(1.0, float(max_outflow_per_step)), 0.0, 1.5)
-
-    # Reward-Berechnung
-    r = -w_q*q_norm - w_build*b_norm + w_flow*f_norm - w_switch*phase_sw
-    r = float(np.clip(r, -clip, clip))
-
-    # Update interner Zustände
-    st["prev_q"], st["ema_q"], st["ema_f"] = q, ema_q, ema_f
-    traffic_signal._rw_state = st
-
-    return r
 
 # ----- Env Factory -----
 def make_env(route_file, sumo_seed):
@@ -154,12 +60,12 @@ def load_model_and_norm(env, run_dir):
 def rollout(model, env):
     obs = env.reset()
     dones = [False]
-    info_acc = []
     step_count = 0
     ep_reward = 0.0
 
     sums = {}
     counts = {}
+    last_vals = {}  # nur letzten Wert für system_total_* merken
 
     while not dones[0]:
         action, _ = model.predict(obs, deterministic=True)
@@ -176,19 +82,21 @@ def rollout(model, env):
                     sums[key] = sums.get(key, 0.0) + float(v)
                     counts[key] = counts.get(key, 0) + 1
                 elif key.startswith("system_total_"):
-                    sums[key] = sums.get(key, 0.0) + float(v)
+                    last_vals[key] = float(v)  # nur letzten Wert behalten
 
     mean_metrics = {}
     for k, total in sums.items():
-        if k.startswith("system_mean_"):
-            mean_val = total / max(1, counts.get(k, 1))
-            mean_metrics[k] = mean_val
-        elif k.startswith("system_total_"):
-            mean_metrics[k] = total
+        cnt = max(1, counts.get(k, 0))
+        mean_metrics[k] = total / cnt
+
+    # Endstände (letzter Wert)
+    for k, v in last_vals.items():
+        mean_metrics[k] = v
 
     mean_metrics["ep_rew"] = ep_reward
     mean_metrics["ep_len"] = step_count
     return mean_metrics
+
 
 def shorten_key(orig_key: str) -> str:
     return orig_key.replace("system_", "")
@@ -229,8 +137,8 @@ def rollout_baseline(env):
 
     sums = {}
     counts = {}
+    last_vals = {}
 
-    # gültige Dummy-Aktion aus dem Action Space
     dummy_action = np.array([env.action_space.sample() for _ in range(env.num_envs)])
 
     while not dones[0]:
@@ -247,15 +155,15 @@ def rollout_baseline(env):
                     sums[key] = sums.get(key, 0.0) + float(v)
                     counts[key] = counts.get(key, 0) + 1
                 elif key.startswith("system_total_"):
-                    sums[key] = sums.get(key, 0.0) + float(v)
+                    last_vals[key] = float(v)
 
     mean_metrics = {}
     for k, total in sums.items():
-        if k.startswith("system_mean_"):
-            mean_val = total / max(1, counts.get(k, 1))
-            mean_metrics[k] = mean_val
-        elif k.startswith("system_total_"):
-            mean_metrics[k] = total
+        cnt = max(1, counts.get(k, 0))
+        mean_metrics[k] = total / cnt
+
+    for k, v in last_vals.items():
+        mean_metrics[k] = v
 
     mean_metrics["ep_rew"] = ep_reward
     mean_metrics["ep_len"] = step_count
