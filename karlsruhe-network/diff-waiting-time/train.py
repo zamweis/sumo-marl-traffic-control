@@ -450,7 +450,7 @@ for SEED in SEEDS:
     try:
         time.sleep(3) # Kurze Pause für saubere Konsolenlogs
         model.learn(
-            total_timesteps=2_500_000,
+            total_timesteps=1_500_000,
             callback=callbacks,
         )
         # Nach Abschluss final speichern
