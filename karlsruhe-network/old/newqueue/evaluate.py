@@ -12,7 +12,7 @@ from supersuit import pettingzoo_env_to_vec_env_v1, concat_vec_envs_v1
 RUNS = sorted(glob.glob(os.path.join("runs", "ppo_sumo_*")))
 MODEL_NAME  = "best_model.zip"
 N_EPISODES  = 10
-EP_LENGTH_S = 3500
+EP_LENGTH_S = 4096
 EP_SEEDS    = [12345, 67890, 13579, 24680, 11223, 44556, 77889, 99100, 31415, 27182]
 SCENARIOS   = [
     {"name": "morning_peak", "route_file": "flows_morning.rou.xml"},
@@ -258,6 +258,7 @@ def to_serializable(obj):
     return str(obj)
 
 # ----- Evaluation Loop -----
+# ----- Evaluation Loop -----
 def evaluate():
     results = []
     log_dir_root = os.path.join("evaluation", "logs")
@@ -267,7 +268,6 @@ def evaluate():
     ep_counter = 0
 
     for sc in SCENARIOS:
-        # Eigenes Log-Verzeichnis pro Szenario
         scen_log_dir = os.path.join(log_dir_root, f"eval_{sc['name']}")
         os.makedirs(scen_log_dir, exist_ok=True)
         logger = configure(scen_log_dir, ["tensorboard", "stdout"])
@@ -277,7 +277,7 @@ def evaluate():
         for ep in range(N_EPISODES):
             ep_seed = EP_SEEDS[ep]
 
-            # ---------- 1) Fixed-Time (einmal pro scenario×seed) ----------
+            # --- 1) Fixed-Time ---
             env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=True)
             ep_counter += 1
             print(f"[PROGRESS] FixedTime | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
@@ -287,12 +287,11 @@ def evaluate():
                 "scenario": sc["name"],
                 "ep_seed": ep_seed,
                 "episode": ep,
-                "method": "Baseline_FixedTime",
-                "run_dir": "baseline",
+                "method": "Baseline_FixedTime"
             })
             results.append(m)
 
-            # ---------- 2) Actuated (einmal pro scenario×seed) ----------
+            # --- 2) Actuated ---
             env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=False)
             ep_counter += 1
             print(f"[PROGRESS] Actuated | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
@@ -302,30 +301,32 @@ def evaluate():
                 "scenario": sc["name"],
                 "ep_seed": ep_seed,
                 "episode": ep,
-                "method": "Baseline_Actuated",
-                "run_dir": "baseline",
+                "method": "Baseline_Actuated"
             })
             results.append(m)
 
-            # ---------- 3) RL: jetzt über ALLE Modelle loopen ----------
+            # --- 3) RL-Modelle ---
             for run_dir in RUNS:
                 env_raw = make_env(sc["route_file"], sumo_seed=ep_seed)
                 model, env = load_model_and_norm(env_raw, run_dir)
                 ep_counter += 1
-                print(f"[PROGRESS] RL | {sc['name']} | {os.path.basename(run_dir)} "
+                model_name = os.path.basename(run_dir)
+                print(f"[PROGRESS] RL | {sc['name']} | {model_name} "
                       f"| Ep {ep+1}/{N_EPISODES} ({ep_counter}/{total_episodes})")
                 m = rollout(model, env)
+                
+                # Seed extrahieren (3. Teil vom Namen)
+                parts = model_name.split("_")
+                model_seed = parts[2] if len(parts) > 2 else "unknown"
+
                 m.update({
                     "scenario": sc["name"],
-                    "ep_seed": ep_seed,
                     "episode": ep,
-                    "method": "RL",
-                    "run_dir": os.path.basename(run_dir),
+                    "method": f"{model_name}_{model_seed}"
                 })
                 results.append(m)
 
-            # ---------- Logging (die letzte Runde Baselines + alle RL der Episode) ----------
-            # Anzahl Einträge in dieser Ep.: 2 Baselines + len(RUNS) RL
+            # --- Logging dieser Episode (Baselines + alle RL) ---
             for entry in results[-(2 + len(RUNS)):]:
                 for k, v in entry.items():
                     if isinstance(v, (int, float)) and k not in ["ep_rew", "ep_len", "episode", "ep_seed"]:
@@ -341,7 +342,6 @@ def evaluate():
         json.dump(results, f, indent=2, default=to_serializable)
 
     print(f"[INFO] Evaluation abgeschlossen. Ergebnisse: {results_path}")
-
 
 if __name__ == "__main__":
     evaluate()

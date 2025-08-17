@@ -4,7 +4,6 @@ import os
 import re
 import time
 import datetime
-import random
 
 # SUMO-Interface (TraCI) für Simulation
 import traci
@@ -37,45 +36,40 @@ from gymnasium import Wrapper
 
 
 # ====== Trainings-Setup ======
-SEEDS = [143534, 456, 635768, 13755]  # Verschiedene Zufalls-Seed-Werte für reproduzierbare Runs
-ROUTE_FILES = [
-    "flows_evening.rou.xml",
-    "flows_morning.rou.xml",
-    "flows_uniform.rou.xml",
-]
+SEEDS = [546456, 678678, 234256, 678]  # Verschiedene Zufalls-Seed-Werte für reproduzierbare Runs
 
 
 # ====== Reward-Funktion: RealWorld-Variante ======
 def realworld_reward(traffic_signal):
     """
-    Verbesserte Reward-Funktion:
-    - belohnt Outflow stärker
-    - bestraft Queue-Aufbau und häufige Phasenwechsel
-    - EMA-Glättung für stabilere Werte
-    - kleine positive Basis, damit PPO leichter lernt
+    Belohnt Verkehrsfluss, bestraft Stau und häufige Phasenwechsel.
+    Nutzt Exponentielles gleitendes Mittel (EMA) zur Glättung der Messwerte.
     """
+    # Reset interner Zustände zu Beginn einer Episode
+    if hasattr(traffic_signal, "step_count") and traffic_signal.step_count == 0:
+        traffic_signal._rw_state = None
 
-    # aktuelle Messwerte lokal zur Kreuzung
-    q = traffic_signal.get_total_queued()
-    f = sum(
-        traffic_signal.sumo.lane.getLastStepVehicleNumber(l)
-        for l in traffic_signal.out_lanes
-    )
-
-    # interne Zustände initialisieren
-    if not hasattr(traffic_signal, "_rw_state") or traffic_signal.env.sim_step == 0:
+    # Initialisierung beim ersten Step
+    if not hasattr(traffic_signal, "_rw_state") or traffic_signal._rw_state is None:
+        q = int(traffic_signal.get_total_queued())   # Fahrzeuge in der Warteschlange
+        f = int(traci.simulation.getArrivedNumber()) # Fahrzeuge, die das Netz verlassen haben
         traffic_signal._rw_state = {"prev_q": q, "ema_q": float(q), "ema_f": float(f)}
         return 0.0
 
+    # Parameter für Normalisierung und Gewichtung
+    max_storage = 40               # Maximale Speicherkapazität der Kreuzung (Fahrzeuge)
+    max_outflow_per_step = 8       # Maximaler Ausfluss pro Step
+    w_q, w_build, w_flow, w_switch = 1.0, 0.8, 0.7, 0.1
+    ema, clip = 0.3, 5.0           # EMA-Faktor und Reward-Clipping
+
+    # Aktuelle Messwerte
+    q = int(traffic_signal.get_total_queued())
+    f = int(traci.simulation.getArrivedNumber())
+    phase_sw = 1.0 if getattr(traffic_signal, "phase_changed", False) else 0.0
+
     st = traffic_signal._rw_state
 
-    # Parameter für Normalisierung / Gewichtung
-    max_storage = max(5.0, len(traffic_signal.lanes) * 12)   # etwas großzügiger als *10
-    max_outflow_per_step = max(2.0, len(traffic_signal.out_lanes) * 3)  # großzügiger als *2
-    w_q, w_build, w_flow, w_switch = 1.0, 0.8, 1.0, 0.1      # Flow stärker gewichtet
-    ema, clip = 0.3, 2.0                                     # glatter, engerer Clip
-
-    # Exponentielles Mittel
+    # EMA-Glättung für Queue und Fluss
     ema_q = (1 - ema) * st["ema_q"] + ema * q
     ema_f = (1 - ema) * st["ema_f"] + ema * f
 
@@ -83,26 +77,21 @@ def realworld_reward(traffic_signal):
     delta_q = q - st["prev_q"]
     build = max(0, delta_q)
 
-    # Normierungen
-    q_norm = np.clip(ema_q / max_storage, 0.0, 1.5)
-    b_norm = np.clip(build / (0.2 * max_storage), 0.0, 1.5)
-    f_norm = np.clip(ema_f / max_outflow_per_step, 0.0, 1.5)
-
-    # Phasenwechsel-Bestrafung
-    phase_sw = 1.0 if getattr(traffic_signal, "phase_changed", False) else 0.0
+    # Normalisierung der Werte
+    q_norm = np.clip(ema_q / max(1.0, float(max_storage)), 0.0, 1.5)
+    b_norm = np.clip(build / max(1.0, float(max_storage) * 0.2), 0.0, 1.5)
+    f_norm = np.clip(ema_f / max(1.0, float(max_outflow_per_step)), 0.0, 1.5)
 
     # Reward-Berechnung
-    r = -w_q * q_norm - w_build * b_norm + w_flow * f_norm - w_switch * phase_sw
+    r = -w_q*q_norm - w_build*b_norm + w_flow*f_norm - w_switch*phase_sw
     r = float(np.clip(r, -clip, clip))
 
-    # Kleine positive Basis hinzufügen
-    r += 0.1
-
     # Update interner Zustände
-    traffic_signal._rw_state = {"prev_q": q, "ema_q": ema_q, "ema_f": ema_f}
-    traffic_signal.phase_changed = False  # Reset Flag nach Verwendung
+    st["prev_q"], st["ema_q"], st["ema_f"] = q, ema_q, ema_f
+    traffic_signal._rw_state = st
 
     return r
+
 
 # ====== Reward-Funktion: Custom-Variante ([-1, 1] gebunden) ======
 def custom_reward(traffic_signal):
@@ -198,6 +187,7 @@ def cosine_warmup_floor(start=3e-4, warmup_frac=0.05, min_lr_frac=0.1):
         return float(base)
     return schedule
 
+
 # ====== Hilfsfunktionen und Callbacks ======
 # (Modelle finden, Checkpoints speichern, Metriken loggen, bestes Modell sichern)
 # ====== Letzten vollständigen Run finden ======
@@ -235,49 +225,6 @@ def find_latest_complete_run(base_dir="runs", prefix="ppo_sumo_"):
 
     return None
 
-def make_env(seed, route_files):
-    def _init():
-        # Initial mit einer Dummy-Datei starten
-        route_file = random.choice(route_files)
-        env = parallel_env(
-            net_file="map.net.xml",
-            route_file=route_file,
-            use_gui=False,
-            num_seconds=4096,
-            reward_fn="queue",
-            min_green=5,
-            max_depart_delay=100,
-            sumo_seed=seed,              
-            add_system_info=True,
-            add_per_agent_info=False,
-        )
-
-        # Re-Seeding falls möglich
-        if hasattr(env, "seed"):
-            env.seed(seed)
-
-        # --- Reset patchen, damit jedes Mal neues route_file gewählt wird ---
-        orig_reset = env.reset
-
-        def reset_with_random_route(**kwargs):
-            new_route = random.choice(route_files)
-            env.route_file = new_route  # wichtig: route_file-Attribut ändern
-            if hasattr(env, "sumo_seed"):
-                env.sumo_seed = seed
-            print(
-                "\n" + "="*60 +
-                f"\n[DEBUG] Reset mit neuem Route-File: {new_route}\n[DEBUG] Seed: {seed}\n" +
-                "="*60 + "\n",
-                flush=True
-            )
-            return orig_reset(**kwargs)
-
-        env.reset = reset_with_random_route
-        return env
-    return _init
-
-def shorten_key(orig_key: str) -> str:
-    return orig_key.replace("system_", "")
 
 # ====== Callback: Zeitbasiertes Speichern ======
 class TimeBasedCheckpointCallback(BaseCallback):
@@ -339,7 +286,13 @@ class EnvMetricsLoggerCallback(BaseCallback):
                 if not isinstance(v, (int, float)) or not np.isfinite(v):
                     continue
                 # Kürzung der Key-Namen
-                short_key = shorten_key(orig_key)
+                if orig_key.startswith("system_"):
+                    short_key = orig_key[len("system_"):]
+                    if short_key.startswith("total"):
+                        short_key = short_key[len("total_"):]
+                    short_key = "mean_" + short_key
+                else:
+                    short_key = orig_key
                 tag = f"{self.prefix}/{short_key}"
                 self.sums[tag] = self.sums.get(tag, 0.0) + float(v)
                 self.counts[tag] = self.counts.get(tag, 0) + 1
@@ -393,7 +346,18 @@ for SEED in SEEDS:
     print(f"\n[INFO] Starte Training mit Seed: {SEED}")
 
     # SUMO-Umgebung initialisieren
-    env = make_env(SEED, ROUTE_FILES)()
+    env = parallel_env(
+        net_file="map.net.xml",
+        route_file="map.rou.xml",
+        use_gui=False,            # Kein GUI (schnelleres Training)
+        num_seconds=4096,         # Episodenlänge in Simulationssekunden
+        reward_fn="queue",  # Reward-Funktion
+        min_green=5,              # Minimale Grünphase
+        max_depart_delay=100,     # Max. Verzögerung bei Fahrzeugstart
+        sumo_seed=SEED,           # Seed für SUMO
+        add_system_info=True,     # Zusätzliche Systemmetriken
+        add_per_agent_info=False, # Keine Metriken pro Agent (nur global)
+    )
 
     # Falls die Env einen seed()-Aufruf unterstützt
     if hasattr(env, "seed"):
@@ -403,10 +367,7 @@ for SEED in SEEDS:
     env = pad_observations_v0(env)
     env = pad_action_space_v0(env)
     env = pettingzoo_env_to_vec_env_v1(env)
-
-    # WICHTIG: trotzdem concat_vec_envs_v1 mit num_vec_envs=1
-    env = concat_vec_envs_v1(env, num_vec_envs=1, num_cpus=1, base_class="stable_baselines3")
-
+    env = concat_vec_envs_v1(env, num_vec_envs=1, num_cpus=8, base_class="stable_baselines3")
 
     # Logging und Normalisierung
     env = VecMonitor(env, filename=os.path.join(log_dir, "monitor.csv"))
@@ -418,7 +379,7 @@ for SEED in SEEDS:
         env=env,
         verbose=1,               # Ausführliches Logging
         tensorboard_log=log_dir, # TensorBoard-Pfad
-        batch_size=256,          # Minibatch-Größe für PPO
+        batch_size=512,          # Minibatch-Größe für PPO
         n_steps=2048,            # Rollout-Länge
         learning_rate=cosine_warmup_floor(start=3e-4, warmup_frac=0.05, min_lr_frac=0.1),
         clip_range=cosine_clip(), # Clipping-Range dynamisch
@@ -445,7 +406,7 @@ for SEED in SEEDS:
     try:
         time.sleep(3) # Kurze Pause für saubere Konsolenlogs
         model.learn(
-            total_timesteps=5_000_000,
+            total_timesteps=2_000_000,
             callback=callbacks,
         )
         # Nach Abschluss final speichern
