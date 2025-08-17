@@ -202,7 +202,7 @@ def make_env(seed, route_files):
             net_file="map.net.xml",
             route_file=route_files[0],  # Platzhalter
             use_gui=False,
-            num_seconds=4096,
+            num_seconds=1000,
             reward_fn=realworld_reward,
             min_green=5,
             max_depart_delay=100,
@@ -264,13 +264,6 @@ class TimeBasedCheckpointCallback(BaseCallback):
 
 # ====== Callback: Metriken aus der Env loggen ======
 class EpisodeMetricsLoggerCallback(BaseCallback):
-    """
-    Loggt Episodenmetriken nach rollout_baseline-Strategie:
-    - system_mean_* → über Episode mitteln
-    - system_total_* → nur letzten gültigen Wert merken
-    - finale Totals (aus final_info/terminal_info) oder letzter Info-State
-    """
-
     def __init__(self, prefix="episode", verbose=0):
         super().__init__(verbose)
         self.prefix = prefix
@@ -278,45 +271,6 @@ class EpisodeMetricsLoggerCallback(BaseCallback):
         self.sums = {}
         self.counts = {}
         self.last_totals = {}
-        self.last_info_before_done = None  # <- merken
-
-    def _process_info(self, info, is_final=False):
-        for k, v in info.items():
-            if not isinstance(v, (int, float)) or not np.isfinite(v):
-                continue
-            if k.startswith("system_mean_") or k in [
-                "system_total_waiting_time",
-                "system_total_stopped",
-                "system_total_running",
-            ]:
-                # Momentanwerte -> mitteln
-                self.sums[k] = self.sums.get(k, 0.0) + float(v)
-                self.counts[k] = self.counts.get(k, 0) + 1
-            elif k.startswith("system_total_"):
-                # Totals -> letzten Wert merken
-                self.last_totals[k] = float(v)
-
-    def _finalize_episode(self):
-        # Mittelwerte berechnen
-        for k, total in self.sums.items():
-            mean_val = total / max(1, self.counts.get(k, 1))
-            short = shorten_key(k)
-            self.logger.record(f"{self.prefix}/{short}", mean_val)
-            if self.verbose:
-                print(f"[EpisodeMetrics] {short} (mean) = {mean_val:.3f}")
-
-        # letzte Totals übernehmen
-        for k, v in self.last_totals.items():
-            short = shorten_key(k)
-            self.logger.record(f"{self.prefix}/{short}", v)
-            if self.verbose:
-                print(f"[EpisodeMetrics] {short} (total) = {v:.0f}")
-
-        # Reset
-        self.sums.clear()
-        self.counts.clear()
-        self.last_totals.clear()
-        self.last_info_before_done = None
 
     def _on_step(self) -> bool:
         dones = self.locals.get("dones")
@@ -328,23 +282,52 @@ class EpisodeMetricsLoggerCallback(BaseCallback):
             if not isinstance(info, dict):
                 continue
 
-            # Merken, falls letzte gültige Info gebraucht wird
-            self.last_info_before_done = info
-
-            # Episode vorbei?
             if dones is not None and dones[i]:
+                # --- Episode zu Ende ---
                 fin = info.get("final_info") or info.get("terminal_info")
                 if isinstance(fin, dict):
-                    self._process_info(fin, is_final=True)
-                elif self.last_info_before_done is not None:
-                    # Fallback: letzter gültiger Info-State
-                    self._process_info(self.last_info_before_done, is_final=True)
+                    for k, v in fin.items():
+                        if not isinstance(v, (int, float)) or not np.isfinite(v):
+                            continue
+                        if k.startswith("system_mean_"):
+                            self.sums[k] = self.sums.get(k, 0.0) + float(v)
+                            self.counts[k] = self.counts.get(k, 0) + 1
+                        elif k.startswith("system_total_"):
+                            self.last_totals[k] = float(v)
+            else:
+                # --- Nur Zwischenschritt, solange Episode noch läuft ---
+                for k, v in info.items():
+                    if not isinstance(v, (int, float)) or not np.isfinite(v):
+                        continue
+                    if k.startswith("system_mean_") or k in [
+                        "system_total_waiting_time",
+                        "system_total_stopped",
+                        "system_total_running",
+                    ]:
+                        self.sums[k] = self.sums.get(k, 0.0) + float(v)
+                        self.counts[k] = self.counts.get(k, 0) + 1
+                    elif k.startswith("system_total_"):
+                        self.last_totals[k] = float(v)
 
-                self._finalize_episode()
-                return True  # WICHTIG: sofort zurück, keine Reset-Werte mehr verarbeiten
+        # Episode fertig → loggen
+        if dones is not None and any(dones):
+            for k, total in self.sums.items():
+                mean_val = total / max(1, self.counts.get(k, 1))
+                short_key = shorten_key(k)
+                self.logger.record(f"{self.prefix}/{short_key}", mean_val)
+                if self.verbose:
+                    print(f"[EpisodeMetrics] {short_key} (mean) = {mean_val:.3f}")
 
-            # Normaler Step
-            self._process_info(info)
+            for k, v in self.last_totals.items():
+                short_key = shorten_key(k)
+                self.logger.record(f"{self.prefix}/{short_key}", v)
+                if self.verbose:
+                    print(f"[EpisodeMetrics] {short_key} (total) = {v:.0f}")
+
+            # Reset für nächste Episode
+            self.sums.clear()
+            self.counts.clear()
+            self.last_totals.clear()
 
         return True
 
@@ -415,14 +398,14 @@ for SEED in SEEDS:
         verbose=1,               # Ausführliches Logging
         tensorboard_log=log_dir, # TensorBoard-Pfad
         batch_size=256,          # Minibatch-Größe für PPO
-        n_steps=2048,            # Rollout-Länge
+        n_steps=4096,            # Rollout-Länge
         learning_rate=cosine_warmup_floor(start=3e-4, warmup_frac=0.05, min_lr_frac=0.1),
         clip_range=cosine_clip(), # Clipping-Range dynamisch
         ent_coef=0.01,            # Entropie-Koeffizient (Exploration)
         gamma=0.99,               # Diskontfaktor
         gae_lambda=0.95,          # Lambda für GAE
         device="cpu",             # Training auf CPU
-        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])), # Netzarchitektur
+        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])), # Netzarchitekturgit
     )
 
     # Callback-Liste: Checkpoints, Logging, Best-Model-Speicherung
