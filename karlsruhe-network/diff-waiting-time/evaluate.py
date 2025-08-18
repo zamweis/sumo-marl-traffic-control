@@ -60,41 +60,49 @@ def load_model_and_norm(env, run_dir):
 def rollout(model, env):
     obs = env.reset()
     dones = [False]
-    step_count = 0
-    ep_reward = 0.0
 
     sums = {}
     counts = {}
-    last_vals = {}  # nur letzten Wert für system_total_* merken
+    last_totals = {}
 
-    while not dones[0]:
+    while True:
         action, _ = model.predict(obs, deterministic=True)
         obs, rewards, dones, infos = env.step(action)
-        step_count += 1
-        ep_reward += rewards[0]
 
-        if infos:
-            info = infos[0] if isinstance(infos, list) else infos
-            for key, v in info.items():
-                if not isinstance(v, (int, float)) or not np.isfinite(v):
-                    continue
-                if key.startswith("system_mean_"):
-                    sums[key] = sums.get(key, 0.0) + float(v)
-                    counts[key] = counts.get(key, 0) + 1
-                elif key.startswith("system_total_"):
-                    last_vals[key] = float(v)  # nur letzten Wert behalten
+        info = infos[0] if isinstance(infos, list) else infos
+        if not isinstance(info, dict):
+            info = {}
 
-    mean_metrics = {}
-    for k, total in sums.items():
-        cnt = max(1, counts.get(k, 0))
-        mean_metrics[k] = total / cnt
+        # Wenn Episode zu Ende ist:
+        if dones[0]:
+            # Falls vorhanden, final_info/terminal_info verwenden
+            fin = info.get("final_info") or info.get("terminal_info")
+            if isinstance(fin, dict):
+                # Mittelwerte vom finalen Step noch einrechnen
+                for k, v in fin.items():
+                    if k.startswith("system_mean_") and isinstance(v, (int, float)) and np.isfinite(v):
+                        sums[k] = sums.get(k, 0.0) + float(v)
+                        counts[k] = counts.get(k, 0) + 1
+                # Totals aus final_info (echte Endstände)
+                for k, v in fin.items():
+                    if k.startswith("system_total_") and isinstance(v, (int, float)) and np.isfinite(v):
+                        last_totals[k] = float(v)
+            break
 
-    # Endstände (letzter Wert)
-    for k, v in last_vals.items():
-        mean_metrics[k] = v
+        # Normaler Zwischenschritt: Mittelwerte sammeln + Totals „letzten gültigen“ merken
+        for k, v in info.items():
+            if not isinstance(v, (int, float)) or not np.isfinite(v):
+                continue
+            if k.startswith("system_mean_") or k in ["system_total_waiting_time", "system_total_stopped", "system_total_running"]:
+                # momentane Werte mitteln
+                sums[k] = sums.get(k, 0.0) + float(v)
+                counts[k] = counts.get(k, 0) + 1
+            elif k.startswith("system_total_"):
+                # Totals: nur letzten Wert merken
+                last_totals[k] = float(v)
 
-    mean_metrics["ep_rew"] = ep_reward
-    mean_metrics["ep_len"] = step_count
+    mean_metrics = {k: (sums[k] / max(1, counts.get(k, 0))) for k in sums}
+    mean_metrics.update(last_totals)
     return mean_metrics
 
 
@@ -132,41 +140,56 @@ def dummy_reward(_ts):
 def rollout_baseline(env):
     obs = env.reset()
     dones = [False]
-    ep_reward = 0.0
-    step_count = 0
 
+    # Mittelwerte über die Episode
     sums = {}
     counts = {}
-    last_vals = {}
+    # Letzte gültige Totals (vor Reset)
+    last_totals = {}
 
+    # gültige Dummy-Aktion aus dem Action Space
     dummy_action = np.array([env.action_space.sample() for _ in range(env.num_envs)])
 
-    while not dones[0]:
+    while True:
         obs, rewards, dones, infos = env.step(dummy_action)
-        step_count += 1
-        ep_reward += rewards[0] if rewards is not None else 0.0
 
-        if infos:
-            info = infos[0] if isinstance(infos, list) else infos
-            for key, v in info.items():
-                if not isinstance(v, (int, float)) or not np.isfinite(v):
-                    continue
-                if key.startswith("system_mean_"):
-                    sums[key] = sums.get(key, 0.0) + float(v)
-                    counts[key] = counts.get(key, 0) + 1
-                elif key.startswith("system_total_"):
-                    last_vals[key] = float(v)
+        info = infos[0] if isinstance(infos, list) else infos
+        if not isinstance(info, dict):
+            info = {}
 
-    mean_metrics = {}
-    for k, total in sums.items():
-        cnt = max(1, counts.get(k, 0))
-        mean_metrics[k] = total / cnt
+        # Wenn Episode zu Ende ist:
+        if dones[0]:
+            # Falls vorhanden, final_info/terminal_info verwenden
+            fin = info.get("final_info") or info.get("terminal_info")
+            if isinstance(fin, dict):
+                # Mittelwerte vom finalen Step noch einrechnen
+                for k, v in fin.items():
+                    if k.startswith("system_mean_") and isinstance(v, (int, float)) and np.isfinite(v):
+                        sums[k] = sums.get(k, 0.0) + float(v)
+                        counts[k] = counts.get(k, 0) + 1
+                # Totals aus final_info (echte Endstände)
+                for k, v in fin.items():
+                    if k.startswith("system_total_") and isinstance(v, (int, float)) and np.isfinite(v):
+                        last_totals[k] = float(v)
+            break
 
-    for k, v in last_vals.items():
-        mean_metrics[k] = v
+        # Normaler Zwischenschritt: Mittelwerte sammeln + Totals „letzten gültigen“ merken
+        for k, v in info.items():
+            if not isinstance(v, (int, float)) or not np.isfinite(v):
+                continue
+            if k.startswith("system_mean_") or k in ["system_total_waiting_time", "system_total_stopped", "system_total_running"]:
+                # momentane Werte mitteln
+                sums[k] = sums.get(k, 0.0) + float(v)
+                counts[k] = counts.get(k, 0) + 1
+            elif k.startswith("system_total_"):
+                # Totals: nur letzten Wert merken
+                last_totals[k] = float(v)
 
-    mean_metrics["ep_rew"] = ep_reward
-    mean_metrics["ep_len"] = step_count
+    # Mittelwerte berechnen
+    mean_metrics = {k: (sums[k] / max(1, counts.get(k, 0))) for k in sums}
+    # Letzte gültige Totals übernehmen
+    mean_metrics.update(last_totals)
+
     return mean_metrics
 
 
@@ -207,7 +230,6 @@ def evaluate():
             m = rollout_baseline(env)
             m.update({
                 "scenario": sc["name"],
-                "ep_seed": ep_seed,
                 "episode": ep,
                 "method": "Baseline_FixedTime"
             })
@@ -221,7 +243,6 @@ def evaluate():
             m = rollout_baseline(env)
             m.update({
                 "scenario": sc["name"],
-                "ep_seed": ep_seed,
                 "episode": ep,
                 "method": "Baseline_Actuated"
             })
@@ -251,11 +272,9 @@ def evaluate():
             # --- Logging dieser Episode (Baselines + alle RL) ---
             for entry in results[-(2 + len(RUNS)):]:
                 for k, v in entry.items():
-                    if isinstance(v, (int, float)) and k not in ["ep_rew", "ep_len", "episode", "ep_seed"]:
+                    if isinstance(v, (int, float)) and k not in ["episode", "ep_seed"]:
                         short_key = shorten_key(k)
                         logger.record(f"{entry['method']}/{short_key}", v)
-                logger.record(f"{entry['method']}/ep_rew_mean", entry["ep_rew"])
-                logger.record(f"{entry['method']}/ep_len", entry["ep_len"])
             logger.dump(step=ep)
 
     results_path = os.path.join("evaluation", "eval_results.json")

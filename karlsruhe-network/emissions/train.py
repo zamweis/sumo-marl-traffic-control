@@ -43,8 +43,6 @@ ROUTE_FILES = [
     "flows_uniform.rou.xml",
 ]
 
-
-# ====== Reward-Funktion: RealWorld-Variante ======
 # ====== Reward-Funktion: RealWorld-Variante ======
 def emissions_reward(traffic_signal):
     env = getattr(traffic_signal, "env", None)
@@ -70,9 +68,7 @@ def emissions_reward(traffic_signal):
 
     # Emissionen (nur für Reward!)
     try:
-        lanes = getattr(traffic_signal, "incoming_lanes", None) \
-                or getattr(traffic_signal, "lanes", None) \
-                or []
+        lanes = getattr(traffic_signal, "lanes", [])
         total_co2 = sum(sumo.lane.getCO2Emission(lane) for lane in lanes)
         n_veh = sum(sumo.lane.getLastStepVehicleNumber(lane) for lane in lanes)
 
@@ -269,9 +265,9 @@ class EpisodeMetricsLoggerCallback(BaseCallback):
                         self.counts[k] = self.counts.get(k, 0) + 1
                     elif k.startswith("system_total_"):
                         self.last_totals[k] = float(v)
-                if "system_mean_co2" in info:
-                    self.sums["system_mean_co2"] = self.sums.get("system_mean_co2", 0.0) + float(info["system_mean_co2"])
-                    self.counts["system_mean_co2"] = self.counts.get("system_mean_co2", 0) + 1
+                
+                self.sums["system_mean_co2"] = self.sums.get("system_mean_co2", 0.0) + float(info["system_mean_co2"])
+                self.counts["system_mean_co2"] = self.counts.get("system_mean_co2", 0) + 1
 
         # Episode fertig → loggen
         if dones is not None and any(dones):
