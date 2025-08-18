@@ -2,7 +2,7 @@
 \label{sec:evaluation-strategy}
 
 Zur Bewertung der trainierten Modelle wird ein systematischer, skriptbasierter Evaluationsplan verfolgt (Details und Ergebnisse siehe Kapitel~\ref{sec:validation}).
-Dabei wird stets dasselbe, bereinigte Verkehrsnetz (\texttt{map.net.xml}) verwendet, um die Vergleichbarkeit zu gewährleisten; variiert werden Signalsteuerung, Routenbelegung und Seeds.
+Dabei wird stets dasselbe, bereinigte Verkehrsnetz (\texttt{map.net.xml}) verwendet, um die Vergleichbarkeit zu gewährleisten. Variiert werden Signalsteuerung, Routenbelegung und Seeds.
 Statische Baselines werden direkt im Evaluationslauf mitgeführt (fester Phasenplan und aktuiert).
 
 \subsubsection{Vergleichsszenarien}
@@ -24,20 +24,13 @@ Die zu evaluierenden RL-Modelle werden automatisch aus \texttt{runs/} ermittelt:
 Zusätzlich zu den RL-Läufen werden im selben Skript die Baselines (Fixed-Time, Actuated) ausgeführt.
 
 \subsubsection{Reward-Funktionen}
-Aktuell wird \texttt{realworld\_reward} verwendet, die den Durchfluss belohnt und Stauaufbau sowie häufige Phasenwechsel bestraft:
-\begin{itemize}
-    \item EMA-Glättung mit Faktor \(\alpha=0{,}3\),
-    \item Normalisierung: \texttt{max\_storage=40}, \texttt{max\_outflow\_per\_step=8},
-    \item Gewichtungen: \(w_q=1{,}0\), \(w_{\text{build}}=0{,}8\), \(w_{\text{flow}}=0{,}7\), \(w_{\text{switch}}=0{,}1\),
-    \item Reward-Clipping auf \(\pm 5\),
-    \item Step-Cache reduziert TraCI-Aufrufe pro Zeitschritt.
-\end{itemize}
-Weitere Reward-Varianten (z.\,B.\ \texttt{pressure}, \texttt{throughput}) können identisch eingebunden werden; die Evaluationslogik bleibt unverändert.
+Im Evaluationslauf werden Rewards nicht genutzt. Stattdessen basiert die Bewertung ausschließlich auf den von SUMO gelieferten Systemmetriken (\texttt{system\_mean\_*}, \texttt{system\_total\_*}).
+Dies stellt sicher, dass unterschiedliche Modelle und Baselines unabhängig von der jeweiligen Trainings-Rewardfunktion objektiv vergleichbar sind.
 
 \subsubsection{Simulations- und Umgebungsparameter}
 Für alle Simulationen (RL und Baselines) gelten konsistente Parameter:
 \begin{itemize}
-    \item Episodenlänge: \texttt{EP\_LENGTH\_S = 3500}~s,
+    \item Episodenlänge: \texttt{EP\_LENGTH\_S = 4096}~s,
     \item Minimaldauer Grünphase: \texttt{min\_green = 5}~s,
     \item Maximaler Abfahrtsverzug: \texttt{max\_depart\_delay = 100}~s,
     \item Zusätzliche Systemmetriken: \texttt{add\_system\_info = True},
@@ -51,30 +44,32 @@ Die Normalisierung wird aus \texttt{vecnormalize.pkl} geladen und eingefroren (\
 
 \paragraph{Baselines.}
 Für die Baselines wird die SUMO-interne Steuerung genutzt (\texttt{fixed\_ts=True} für Fixed-Time, \texttt{fixed\_ts=False} für Actuated).
-Ein \emph{Dummy-Reward} (\texttt{0.0}) stellt sicher, dass kein RL-Einfluss auf die Steuerung erfolgt; Aktionen sind gültige Platzhalter aus dem Action Space.
+Ein \emph{Dummy-Reward} (\texttt{0.0}) stellt sicher, dass kein RL-Einfluss auf die Steuerung erfolgt; die Aktionen bestehen aus einer konstant wiederholten, gültigen Sample-Aktion.
 
 \subsubsection{Ablauf je Episode}
 Der Ablauf ist für RL und Baselines einheitlich:
 \begin{enumerate}
     \item Reset der Umgebung,
     \item Simulation bis zum Terminalzustand,
-    \item Pro Schritt: (i) Aktion (bei RL deterministisch via \texttt{model.predict}), (ii) \texttt{env.step}, (iii) Metrik-Sampling aus \texttt{infos},
-    \item Episodenende: Mittelwerte aller numerischen Keys sowie \texttt{ep\_rew} (kumuliert) und \texttt{ep\_len} (Schritte).
+    \item Pro Schritt: (i) Aktion (bei RL deterministisch via \texttt{model.predict}, bei Baselines konstante Dummy-Aktion), (ii) \texttt{env.step}, (iii) Metrik-Sampling aus \texttt{infos},
+    \item Episodenende: Mittelwerte aller \texttt{system\_mean\_*}-Keys sowie Übernahme der finalen \texttt{system\_total\_*}-Werte.
 \end{enumerate}
-Baselines führen Dummy-Aktionen aus, die Steuerungslogik stammt jedoch aus SUMO.
 
 \subsubsection{Seeds und Replikationsdesign}
 Das Seed-Design ist eindimensional: Es wird eine feste Menge von zehn \emph{Episoden-Seeds} (\texttt{EP\_SEEDS}) verwendet, die vom Training entkoppelt sind.
-Pro Kombination aus \emph{Modell}, \emph{Szenario} und \emph{Methode} werden \texttt{N\_EPISODES = 10} Episoden mit diesen Seeds ausgewertet. Damit ergibt sich:
+Pro Kombination aus \emph{Szenario}, \emph{Methode} und \emph{Modelllauf} werden \texttt{N\_EPISODES = 10} Episoden ausgewertet.
+Da zwei Baselines (Fixed-Time, Actuated) sowie alle RL-Läufe unter \texttt{runs/ppo\_sumo\_*} berücksichtigt werden, ergibt sich insgesamt:
 \[
-    \#\text{Episoden} = |\texttt{RUNS}| \cdot 4 \cdot 10 \cdot 3.
+    \#\text{Episoden} = (2 + |\texttt{RUNS}|)\cdot |\texttt{SCENARIOS}|\cdot \texttt{N\_EPISODES}
+    = (2 + |\texttt{RUNS}|)\cdot 4 \cdot 10.
 \]
 
+
 \subsubsection{Metriken und Logging}
-Alle numerischen \texttt{infos}-Keys werden über die Episoden gemittelt.
+Es werden alle numerischen \texttt{system\_mean\_*}- und \texttt{system\_total\_*}-Keys gespeichert.
 Für die Visualisierung werden Präfixe teilweise entfernt (\texttt{system\_*} $\rightarrow$ ohne Präfix).
 Pro Kombination werden Metriken für \texttt{Baseline\_FixedTime}, \texttt{Baseline\_Actuated} und \texttt{RL} geloggt (\texttt{tensorboard} und \texttt{stdout}); die Logs liegen unter
-\texttt{evaluation/logs/eval\_run\{run\_idx\}\_\{run\_dir\}\_\{scenario\}}.
+\texttt{evaluation/logs/eval\_\{scenario\}}.
 Die aggregierten Ergebnisse werden zusätzlich in \texttt{evaluation/eval\_results.json} persistiert.
 
 \subsubsection{Reproduzierbarkeit}
