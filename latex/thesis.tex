@@ -77,24 +77,84 @@
 \author{Sam Weiler}
 \date{\small \today}
 \begin{document}
-
 \begin{titlepage}
   \centering
-  \includegraphics[width=5cm]{HKA_IWI_Wortmarke_RGB.jpg}
-  \hspace{2cm}
-  \includegraphics[width=3cm]{HKA_IWI_Bildmarke_RGB.jpg}
-  \vspace{2cm}
 
-  \Large
-  \textbf{Optimierung einer Verkehrssimulation mit KI-basierten Agenten in SUMO}
+  % Hochschule und Fakultät
+  {\large Hochschule Karlsruhe – Technik und Wirtschaft \\[0.3cm]}
+  {\normalsize Fakultät für Informatik und Wirtschaftsinformatik}
 
   \vspace{2cm}
 
-  Studiengang Informatik\\
+  % Titel
+  {\LARGE\bfseries Optimierung einer Verkehrssimulation mit \\[0.2cm]
+    KI-basierten Agenten in SUMO \par}
 
-  Sam Weiler\\
-  Matr. Nr. 73640\\
+  \vspace{1.8cm}
+
+  % Art der Arbeit
+  {\large Bachelorarbeit \\[0.2cm]}
+  {\normalsize im Studiengang Informatik}
+
+  \vspace{1.25cm}
+
+  % Grafik (Thema-Verkehrskreuzung)
+  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+    % Straßen
+    \fill[gray!20] (-4,-0.6) rectangle (4,0.6);
+    \fill[gray!20] (-0.6,-4) rectangle (0.6,4);
+
+    % Fahrbahnmarkierungen (horizontal)
+    \foreach \x in {-3.5,-2.5,...,3.5} {
+        \draw[dashed, white, line width=1pt] (\x,0) -- ++(0.8,0);
+      }
+    % Fahrbahnmarkierungen (vertikal)
+    \foreach \y in {-3.5,-2.5,...,3.5} {
+        \draw[dashed, white, line width=1pt] (0,\y) -- ++(0,0.8);
+      }
+
+    % Ampeln
+    \foreach \pos/\col in {(-0.9,0.9)/red, (0.9,-0.9)/green,
+        (0.9,0.9)/red, (-0.9,-0.9)/green} {
+        \fill[\col] \pos circle (0.15);
+      }
+
+    % Autos (kleine Rechtecke mit Pfeilen als Fahrtrichtung)
+    \filldraw[blue!60!black,rounded corners=1pt] (-2,-0.1) rectangle (-1.5,-0.5);
+    \draw[-{Latex[length=2mm]},blue!60!black,thick] (-1.75,-0.3) -- ++(0.6,0);
+
+    \filldraw[orange!80!black,rounded corners=1pt] (-0.1,2) rectangle (-0.5,1.5);
+    \draw[-{Latex[length=2mm]},orange!80!black,thick] (-0.3,1.75) -- ++(0,-0.6);
+
+    \filldraw[green!60!black,rounded corners=1pt] (1.5,0.5) rectangle (2,0.1);
+    \draw[-{Latex[length=2mm]},green!60!black,thick] (1.75,0.3) -- ++(-0.6,0);
+  \end{tikzpicture}
+
+  \vfill
+
+  \vspace{1.25cm}
+
+  % Autorendetails
+  \begin{tabular}{rl}
+    Vorgelegt von:  & Sam Weiler \\
+    Matrikelnummer: & 73640      \\
+    Studiengang:    & Informatik \\
+  \end{tabular}
+
+  \vspace{1cm}
+
+  % Prüfer/Betreuer
+  \begin{tabular}{rl}
+    Betreuer: & Prof. Dr. rer. nat. Patrick Baier \\
+  \end{tabular}
+
+  \vspace{1cm}
+
+  % Datum
+  {\normalsize Karlsruhe, den \today}
+
 \end{titlepage}
+
 
 \tableofcontents
 \newpage
