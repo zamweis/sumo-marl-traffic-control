@@ -15,13 +15,26 @@ Besonders relevant für diese Arbeit sind folgende Merkmale\cite{sumo-doc}:
 \begin{itemize}
     \item \textbf{Mikroskopische Modellierung:} Jedes Fahrzeug wird als individuelles Objekt simuliert. Parameter wie Geschwindigkeit, Abstand oder Spurwechselverhalten sind individuell konfigurierbar.
     \item \textbf{Flexible Netzdefinition:} Verkehrsnetze lassen sich aus OpenStreetMap-Daten sowie aus Shapefiles oder VISUM-Modellen mit dem Tool \texttt{netconvert} erzeugen. \cite{netconvert} Netzdateien können auch mit \texttt{netedit} visuell editiert werden.
-    \item \textbf{Nachfragegenerierung:} Fahrpläne und Routen lassen sich mit Tools wie \texttt{activitygen}, \texttt{randomTrips}, \texttt{od2trips} oder \texttt{duarouter} erzeugen – basierend auf statistischen oder echten OD-Matrizen. \cite{randomTrips,duarouter}
+    \item \textbf{Nachfragegenerierung:} Fahrpläne und Routen lassen sich mit Tools wie \texttt{activitygen}, \texttt{randomTrips}, \texttt{od2trips} oder \texttt{duarouter} erzeugen, basierend auf statistischen oder echten OD-Matrizen. \cite{randomTrips,duarouter}
     \item \textbf{Multimodalität:} SUMO unterstützt neben Pkw auch Busse, Fahrräder, Fußgänger sowie den öffentlichen Nahverkehr. Ampeln können für alle Verkehrsarten gleichzeitig modelliert werden.
     \item \textbf{Emissionsmodellierung:} Mit Hilfe von integrierten HBEFA-Tabellen (Version 4)\cite{Sumo-HBEFA} kann SUMO CO\textsubscript{2}-, NO\textsubscript{x}- und Feinstaubemissionen simulieren und ausgeben.
     \item \textbf{Steuerbare Ampelanlagen:} Lichtsignalanlagen können sowohl mit festen Programmen als auch dynamisch über die TraCI-Schnittstelle gesteuert werden.
     \item \textbf{Reproduzierbarkeit und Kontrolle:} SUMO ist vollständig deterministisch, was es ideal für kontrollierte Experimente und das Training von KI-Agenten macht.
     \item \textbf{Visualisierung und Debugging:} Die SUMO-GUI und das Tool \texttt{sumo-gui} ermöglichen eine grafische Darstellung von Netz, Fahrzeugen, Ampelphasen und Simulationsergebnissen.
 \end{itemize}
+
+Ein zentrales Element für externe Steuerungsexperimente ist das
+\textbf{Traffic Control Interface (TraCI)\cite{sumo-doc}}.
+Dabei handelt es sich um eine TCP-basierte Client-Server-Schnittstelle,
+über die laufende SUMO-Simulationen in Echtzeit beeinflusst werden können.
+TraCI erlaubt nicht nur das Abfragen von Zustandsgrößen wie Position, Geschwindigkeit
+oder Warteschlangenlänge von Fahrzeugen, sondern auch das aktive Eingreifen,
+etwa durch Phasenwechsel an Lichtsignalanlagen oder die Modifikation von Routen.
+Dadurch wird SUMO zu einer interaktiven Umgebung, die sich ideal
+für Reinforcement-Learning-Anwendungen eignet, da Agenten ihre Aktionen direkt
+auf den Verkehrsfluss auswirken können und unmittelbares Feedback erhalten. \cite{TraCI}
+\label{sec:TraCI}
+
 
 Die SUMO-Toolchain bietet damit alle notwendigen Komponenten für die Entwicklung, Analyse und Auswertung urbaner Verkehrsszenarien und stellt eine erprobte Plattform für KI-gestützte Steuerungsexperimente dar.
 
@@ -91,11 +104,11 @@ In den letzten Jahren wurden zahlreiche wissenschaftliche Arbeiten veröffentlic
 
     \item \textbf{Almeida et al. (2022):} Kombination von Multiagenten-Reinforcement Learning mit k-Nearest-Neighbors-Technik zur koordinierten Steuerung von Ampeln in Netzwerken mit dichtem Verkehrsaufkommen. \cite{almeida2022}
 
-    \item \textbf{Zheng et al. (2022):} Vorschlag eines Curriculum-Learning-Ansatzes, der schrittweise von lokalen zu globalen Steuerstrategien führt – mit dem Ziel, RL-Agenten robuster und lernfähiger zu machen. \cite{zheng2022}
+    \item \textbf{Zheng et al. (2022):} Vorschlag eines Curriculum-Learning-Ansatzes, der schrittweise von lokalen zu globalen Steuerstrategien führt,mit dem Ziel, RL-Agenten robuster und lernfähiger zu machen. \cite{zheng2022}
 
     \item \textbf{Weitere erwähnenswerte Arbeiten:} Benchmarking verschiedener RL-Algorithmen für Ampelsteuerung (Ault \& Sharon, 2021), ein Framework zur Belohnungsgestaltung („EcoLight“, Agand et al., 2021) sowie ontologiegestützte Lernmodelle, die eine robuste Anwendung von Steuerungsstrategien in unbekannten Situationen ermöglichen (Ghanadbashi et al., 2022). \cite{ault2021,agand2021,ghanadbashi2023}
 \end{itemize}
 
 
-Diese Arbeiten zeigen, dass RL-basierte Methoden das Potenzial haben, bestehende Systeme zu übertreffen – sowohl bei einfachen als auch bei komplexeren Szenarien. Die vorliegende Arbeit knüpft an diesen Forschungsstand an und erweitert ihn um eine Anwendung auf reale Geodaten aus Karlsruhe sowie eine methodische Evaluation.
+Diese Arbeiten zeigen, dass RL-basierte Methoden das Potenzial haben, bestehende Systeme zu übertreffen, sowohl bei einfachen als auch bei komplexeren Szenarien. Die vorliegende Arbeit knüpft an diesen Forschungsstand an und erweitert ihn um eine Anwendung auf reale Geodaten aus Karlsruhe sowie eine methodische Evaluation.
 

@@ -49,7 +49,7 @@ Diese öffentlichen Quellen bilden eine solide Grundlage für die realitätsnahe
 
 \subsubsection{Stationäre Zählstellen in Karlsruhe und Umgebung}
 \label{sec:zaehlstellen-karlsruhe}
-Eine besonders wertvolle Datenquelle zur realitätsnahen Modellierung des Verkehrsaufkommens stellen die stationären Zählstellen des Landes Baden-Württemberg dar. Diese liefern standardisierte Tagesverkehrswerte (DTV\footnote{DTV steht für \textit{Durchschnittlicher Tagesverkehr} und bezeichnet die mittlere Anzahl an Fahrzeugen, die einen bestimmten Straßenabschnitt pro Tag passieren – typischerweise gemittelt über einen längeren Zeitraum.}), getrennt nach Fahrzeugklassen.
+Eine besonders wertvolle Datenquelle zur realitätsnahen Modellierung des Verkehrsaufkommens stellen die stationären Zählstellen des Landes Baden-Württemberg dar. Diese liefern standardisierte Tagesverkehrswerte (DTV\footnote{DTV steht für \textit{Durchschnittlicher Tagesverkehr} und bezeichnet die mittlere Anzahl an Fahrzeugen, die einen bestimmten Straßenabschnitt pro Tag passiere, typischerweise gemittelt über einen längeren Zeitraum.}), getrennt nach Fahrzeugklassen.
 
 \newpage
 Im direkten Untersuchungsgebiet, der Reinhold-Frank-Straße in Karlsruhe, befindet sich eine automatische Dauerzählstelle. Die dort erfassten Werte für den Zeitraum vom 1.1. bis 20.6.2025 lauten: \cite{Verkehrszählungen_Baden-Württemberg}
@@ -79,31 +79,42 @@ Diese Messwerte stimmen gut mit den aus den äußeren Zufahrtsachsen abgeleitete
         B10 Ost          & Durlach (A5) / Innenstadt             & 28.555           & 913             & 29.468          \\
         \hline
     \end{tabular}
+    \caption*{\footnotesize Hinweis: KFZ = Leichtverkehr (Pkw, Lieferwagen, Motorräder);
+        SV = Schwerverkehr (Lkw, Busse, schwere Nutzfahrzeuge);
+        Gesamt = Summe aus KFZ und SV.}
     \label{tab:zaehlstellen}
 \end{table}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{images/zaehlstellenkarte.png}
-    \caption{Lage der Dauerzählstellen im Raum Karlsruhe (Quelle: MobiData BW \cite{mobidata_karte}).}
     \label{fig:zaehlstellenkarte}
+    \vspace{0.3em}
+    \begin{minipage}{0.9\linewidth}
+        \footnotesize \textbf{Legende:}
+        \textcolor{yellow}{\large$\bullet$} Temporäre Zählstellen \quad
+        \textcolor{red}{\large$\bullet$} Dauerzählstellen \quad
+        \textcolor{gray}{\large$\bullet$} Manuelle Zählstellen
+    \end{minipage}
+    \caption{Lage der Dauerzählstellen im Raum Karlsruhe (Quelle: MobiData BW \cite{mobidata_karte}).}
 \end{figure}
 
-Diese externen Zuflüsse liefern eine verlässliche Grundlage zur Generierung plausibler Eingangsrouten für Fahrzeuge in der Simulation. Das betrachtete Gebiet wird von mehreren dieser Hauptachsen direkt gespeist, wodurch sich ein realitätsnahes Verkehrsaufkommen im Bereich von 20.000–40.000 Fahrzeugen/Tag ergibt – im Einklang mit der Messung in der Reinhold-Frank-Straße.
+Diese externen Zuflüsse bilden die Grundlage für realistische Eingangsströme in der Simulation. Sie versorgen das Untersuchungsgebiet direkt und ergeben ein plausibles Verkehrsaufkommen von etwa 20.000 bis 40.000 Fahrzeugen pro Tag, was mit den Messungen in der Reinhold-Frank-Straße übereinstimmt.
 
-Die Verwendung dieser Zähldaten ermöglicht es, Fahrzeugströme in SUMO proportional zu real beobachteten Verkehrsverhältnissen zu modellieren. Zudem erleichtert sie die spätere Kalibrierung und Validierung der simulierten Szenarien.
-
+Die Zähldaten erlauben es, die Fahrzeugströme in SUMO proportional zu den realen Verhältnissen abzubilden und unterstützen zugleich die spätere Kalibrierung und Validierung der Szenarien.
 \subsubsection{Kommerzielle APIs: TomTom, Google Maps}\cite{googlemaps, tomtom}
 
 Ergänzend zu den öffentlichen Datenquellen bieten kommerzielle Anbieter wie TomTom und Google über Programmierschnittstellen (APIs) hochaufgelöste Echtzeit- und Historikdaten an. Diese umfassen unter anderem:
 
 \begin{itemize}
     \item Durchschnittliche Fahrgeschwindigkeiten nach Wochentag und Uhrzeit,
-    \item Verkehrsdichte- und Stauinformationen,
+    \item Verkehrsdichte und Stauinformationen,
     \item Prognosen basierend auf anonymisierten Bewegungsdaten.
 \end{itemize}
 
-Der Zugriff auf diese APIs ist in der Regel kostenpflichtig oder durch Nutzungsbeschränkungen limitiert, ermöglicht jedoch eine deutlich feinere zeitliche und räumliche Auflösung, was für die Modellierung und spätere Optimierung des Verkehrsflusses mittels KI von Vorteil ist.
+Der Zugriff auf diese APIs ist in der Regel kostenpflichtig oder durch Nutzungsbeschränkungen limitiert. Sie ermöglichen eine deutlich feinere zeitliche und räumliche Auflösung, was für die Modellierung und spätere Optimierung des Verkehrsflusses mittels KI von Vorteil sein könnte.
+
+Für die vorliegende Arbeit wurden diese kommerziellen Angebote nicht genutzt. Die Modellierung basiert ausschließlich auf offenen Datenquellen wie OSM sowie auf Google Maps für einzelne Standortrecherchen.
 
 \subsection{Modellierung der Ampelschaltungen}
 

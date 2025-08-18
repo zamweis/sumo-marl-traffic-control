@@ -8,7 +8,7 @@ Für die Anwendung und Evaluation der KI-basierten Verkehrssteuerung wurde ein A
 Die Entscheidung für diese Region basiert auf folgenden Kriterien (siehe Kapitel~\ref{sec:datenquellen_und_modellgrundlage}):
 
 \begin{itemize}
-    \item \textbf{Hohe Verkehrsbedeutung:} Das Gebiet stellt einen wichtigen innerstädtischen Verkehrsraum dar, der sowohl Pendlerverkehr als auch lokalen Individualverkehr aufnimmt.
+    \item \textbf{Hohe Verkehrsbedeutung:} Das Gebiet stellt einen wichtigen innerstädtischen Verkehrsraum dar.
     \item \textbf{Bekanntes Stauaufkommen:} Die Reinhold-Frank-Straße ist in der Stadtbevölkerung für regelmäßige Verkehrsstaus bekannt, insbesondere zu Stoßzeiten. \cite{Stau_in_Karlsruhe}
     \item \textbf{Verfügbarkeit realer Verkehrszähldaten:} Eine automatische Dauerzählstelle erhebt dort täglich Verkehrsdaten. Für den Zeitraum vom 01.01.2025 bis 20.6.2025 wurden durchschnittlich 21.300 Kfz/Tag erfasst. \cite{Verkehrszählungen_Baden-Württemberg,Dauerzählstellen_Ergebnisse}
     \item \textbf{Zusätzliche Zähldaten angrenzender Hauptverkehrsstraßen:} Zählstellen an der B10, B36, L605 und in Durlach liefern ergänzende Werte zur Plausibilisierung des Gesamtverkehrsflusses.
@@ -19,16 +19,16 @@ Die Entscheidung für diese Region basiert auf folgenden Kriterien (siehe Kapite
 
 \subsubsection{Verfügbare Verkehrszähldaten}
 
-Für die Kalibrierung und Validierung der Verkehrssimulation wurden verschiedene reale Zähldatenquellen aus dem Raum Karlsruhe herangezogen. Hauptquelle war dabei die offene Mobilitätsdatenplattform des Landes Baden-Württemberg (MobiData BW)\cite{mobidata_stunden}. Dort werden automatisiert erfasste Stundenwerte stationärer Dauerzählstellen veröffentlicht, die eine fein aufgelöste Analyse von Verkehrsverläufen ermöglichen.
+Für die Kalibrierung und Validierung der Verkehrssimulation wurden verschiedene reale Zähldatenquellen aus dem Raum Karlsruhe herangezogen. Hauptquelle war dabei die offene Mobilitätsdatenplattform des Landes Baden-Württemberg \cite{mobidata_stunden}. Dort werden automatisiert erfasste Stundenwerte stationärer Dauerzählstellen veröffentlicht, die eine fein aufgelöste Analyse von Verkehrsverläufen ermöglichen.
 
 Konkret wurden folgende Datensätze ausgewertet:
 
 \begin{itemize}
-    \item \textbf{Dauerzählstelle Reinhold-Frank-Straße:} Erfasst täglich die Anzahl der Kraftfahrzeuge (Kfz), aufgeschlüsselt nach Fahrzeugklassen (PKW, lNfz, sNfz). Für den Zeitraum 01.01.–20.06.2025 lag der durchschnittliche Tagesverkehr (DTV\footnote{DTV = durchschnittlicher Tagesverkehr: Durchschnittliche Anzahl an Fahrzeugen pro Tag über einen bestimmten Zeitraum hinweg.}) bei ca. 21.300 Kfz/Tag.
+    \item \textbf{Dauerzählstelle Reinhold-Frank-Straße:} Erfasst täglich die Anzahl der Kraftfahrzeuge (Kfz), aufgeschlüsselt nach Fahrzeugklassen (KFZ, PKW, sNfz). Für den Zeitraum 01.01.–20.06.2025 lag der durchschnittliche Tagesverkehr bei ca. 21.300 Kfz/Tag.
 
-    \item \textbf{Historische Jahresmittelwerte:} Langzeitdatenreihen von 2008–2024 aus MobiData BW ermöglichen eine Kontextualisierung der aktuellen Verkehrsbelastung. \cite{mobidata_karte}
+    \item \textbf{Historische Jahresmittelwerte:} Langzeitdatenreihen von 2008-2024 aus MobiData BW ermöglichen eine Kontextualisierung der aktuellen Verkehrsbelastung. \cite{mobidata_karte}
 
     \item \textbf{Zählstellen an äußeren Zufahrtsachsen:} Ergänzende Zähldaten aus dem Jahr 2023 an acht stark befahrenen Einfallstraßen (u.\,a. B10, B36, L605)\cite{mobidata_karte} liefern Anhaltspunkte zur Verkehrsstärke an den Netzrändern.
 \end{itemize}
 
-Die Kombination dieser Quellen ermöglicht eine robuste, datenbasierte Schätzung realistischer Flussverteilungen für die Simulation – sowohl zeitlich (z.\,B. Spitzenlasten) als auch räumlich (Zufahrtsverteilung).
+Die Kombination dieser Quellen ermöglicht eine robuste, datenbasierte Schätzung realistischer Flussverteilungen für die Simulation, sowohl zeitlich (z.\,B. Spitzenlasten) als auch räumlich (Zufahrtsverteilung).
