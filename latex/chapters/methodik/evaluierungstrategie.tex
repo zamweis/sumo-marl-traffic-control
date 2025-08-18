@@ -59,10 +59,12 @@ Der Ablauf ist für RL und Baselines einheitlich:
 Das Seed-Design ist eindimensional: Es wird eine feste Menge von zehn \emph{Episoden-Seeds} (\texttt{EP\_SEEDS}) verwendet, die vom Training entkoppelt sind.
 Pro Kombination aus \emph{Szenario}, \emph{Methode} und \emph{Modelllauf} werden \texttt{N\_EPISODES = 10} Episoden ausgewertet.
 Da zwei Baselines (Fixed-Time, Actuated) sowie alle RL-Läufe unter \texttt{runs/ppo\_sumo\_*} berücksichtigt werden, ergibt sich insgesamt:
-\[
-    \#\text{Episoden} = (2 + |\texttt{RUNS}|)\cdot |\texttt{SCENARIOS}|\cdot \texttt{N\_EPISODES}
-    = (2 + |\texttt{RUNS}|)\cdot 4 \cdot 10.
-\]
+
+\begin{align*}
+    \#\text{Episoden} & = (2 + |\texttt{RUNS}|)\cdot |\texttt{SCENARIOS}|\cdot \texttt{N\_EPISODES} \\
+                      & = (2 + |\texttt{RUNS}|)\cdot 4 \cdot 10                                     \\
+                      & = 240
+\end{align*}
 
 
 \subsubsection{Metriken und Logging}
