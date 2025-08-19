@@ -16,7 +16,7 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
         \node[box, below=of mae] (wrap) {SuperSuit Wrappers\\\texttt{- pad\_obs / pad\_actions}\\\texttt{- pettingzoo\_to\_vec\_env}\\\texttt{- concat\_vec\_envs}};
         \node[box, below=of wrap] (vec) {VecNormalize + VecMonitor\\(Stable-Baselines3)};
         \node[box, below=of vec] (ppo) {PPO Agent (Stable-Baselines3)\\\texttt{- MLPPolicy}\\\texttt{- Schedules: LR (cosine warmup), Clip (cosine)}};
-        \node[box, below=of ppo] (cb) {Callbacks\\\texttt{- TimeBasedCheckpoint}\\\texttt{- EnvMetricsLogger}\\\texttt{- BestModelSaver}};
+        \node[box, below=of ppo] (cb) {Callbacks\\\texttt{- TimeBasedCheckpoint}\\\texttt{- EpisodeMetricsLogger}\\\texttt{- BestModelSaver}};
         \node[box, below=of cb] (log) {Modell- \& Log-Speicherung\\\texttt{(pro Seed in runs/)}};
 
         \draw[arrow] (sim) -- (mae);
@@ -53,24 +53,36 @@ Evaluationsläufe mit zuvor nicht genutzten Zufallsseeds dienen der abschließen
 
 
 \subsubsection{Konfiguration der Umgebung}
-
-Die Reinforcement-Learning-Umgebung wurde auf Basis der Klasse \texttt{parallel\_env} aus \texttt{sumo-rl} konfiguriert.
-Wichtige Parameter umfassen:
+\label{sec:training-setup}
+Die Trainingsumgebung basiert auf der Klasse \texttt{parallel\_env} aus dem \texttt{sumo-rl}-Framework, wurde jedoch stark erweitert und in eine
+Stable-Baselines3-kompatible Vektor-Umgebung eingebettet.
+Dabei wurden die folgenden Aspekte berücksichtigt:
 
 \begin{itemize}
-    \item \texttt{net\_file}, \texttt{route\_file}: Pfade zum bereinigten Verkehrsnetz und zugehöriger Routendatei.
-    \item \texttt{use\_gui}: Deaktiviert für schnelleres Training (\texttt{False}); bei Bedarf zur Laufzeit aktivierbar.
-    \item \texttt{num\_seconds}: Dauer einer Simulationsepisode in Sekunden (hier 5000\,s).
-    \item \texttt{delta\_time}: Zeitabstand zwischen Agentenentscheidungen (Default: 5\,s).
-    \item \texttt{reward\_fn}: Referenz auf die aktive Belohnungsfunktion.
-          Für das Haupttraining wurde \texttt{realworld\_reward} verwendet (Details siehe Abschnitt~\ref{sec:rl-konzept}).
-    \item \texttt{min\_green}: Minimale Grünphasenlänge (5\,s).
-    \item \texttt{max\_depart\_delay}: Maximale Verzögerung bei der Einfahrt eines Fahrzeugs (100\,s).
-    \item \texttt{sumo\_seed}: Fester Zufalls-Seed aus der Seedliste $\{546456, 678678, 234256, 678\}$.
-    \item \texttt{add\_system\_info}: Ergänzt systemweite Kennzahlen in den \texttt{infos}.
-    \item \texttt{add\_per\_agent\_info}: Kontextdaten pro Agent (hier deaktiviert).
-    \item \texttt{single\_agent = False}: Multiagentenmodus; jede steuerbare Ampel ist ein separater Agent.
+    \item \textbf{Verkehrsnetz:} Grundlage ist das bereinigte Netz \texttt{map.net.xml}.
+    \item \textbf{Routenprofile:} Drei Routendateien (\texttt{flows\_low.rou.xml}, \texttt{flows\_medium.rou.xml}, \texttt{flows\_high.rou.xml}) werden
+          zyklisch per Reset geladen, sodass das Modell im Training auf verschiedene Lastprofile trifft.
+    \item \textbf{Seed-Handling:} Vier unterschiedliche Seeds (\{143534, 456, 635768, 13755\}) sorgen für Reproduzierbarkeit und Variation.
+    \item \textbf{Episode-Länge:} Jede Episode läuft für 4096 Simulationssekunden.
+    \item \textbf{Entscheidungsintervall:} Ampelaktionen werden alle 5\,s (\texttt{delta\_time}) neu gewählt.
+    \item \textbf{Belohnungsfunktionen:} Durch die direkte Erweiterung des \texttt{sumo-rl}-Frameworks können unterschiedliche Reward-Funktionen flexibel eingebunden werden,
+          wodurch eine einheitliche Schnittstelle für Experimente mit verschiedenen Zielfunktionen entsteht (siehe Anhang~\ref{app:rewardfunktionen}).
+    \item \textbf{Systemmetriken:} \texttt{add\_system\_info=True} aktiviert globale Kennzahlen wie mittlere Wartezeit oder Gesamtemissionen.
+    \item \textbf{Multi-Agent-Setup:} Jede steuerbare Ampel im Netz wird als eigenständiger Agent behandelt, was der PettingZoo-Schnittstelle entspricht.
+    \item \textbf{Integration in SB3:} Über \texttt{SuperSuit} (Padding, Konvertierung, Vektorisierung) wird die Umgebung an Stable-Baselines3 angebunden.
+    \item \textbf{Normalisierung:} Rewards und Beobachtungen werden mit \texttt{VecNormalize} z-standardisiert, um das Training zu stabilisieren.
 \end{itemize}
+
+Zusätzlich sind mehrere Callback-Mechanismen implementiert:
+\begin{itemize}
+    \item \textbf{Checkpoints:} Zeitbasiertes Speichern der Modelle (stündlich).
+    \item \textbf{Logging:} Aggregierte Episodenmetriken (Wartezeiten, Queues, Fluss) werden in TensorBoard und CSV-Dateien geschrieben.
+    \item \textbf{Bestes Modell:} Automatisches Sichern des jeweils besten Modells nach mittlerem Episoden-Reward.
+\end{itemize}
+
+Das Training erfolgt mit PPO (\texttt{stable-baselines3}) und nutzt eine Cosine-Schedule für Lernrate und Clip-Range,
+sowie eine zweischichtige MLP-Policy (\texttt{[128,128]}). Jede Run wird im Ordner \texttt{runs/} mit Zeitstempel protokolliert.
+
 
 Die Umgebung ist vollständig kompatibel mit \texttt{Gymnasium}, \texttt{PettingZoo} sowie den Wrapper-Bibliotheken \texttt{SuperSuit} und \texttt{VecEnv}, wodurch ein standardisiertes Interfacing mit RL-Algorithmen ermöglicht wird.
 
@@ -143,58 +155,71 @@ zu Beginn eine hohe Exploration zuzulassen und gegen Ende des Trainings die Upda
 Der Entropiekoeffizient von 0{,}01 wurde so gewählt,
 dass auch in späten Trainingsphasen eine gewisse Exploration erhalten bleibt.
 
-
 \subsubsection{Checkpoints, Monitoring und Logging}
 
-Zur Sicherstellung eines robusten Trainingsprozesses wurde eine Reihe von Callback-Mechanismen implementiert (siehe Anhang \ref{app:train_script}):
+Zur Sicherstellung eines robusten und reproduzierbaren Trainingsprozesses wurde ein
+umfassendes Callback- und Logging-System integriert (siehe Anhang~\ref{app:train_script}).
+Dieses setzt direkt auf den Mechanismen von Stable-Baselines3 auf und umfasst:
 
 \begin{itemize}
     \item \textbf{TimeBasedCheckpointCallback:}
-          Zeitbasierte Sicherung des Modells und der Normalisierungsdaten in festen Intervallen
-          (standardmäßig stündlich). Gespeicherte Dateien:
-          \begin{itemize}
-              \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps.zip} - Modellparameter,
-              \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps\_vecnormalize.pkl} - Normalisierungszustand.
-          \end{itemize}
+          Zeitbasierte Sicherung des aktuellen Modells und der Normalisierungsdaten
+          in festen Intervallen (standardmäßig stündlich).
+          Die Dateien werden mit Schrittzähler im Namen versioniert
+          und ermöglichen die Wiederaufnahme ab beliebigen Zwischenständen.
 
-    \item \textbf{EnvMetricsLoggerCallback:}
-          Aggregiert und loggt Umgebungsmetriken aus dem \texttt{infos}-Dictionary.
-          Schlüssel mit Präfix \texttt{system\_} werden in globale Mittelwerte umbenannt (\texttt{mean\_...}).
-          Geloggte Metriken umfassen:
-          \begin{itemize}
-              \item \texttt{mean\_arrived}: mittlere Anzahl neu eingetroffener Fahrzeuge,
-              \item \texttt{mean\_departed}: mittlere Anzahl abgefahrener Fahrzeuge,
-              \item \texttt{mean\_backlogged}: mittlere Anzahl nicht abgefertigter Fahrzeuge,
-              \item \texttt{mean\_running}: mittlere Anzahl aktuell fahrender Fahrzeuge,
-              \item \texttt{mean\_stopped}: mittlere Anzahl stehender Fahrzeuge,
-              \item \texttt{mean\_mean\_speed}: mittlere Durchschnittsgeschwindigkeit,
-              \item \texttt{mean\_mean\_waiting\_time}: mittlere mittlere Wartezeit pro Fahrzeug,
-              \item \texttt{mean\_waiting\_time}: mittlere Wartezeit (gesamt),
-              \item \texttt{mean\_teleported}: mittlere Anzahl Teleportationen pro Schritt,
-              \item \texttt{mean\_emissions\_per\_vehicle}: mittlere CO\textsubscript{2}-Emission pro Fahrzeug.
-          \end{itemize}
+    \item \textbf{EpisodeMetricsLoggerCallback:}
+          Aggregiert Kennzahlen direkt aus dem \texttt{infos}-Dictionary der SUMO-Umgebung
+          und schreibt sie in das Stable-Baselines3-Logger-Interface.
+          Damit wird ein kontinuierliches Monitoring pro Episode gewährleistet.
 
     \item \textbf{BestModelSaverCallback:}
-          Automatische Speicherung des jeweils besten Modells (höchster mittlerer Episodenreward aus \texttt{ep\_info\_buffer}),
-          inklusive zugehöriger Normalisierungsdaten:
-          \begin{itemize}
-              \item \texttt{best\_model.zip}: bestes Modell,
-              \item \texttt{best\_model\_vecnormalize.pkl}: Normalisierungszustand des besten Modells.
-          \end{itemize}
+          Automatische Speicherung des jeweils besten Modells,
+          gemessen am mittleren Episodenreward (\texttt{ep\_info\_buffer}).
+          Neben den Modellparametern werden auch die Normalisierungsdaten gesichert,
+          sodass eine konsistente Reproduktion möglich ist.
 \end{itemize}
 
+\paragraph{Geloggte Metriken.}
+Alle relevanten Metriken werden zusätzlich im CSV-Format und über TensorBoard \cite{TensorBoard} erfasst.
+Die wichtigsten überwachten Größen sind:
 
-Alle Modellartefakte (\texttt{.zip}, \texttt{vecnormalize.pkl}) sowie die TensorBoard-Logs \cite{TensorBoard}
-wurden pro Seed-Version strukturiert gespeichert. Das Log-Verzeichnis folgt dem Schema
-\texttt{runs/ppo\_sumo\_<SEED>\_<YYYY-MM-DD\_HH-MM-SS>}.
-\texttt{tensorboard\_log} verweist auf diesen Ordner; \texttt{VecMonitor} schreibt zusätzlich \texttt{monitor.csv}.
-TensorBoard wurde während des gesamten Trainings eingesetzt, um den Verlauf zentraler Kennzahlen
-(z.\,B. Episodenreward, mittlere Geschwindigkeit, Wartezeiten, CO\textsubscript{2}-Emissionen,
-Lernrate, Clip-Range) in Echtzeit zu überwachen.
-Dies ermöglichte eine frühzeitige Erkennung von Instabilitäten (z.\,B. plötzliche Reward-Einbrüche)
-sowie die Analyse des Lernfortschritts in unterschiedlichen Trainingsphasen.
-Die Visualisierungen wurden zudem genutzt, um Hyperparameter-Anpassungen
-in Vorversuchen gezielt zu validieren.
+\begin{itemize}
+    \item \textbf{Szenario und Methode:} \texttt{scenario}, \texttt{method}, \texttt{run\_dir},
+    \item \textbf{Systemmetriken:} Anzahl fahrender Fahrzeuge (\texttt{system\_total\_running}),
+          gestoppter Fahrzeuge (\texttt{system\_total\_stopped}),
+          eingetroffener Fahrzeuge (\texttt{system\_total\_arrived}),
+          abgefertigter Fahrzeuge (\texttt{system\_total\_departed}),
+          backlogged Fahrzeuge (\texttt{system\_total\_backlogged}),
+          Teleports (\texttt{system\_total\_teleported}),
+    \item \textbf{Leistungsmetriken:} mittlere Wartezeit (\texttt{system\_mean\_waiting\_time}),
+          gesamte Wartezeit (\texttt{system\_total\_waiting\_time}),
+          mittlere Geschwindigkeit (\texttt{system\_mean\_speed}),
+    \item \textbf{Trainingsmetriken:} mittlerer Episodenreward (\texttt{ep\_rew\_mean}),
+          Episodenlänge (\texttt{ep\_len\_mean}),
+          verwendeter Seed (\texttt{ep\_seed\_mean}),
+          sowie aggregierte Episodenstatistiken (\texttt{episode\_mean}).
+\end{itemize}
+
+TensorBoard diente als zentrales Werkzeug, um den Verlauf relevanter Kennzahlen in Echtzeit zu überwachen und Trainingstendenzen (z. B. Reward-Stabilität, Auswirkungen von Teleports oder Backlog-Aufbau) nachvollziehbar zu machen.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{tensorboard.PNG}
+    \caption{Beispielhafte Lernkurve eines Trainingslaufs, visualisiert mit TensorBoard. Der Reward stabilisiert sich nach einer Explorationsphase.}
+    \label{fig:tensorboard_example}
+\end{figure}
+
+
+\paragraph{Artefakte und Struktur.}
+Alle Modellartefakte (\texttt{.zip}, \texttt{vecnormalize.pkl}),
+sowie die zugehörigen \texttt{monitor.csv}-Dateien und TensorBoard-Logs
+werden pro Seed in einem Run-spezifischen Ordner gespeichert
+(\texttt{runs/ppo\_sumo\_<SEED>\_<YYYY-MM-DD\_HH-MM-SS>}).
+TensorBoard diente als zentrales Werkzeug, um den Verlauf relevanter Kennzahlen
+in Echtzeit zu überwachen und Trainingstendenzen (z.\,B. Reward-Stabilität,
+Auswirkungen von Teleports oder Backlog-Aufbau) nachvollziehbar zu machen.
+
 
 \subsubsection{Systemumgebung und Durchführung}
 

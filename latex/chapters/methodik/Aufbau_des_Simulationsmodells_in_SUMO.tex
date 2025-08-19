@@ -2,11 +2,11 @@
 
 \subsubsection{Netzgenerierung}
 
-Zur Modellierung des realen Straßennetzes wurde ein Kartenausschnitt des Untersuchungsgebiets über die Exportfunktion von OpenStreetMap \cite{osm-export} heruntergeladen und anschließend mit JOSM \cite{josm} bereinigt. Der Ausschnitt umfasst die Reinhold-Frank-Straße sowie angrenzende Hauptverkehrsachsen im Bereich des Mühlburger Tors. Der bearbeitete Kartenausschnitt wurde mit dem SUMO-Werkzeug \texttt{netconvert} \cite{sumo-tools} in ein XML-Netzwerkformat überführt. Dabei kamen Optionen zur automatischen TLS-Erkennung und zur Verbesserung der Fahrstreifenzuordnung zum Einsatz (z.\,B. \texttt{--tls.guess-signals}, \texttt{--junctions.join}). \cite{sumo-doc}
+Zur Modellierung des realen Straßennetzes wurde ein Kartenausschnitt des Untersuchungsgebiets über die Exportfunktion von OpenStreetMap \cite{osm-export} heruntergeladen und anschließend mit JOSM \cite{josm} bereinigt. Der Ausschnitt umfasst die Reinhold-Frank-Straße sowie angrenzende Hauptverkehrsachsen im Bereich des Mühlburger Tors. Der bearbeitete Kartenausschnitt wurde mit dem SUMO-Werkzeug \texttt{netconvert} \cite{sumo-tools} in ein XML-Netzwerkformat überführt. Dabei kamen Optionen zur Einsatz um das Netz stabiler zu machen(z.\,B. \texttt{--junctions.join}). \cite{sumo-doc}
 
 \subsubsection{Erzeugung von Fahrzeugflüssen}
 
-Für die Simulation wurden zwei Ansätze genutzt. Zunächst entstanden mit dem SUMO-Skript \texttt{randomTrips.py} \cite{randomTrips} einfache Testflüsse, die zur Validierung des Netzmodells dienten. Anschließend wurden auf Basis realer Verkehrszähldaten (siehe Kapitel \ref{sec:zaehlstellen-karlsruhe}) Flussprofile definiert, welche die beobachteten DTV-Werte proportional auf die äußeren Zufahrtskanten verteilten. Hauptachsen wie B10 oder B36 erhielten dabei ein höheres Gewicht. Die daraus erzeugten Routendateien wurden mit \texttt{duarouter} \cite{duarouter} zu konfliktfreien Fahrten verarbeitet. Unterschiedliche Szenarien (Morgen- und Abendspitzen, gleichmäßige Verteilung) erlaubten die Abbildung verschiedener Verkehrslagen.
+Für die Simulation wurden zwei Ansätze genutzt. Zunächst entstanden mit dem SUMO-Skript \texttt{randomTrips.py} \cite{randomTrips} einfache Testflüsse, die zur Validierung des Netzmodells dienten. Anschließend wurden auf Basis realer Verkehrszähldaten (siehe Kapitel \ref{sec:zaehlstellen-karlsruhe}) Flussprofile definiert, welche die beobachteten DTV-Werte proportional auf die äußeren Zufahrtskanten verteilten. Hauptachsen wie B10 oder B36 erhielten dabei ein höheres Gewicht. Die daraus erzeugten Routendateien wurden mit \texttt{duarouter} \cite{duarouter} zu konfliktfreien Fahrten verarbeitet. Unterschiedliche Szenarien (niedrige Last, normale Last, hohe Last) erlaubten die Abbildung verschiedener Verkehrslagen.
 
 \subsubsection{Identifikation relevanter Zufahrtskanten}
 
@@ -30,16 +30,15 @@ Die manuelle Nachbearbeitung war zeitaufwändig, da fehlerhafte TLS nicht automa
 
 \subsubsection{Szenarien und Referenzsimulationen}
 
-Zur Validierung der Verkehrsflüsse wurden unterschiedliche Szenarien umgesetzt:
+Zur Validierung der Verkehrsflüsse wurden Szenarien mit unterschiedlicher Lastintensität definiert:
 
 \begin{itemize}
-  \item \textbf{Morgenspitze:} Verstärkte Einträge an Süd- und Westzufahrten.
-  \item \textbf{Abendliche Rückstaus:} Höhere Belastung der Ausfallstraßen und des Innenstadtrings.
-  \item \textbf{Gleichmäßiger Tagesverlauf:} Homogene Einträge über den Tag verteilt.
-  \item \textbf{Zentrumsfokus:} Stärkerer Verkehr über Reinhold-Frank-Straße und Mühlburger Tor.
+  \item \textbf{Niedrige Last:} geringes Verkehrsaufkommen mit überwiegend freiem Fluss,
+  \item \textbf{Normale Last:} repräsentatives Durchschnittsaufkommen im Tagesverlauf,
+  \item \textbf{Hohe Last:} stark verdichteter Verkehr zur Abbildung von Spitzenbelastungen.
 \end{itemize}
 
-Die Simulationen dienten der Überprüfung der Netzdurchlässigkeit und der Kapazitäten der Knotenpunkte.
+Diese Szenarien ermöglichen eine Überprüfung der Netzdurchlässigkeit und der Leistungsfähigkeit der Knotenpunkte unter verschiedenen Belastungsniveaus.
 
 \subsubsection{Signalsteuerung und Simulationsparameter}
 

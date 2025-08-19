@@ -15,6 +15,12 @@ Vier Szenarien decken typische Lastprofile ab:
     \item \textbf{random\_heavy} (\texttt{flows\_random\_heavy.rou.xml}): stochastisch dichter Verkehr.
 \end{itemize}
 
+Die Lastprofile \emph{morning\_peak} und \emph{evening\_peak} wurden so definiert,
+dass morgens der Verkehr überwiegend in das Stadtzentrum hineinführt,
+während er abends nach außen abfließt.
+Das Szenario \emph{random\_heavy} dient dazu, das Netz an seine Kapazitätsgrenzen zu bringen
+und die Robustheit der Steuerungsansätze unter hoher Last zu überprüfen.
+
 \subsubsection{Bewertete Modelle}
 Die zu evaluierenden RL-Modelle werden automatisch aus \texttt{runs/} ermittelt:
 \begin{itemize}
@@ -58,7 +64,7 @@ Der Ablauf ist für RL und Baselines einheitlich:
 \subsubsection{Seeds und Replikationsdesign}
 Das Seed-Design ist eindimensional: Es wird eine feste Menge von zehn \emph{Episoden-Seeds} (\texttt{EP\_SEEDS}) verwendet, die vom Training entkoppelt sind.
 Pro Kombination aus \emph{Szenario}, \emph{Methode} und \emph{Modelllauf} werden \texttt{N\_EPISODES = 10} Episoden ausgewertet.
-Da zwei Baselines (Fixed-Time, Actuated) sowie alle RL-Läufe unter \texttt{runs/ppo\_sumo\_*} berücksichtigt werden, ergibt sich insgesamt:
+Da zwei Baselines (Fixed-Time, Actuated) sowie alle RL-Läufe unter \texttt{runs/ppo\_sumo\_*} berücksichtigt werden, ergibt sich insgesamt (mit 4 Seeds):
 
 \begin{align*}
     \#\text{Episoden} & = (2 + |\texttt{RUNS}|)\cdot |\texttt{SCENARIOS}|\cdot \texttt{N\_EPISODES} \\
@@ -84,3 +90,9 @@ Die Evaluation ist deterministisch durch:
 \end{enumerate}
 
 Diese Strategie stellt sicher, dass die in Kapitel~\ref{sec:validation} präsentierten Ergebnisse reproduzierbar, belastbar und zwischen RL-Varianten sowie Baselines vergleichbar sind.
+
+Das gesamte Vorgehen ist in einem dedizierten Evaluationsskript (\texttt{evaluate.py}) implementiert,
+welches im Anhang dokumentiert ist (siehe Anhang~\ref{app:evaluate_script}).
+Dieses Skript stellt sicher, dass sämtliche hier beschriebenen Schritte
+systematisch und reproduzierbar umgesetzt werden.
+

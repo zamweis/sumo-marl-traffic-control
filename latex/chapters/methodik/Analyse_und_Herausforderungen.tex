@@ -3,12 +3,14 @@
 
 \subsubsection{Grundstruktur von Lichtsignalanlagen in SUMO}
 Bevor die Probleme beim OSM-Import analysiert werden, ist es hilfreich, den Aufbau und die Abhängigkeiten der relevanten XML-Elemente in SUMO \cite{sumo-doc} zu verstehen, insbesondere im Zusammenhang mit der Steuerung von Lichtsignalanlagen.
+\vspace{0.5cm}
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.9\textwidth]{images/junktion.png}
-  \caption{Visualisierung einer TLS-Kreuzung (eigene Darstellung \cite{Sumo-Gui}).}
+  \includegraphics[width=0.7\textwidth]{images/junktion.png}
+  \caption{Visualisierung einer TLS-Kreuzung (Quelle nededit\cite{netedit}).}
   \label{fig:sumo_karlsruhe}
 \end{figure}
+\vspace{0.5cm}
 
 \begin{itemize}
   \item \textbf{\texttt{<junction>}} Definiert Knotenpunkte im Netz. Falls eine Ampel gesteuert wird, ist der Typ \texttt{type="traffic\_light"}. Die ID entspricht in der Regel der TLS-ID.
@@ -155,12 +157,21 @@ Die Topologie entspricht der realen Verkehrsführung, wurde jedoch so modelliert
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.45\textwidth]{junction_before.PNG}
+  \begin{subfigure}[t]{0.41\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{junction_before.PNG}
+    \caption*{Vorher}
+  \end{subfigure}
   \hfill
-  \includegraphics[width=0.45\textwidth]{junction_after.PNG}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{junction_after2.PNG}
+    \caption*{Nachher}
+  \end{subfigure}
   \caption{Vorher-Nachher-Vergleich einer angepassten TLS-Kreuzung (netedit \cite{netedit})}
   \label{fig:tls_fix}
 \end{figure}
+
 
 \subsubsection{Ergebnis: ein realistisches, RL-kompatibles Netz}
 

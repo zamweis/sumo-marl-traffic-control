@@ -40,26 +40,20 @@ Die SUMO-Toolchain bietet damit alle notwendigen Komponenten für die Entwicklun
 
 \subsection{Verstärkendes Lernen (Reinforcement Learning)}
 
-Reinforcement Learning (RL) ist ein Teilgebiet des maschinellen Lernens, bei dem ein Agent durch Interaktion mit einer Umgebung lernt, optimale Handlungen auszuführen. Dabei verfolgt er das Ziel, eine kumulative Belohnung zu maximieren. \cite{sutton-barto}
+Reinforcement Learning (RL) ist ein Teilgebiet des maschinellen Lernens, bei dem ein Agent durch Interaktion mit einer Umgebung lernt, optimale Handlungen auszuführen. Ziel ist es, die kumulative Belohnung über Zeit zu maximieren \cite{sutton-barto}.
 
 Ein RL-Prozess wird typischerweise als Markov Decision Process (MDP) beschrieben und besteht aus folgenden Komponenten:
 
 \begin{itemize}
-    \item \textbf{Zustand $s$ (state):} Eine Repräsentation der aktuellen Situation der Umgebung.
-    \item \textbf{Aktion $a$ (action):} Eine Entscheidung oder Handlung, die der Agent im Zustand $s$ trifft.
-    \item \textbf{Belohnung $r$ (reward):} Ein numerischer Wert, der die Güte der Aktion bewertet.
-    \item \textbf{Policy $\pi$:} Eine Strategie, die angibt, welche Aktion in welchem Zustand gewählt wird.
+    \item \textbf{Zustand $s$ (state):} Repräsentation der aktuellen Situation der Umgebung.
+    \item \textbf{Aktion $a$ (action):} Entscheidung oder Handlung, die der Agent im Zustand $s$ trifft.
+    \item \textbf{Belohnung $r$ (reward):} Numerischer Wert, der die Güte der Aktion bewertet.
+    \item \textbf{Policy $\pi$:} Strategie, die angibt, welche Aktion in welchem Zustand gewählt wird.
 \end{itemize}
 
-Der Agent interagiert mit der Umgebung, beobachtet den Zustand, wählt eine Aktion, erhält eine Belohnung und gelangt in einen neuen Zustand. Durch viele Wiederholungen lernt er, welche Entscheidungen langfristig die besten sind.
+Der Agent interagiert wiederholt mit der Umgebung, beobachtet Zustände, wählt Aktionen, erhält Belohnungen und gelangt in neue Zustände. Durch diese Rückkopplung lernt er, langfristig optimale Entscheidungen zu treffen.
 
-Wichtige Algorithmen, die in dieser Arbeit potenziell relevant sind, sind:
-
-\begin{itemize}
-    \item \textbf{Q-Learning\cite{Q-Learning}:} Modellfreies, off-policy Lernverfahren zur Annäherung an optimale Aktionen.
-    \item \textbf{DQN (Deep Q-Network)\cite{Deep_Q-Learning}:} Kombination von Q-Learning mit neuronalen Netzen.
-    \item \textbf{PPO (Proximal Policy Optimization)\cite{Proximal_Policy_Optimization}:} Policy-basierter RL-Ansatz mit stabiler Optimierung.
-\end{itemize}
+In dieser Arbeit wird ausschließlich \textbf{Proximal Policy Optimization (PPO)} \cite{Proximal_Policy_Optimization} eingesetzt – ein policy-basierter RL-Algorithmus, der für seine Stabilität und Effizienz bei kontinuierlichen Interaktionen mit komplexen Umgebungen bekannt ist. Andere RL-Verfahren (z. B. Q-Learning oder DQN) wurden nicht berücksichtigt.
 
 \subsection{SUMO-RL: Architektur und Funktionalität}
 
