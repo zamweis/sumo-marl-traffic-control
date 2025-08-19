@@ -31,7 +31,7 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
     \label{fig:rl_architektur}
 \end{figure}
 
-Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} \cite{PettingZoo} und \texttt{SuperSuit} \cite{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes API für Multiagenten-Umgebungen bereit – analog zu \texttt{Gymnasium} \cite{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist.
+Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} \cite{PettingZoo} und \texttt{SuperSuit} \cite{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes API für Multiagenten-Umgebungen bereit, analog zu \texttt{Gymnasium} \cite{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist.
 
 \subsubsection{Agentenzuordnung im Multiagentensystem}
 Jede steuerbare Lichtsignalanlage (TLS) wird einem eindeutigen Agenten zugeordnet.
@@ -153,8 +153,8 @@ Zur Sicherstellung eines robusten Trainingsprozesses wurde eine Reihe von Callba
           Zeitbasierte Sicherung des Modells und der Normalisierungsdaten in festen Intervallen
           (standardmäßig stündlich). Gespeicherte Dateien:
           \begin{itemize}
-              \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps.zip} – Modellparameter,
-              \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps\_vecnormalize.pkl} – Normalisierungszustand.
+              \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps.zip} - Modellparameter,
+              \item \texttt{ppo\_sumo\_model\_\{steps\}\_steps\_vecnormalize.pkl} - Normalisierungszustand.
           \end{itemize}
 
     \item \textbf{EnvMetricsLoggerCallback:}
@@ -162,24 +162,24 @@ Zur Sicherstellung eines robusten Trainingsprozesses wurde eine Reihe von Callba
           Schlüssel mit Präfix \texttt{system\_} werden in globale Mittelwerte umbenannt (\texttt{mean\_...}).
           Geloggte Metriken umfassen:
           \begin{itemize}
-              \item \texttt{mean\_arrived} – mittlere Anzahl neu eingetroffener Fahrzeuge,
-              \item \texttt{mean\_departed} – mittlere Anzahl abgefahrener Fahrzeuge,
-              \item \texttt{mean\_backlogged} – mittlere Anzahl nicht abgefertigter Fahrzeuge,
-              \item \texttt{mean\_running} – mittlere Anzahl aktuell fahrender Fahrzeuge,
-              \item \texttt{mean\_stopped} – mittlere Anzahl stehender Fahrzeuge,
-              \item \texttt{mean\_mean\_speed} – mittlere Durchschnittsgeschwindigkeit,
-              \item \texttt{mean\_mean\_waiting\_time} – mittlere mittlere Wartezeit pro Fahrzeug,
-              \item \texttt{mean\_waiting\_time} – mittlere Wartezeit (gesamt),
-              \item \texttt{mean\_teleported} – mittlere Anzahl Teleportationen pro Schritt,
-              \item \texttt{mean\_emissions\_per\_vehicle} – mittlere CO\textsubscript{2}-Emission pro Fahrzeug.
+              \item \texttt{mean\_arrived}: mittlere Anzahl neu eingetroffener Fahrzeuge,
+              \item \texttt{mean\_departed}: mittlere Anzahl abgefahrener Fahrzeuge,
+              \item \texttt{mean\_backlogged}: mittlere Anzahl nicht abgefertigter Fahrzeuge,
+              \item \texttt{mean\_running}: mittlere Anzahl aktuell fahrender Fahrzeuge,
+              \item \texttt{mean\_stopped}: mittlere Anzahl stehender Fahrzeuge,
+              \item \texttt{mean\_mean\_speed}: mittlere Durchschnittsgeschwindigkeit,
+              \item \texttt{mean\_mean\_waiting\_time}: mittlere mittlere Wartezeit pro Fahrzeug,
+              \item \texttt{mean\_waiting\_time}: mittlere Wartezeit (gesamt),
+              \item \texttt{mean\_teleported}: mittlere Anzahl Teleportationen pro Schritt,
+              \item \texttt{mean\_emissions\_per\_vehicle}: mittlere CO\textsubscript{2}-Emission pro Fahrzeug.
           \end{itemize}
 
     \item \textbf{BestModelSaverCallback:}
           Automatische Speicherung des jeweils besten Modells (höchster mittlerer Episodenreward aus \texttt{ep\_info\_buffer}),
           inklusive zugehöriger Normalisierungsdaten:
           \begin{itemize}
-              \item \texttt{best\_model.zip} – bestes Modell,
-              \item \texttt{best\_model\_vecnormalize.pkl} – Normalisierungszustand des besten Modells.
+              \item \texttt{best\_model.zip}: bestes Modell,
+              \item \texttt{best\_model\_vecnormalize.pkl}: Normalisierungszustand des besten Modells.
           \end{itemize}
 \end{itemize}
 

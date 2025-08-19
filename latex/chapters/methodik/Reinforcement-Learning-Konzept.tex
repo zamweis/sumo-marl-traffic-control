@@ -9,7 +9,9 @@ Ziel ist es, eine Policy \(\pi(a|s)\) zu erlernen, die langfristig die erwartete
 
 Im Trainingsskript sind die verschiedenen Belohnungsfunktionen jeweils als eigene Python-Funktion implementiert und werden über den Parameter \texttt{reward\_fn} in der SUMO-Umgebung ausgewählt.
 Dadurch können unterschiedliche Optimierungsziele systematisch untersucht werden.
-Die Kommunikation mit der Simulation erfolgt über das TraCI-Interface \cite{TraCI}, welches eine Laufzeitsteuerung der Lichtsignalanlagen erlaubt.
+Die Anbindung zwischen RL-Agent und Simulation erfolgt über das \textbf{Traffic Control Interface (TraCI)}, das eine Laufzeitsteuerung von SUMO ermöglicht (siehe Kaptitel ~\ref{sec:TraCI}).
+Über TraCI werden sowohl Zustandsgrößen wie Rückstaulängen oder aktuelle Ampelphasen abgefragt als auch die Entscheidungen des Agenten direkt in die Simulation zurückgeschrieben.
+Dies bildet die Rückkopplungsschleife, die für den Trainingsprozess im Reinforcement Learning erforderlich ist.
 
 \subsubsection{Auswahl des RL-Algorithmus}
 Für das Training wurde der Algorithmus \textit{Proximal Policy Optimization} (PPO) eingesetzt.
@@ -26,11 +28,11 @@ Der Zustand \(s_t\) beschreibt die Verkehrssituation an einer Kreuzung zum Zeitp
 Die Zustandsrepräsentation umfasst: \cite{sumo-doc}
 \begin{itemize}
   \item Fahrzeuganzahl pro Spur (mittels \texttt{laneAreaDetector}),
-  \item Warteschlangenlänge (Anzahl Fahrzeuge mit \(v < 0.1 \,\mathrm{m/s}\)),
+  \item Länge der Warteschlange (Anzahl Fahrzeuge mit \(v < 0.1 \,\mathrm{m/s}\)),
   \item Durchschnittsgeschwindigkeit pro Spur,
   \item aktuelle Ampelphase (TLS state),
   \item Dauer der aktuellen Phase,
-  \item Binärmasken zur Phasenwechselbarkeit,
+  \item Binärmasken für die Phasenwechselbarkeit\footnote{Die Phasenwechselbarkeit gibt an, ob ein Wechsel zu einer bestimmten nächsten Phase im aktuellen Zeitpunkt zulässig ist. Dies hängt von internen Restriktionen wie Mindestgrün- oder Gelbzeiten ab. Die Binärmaske verhindert damit ungültige Agentenaktionen.},
   \item optional aggregierte Zustände benachbarter Kreuzungen (Multiagentensetting).
 \end{itemize}
 Die Merkmale werden normiert und als Eingabevektor an das neuronale Netz des Agenten übergeben.
@@ -112,4 +114,4 @@ Implementiert wurden u.\,a. Cosine-Warmup mit anschließendem Absenken, lineare 
 \paragraph{Motivation der gewählten Schedules}
 Diese Schedules vermeiden typische Probleme wie frühes Overfitting oder stagnierende Exploration.
 Das Cosine-Warmup erlaubt eine initiale Erkundung bei hoher Lernrate, während der anschließende Cosine-Decay den Lernprozess stabilisiert.
-Die adaptive Entropiesteuerung sorgt dafür, dass zu Beginn stark exploriert wird und im weiteren Verlauf zunehmend exploitation-basiert gelernt wird – ein Vorgehen, das sich in verwandten Arbeiten bewährt hat~\cite{Adaptive_Exploration}.
+Die adaptive Entropiesteuerung sorgt dafür, dass zu Beginn stark exploriert wird und im weiteren Verlauf zunehmend exploitation-basiert gelernt wird, ein Vorgehen, das sich in verwandten Arbeiten bewährt hat~\cite{Adaptive_Exploration}.

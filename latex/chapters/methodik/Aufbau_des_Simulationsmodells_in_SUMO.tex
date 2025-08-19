@@ -1,61 +1,50 @@
-
 \subsection{Aufbau des Simulationsmodells in SUMO}
 
-\subsubsection{Netzgenerierung und Verkehrsflussmodellierung}
+\subsubsection{Netzgenerierung}
 
-Zur Modellierung des realen Straßennetzes wurde ein Kartenausschnitt des Untersuchungsgebiets über die Exportfunktion von OpenStreetMap \cite{osm-export} heruntergeladen und anschließend mit JOSM \cite{josm} bearbeitet. Die Auswahl des Ausschnitts orientierte sich an der geografischen Abgrenzung rund um die Reinhold-Frank-Straße sowie die angrenzenden Hauptverkehrsachsen im Bereich des Mühlburger Tors. Der bereinigte Kartenausschnitt wurde anschließend mit dem SUMO-Werkzeug \texttt{netconvert} \cite{sumo-tools} in ein netzwerkkompatibles XML-Format überführt. Dabei kamen zusätzliche Optionen zur Verbesserung der Ampelmodellierung und Fahrstreifenzuordnung zum Einsatz (z.\,B. \texttt{--tls.guess-signals} und \texttt{--junctions.join}). \cite{sumo-doc}
+Zur Modellierung des realen Straßennetzes wurde ein Kartenausschnitt des Untersuchungsgebiets über die Exportfunktion von OpenStreetMap \cite{osm-export} heruntergeladen und anschließend mit JOSM \cite{josm} bereinigt. Der Ausschnitt umfasst die Reinhold-Frank-Straße sowie angrenzende Hauptverkehrsachsen im Bereich des Mühlburger Tors. Der bearbeitete Kartenausschnitt wurde mit dem SUMO-Werkzeug \texttt{netconvert} \cite{sumo-tools} in ein XML-Netzwerkformat überführt. Dabei kamen Optionen zur automatischen TLS-Erkennung und zur Verbesserung der Fahrstreifenzuordnung zum Einsatz (z.\,B. \texttt{--tls.guess-signals}, \texttt{--junctions.join}). \cite{sumo-doc}
 
-Die Erzeugung der Fahrzeugbewegungen erfolgte auf zwei Wegen: Zum einen wurden mit dem SUMO-Skript \texttt{randomTrips.py} \cite{randomTrips} initiale Testflüsse erzeugt, um die Simulation zu validieren. Zum anderen wurden auf Basis der analysierten Verkehrszähldaten (siehe Kapitel \ref{sec:zaehlstellen-karlsruhe}) realitätsnahe Flussprofile definiert, welche die beobachteten DTV-Werte auf die Randkanten des simulierten Netzes verteilen. Dabei wurde darauf geachtet, dass die Hauptverkehrsachsen wie die B10 oder B36 als primäre Zufahrtsrouten fungieren und mit einer höheren Fahrzeugdichte gewichtet werden.
+\subsubsection{Erzeugung von Fahrzeugflüssen}
 
-Die resultierenden Routendateien wurden anschließend mit \texttt{duarouter} \cite{duarouter} verarbeitet, um konfliktfreie Fahrten über das simulierte Netz zu erzeugen. Um unterschiedliche Verkehrssituationen abzubilden, wurden Szenarien mit variierender Verkehrsdichte simuliert – beispielsweise für Morgen- und Abendspitzen sowie für gleichmäßige Durchfahrtsverteilung.
-
-Die erzeugten Flüsse orientieren sich dabei an der realen Kapazität der Knoten und Straßen und wurden mit Hilfe von Detektor-Ausgaben (u.\,a. \texttt{laneAreaDetector}) \cite{sumo-doc} überprüft und bei Bedarf nachjustiert.
+Für die Simulation wurden zwei Ansätze genutzt. Zunächst entstanden mit dem SUMO-Skript \texttt{randomTrips.py} \cite{randomTrips} einfache Testflüsse, die zur Validierung des Netzmodells dienten. Anschließend wurden auf Basis realer Verkehrszähldaten (siehe Kapitel \ref{sec:zaehlstellen-karlsruhe}) Flussprofile definiert, welche die beobachteten DTV-Werte proportional auf die äußeren Zufahrtskanten verteilten. Hauptachsen wie B10 oder B36 erhielten dabei ein höheres Gewicht. Die daraus erzeugten Routendateien wurden mit \texttt{duarouter} \cite{duarouter} zu konfliktfreien Fahrten verarbeitet. Unterschiedliche Szenarien (Morgen- und Abendspitzen, gleichmäßige Verteilung) erlaubten die Abbildung verschiedener Verkehrslagen.
 
 \subsubsection{Identifikation relevanter Zufahrtskanten}
 
-Die Generierung realistischer Verkehrseinträge in das simulierte Netz basiert auf der systematischen Ermittlung geeigneter Zufahrtskanten. Diese stellen die äußeren Einfallstraßen dar, über die der Verkehr gemäß den Zähldaten in das Untersuchungsgebiet einfließt.
+Die Auswahl geeigneter Zufahrtskanten basierte auf den äußeren Hauptverkehrsachsen (u.\,a. B10, B36, L605, Durlacher Allee). Hierzu wurde ein \hyperref[app:find_relevant_edges]{Python-Skript} eingesetzt, das Kanten mit einem \texttt{name}-Attribut automatisch durchsucht und auf relevante Straßennamen prüfte (z.\,B. \texttt{"B10"}, \texttt{"Reinhold-Frank-Straße"}). Die Ergebnisse wurden manuell überprüft und in \texttt{netedit} \cite{netedit} ergänzt. Die so extrahierten Kanten wurden je Verkehrsachse gruppiert und dienten als Grundlage für die segmentierte Trip-Erzeugung.
 
-Zur Auswahl wurden zunächst bekannte Hauptverkehrsachsen wie die B10, B36, L605 oder die Durlacher Allee herangezogen. Anschließend erfolgte eine semiautomatische Zuordnung der SUMO-Kanten (\texttt{<edge>}) auf Basis der in OpenStreetMap vergebenen Straßennamen. Hierzu wurde ein \hyperref[app:find_relevant_edges]{Python-Script} eingesetzt, das alle Kanten mit einem \texttt{name}-Attribut durchsuchte und auf relevante Teilstrings prüfte (z.\,B. \texttt{"B10"}, \texttt{"Reinhold-Frank-Straße"}). Die Ergebnisse wurden manuell geprüft und bei Bedarf durch visuelle Kontrolle in \texttt{netedit} \cite{netedit} ergänzt.
+\subsubsection{Automatisierte Generierung von Trips}
 
-Die so extrahierten Kanten wurden je Verkehrsachse gruppiert und bilden die Grundlage für die segmentierte Trip-Erzeugung.
+Die DTV-Werte wurden auf die Zufahrtsgruppen skaliert und auf eine Simulationsdauer von 5000\,s verteilt. Ein eigens entwickeltes Python-Skript erzeugte daraus Fahrzeugeinträge (\texttt{<trip>}), die über die ermittelten Zufahrtskanten ins Netz eingespeist wurden. Die Trips wurden im XML-Format gespeichert und mit \texttt{duarouter} in vollständige, konfliktfreie Routen (\texttt{<route>}) überführt. Dabei wurde die Gesamtanzahl stündlich extrapoliert und stark belastete Achsen (z.\,B. B10, L605) mit entsprechend höherem Anteil berücksichtigt. Die erzeugten Flüsse wurden durch Detektor-Ausgaben (u.\,a. \texttt{laneAreaDetector}) \cite{sumo-doc} überprüft und bei Bedarf angepasst.
 
-\subsubsection{Automatisierte Generierung von Trips auf Basis realer Zählerdaten}
+\subsubsection{Validierung des Netzmodells}
 
-Zur Simulation realitätsnaher Verkehrsströme wurden die durchschnittlichen Tagesverkehre (DTV) aus Abschnitt~\ref{sec:zaehlstellen-karlsruhe} auf die jeweiligen Zufahrtsgruppen skaliert und anschließend auf die Simulationsdauer von 5000\,s verteilt. Ein eigens entwickeltes Python-Skript erzeugte aus diesen Daten Fahrzeugeinträge (\texttt{<trip>}), die mithilfe von \texttt{randomTrips.py} \cite{randomTrips} über die identifizierten Randkanten eingespielt wurden.
-
-Die erzeugten Trips wurden im XML-Format gespeichert und anschließend mit \texttt{duarouter} zu vollständigen, konfliktfreien Routen (\texttt{<route>}) konvertiert. Die Gesamtanzahl und Verteilung der Fahrzeuge orientierte sich dabei an den stündlich extrapolierten DTV-Werten. Es wurde darauf geachtet, dass insbesondere stark belastete Zufahrten (z.\,B. B10, L605) mit höherem Gewicht berücksichtigt wurden.
-
-\subsubsection{Visuelle und technische Validierung des Netzmodells}
-
-Vor dem eigentlichen Einsatz des Modells wurde das gesamte Netz sowohl strukturell als auch funktional validiert. Die Prüfung erfolgte in mehreren Stufen:
+Vor dem Einsatz des Modells erfolgte eine mehrstufige Validierung:
 
 \begin{itemize}
   \item \textbf{Netzprüfung:} Einsatz von \texttt{netconvert --check-lane-geometry} und \texttt{netcheck} zur Überprüfung der topologischen Konsistenz. \cite{netconvert}
-  \item \textbf{Visuelle Kontrolle:} Mit der SUMO-GUI sowie \texttt{netedit} wurden kritische Knoten visuell inspiziert, um Fehler wie unverbundene Spuren, widersprüchliche Geometrien oder falsche Richtungen zu identifizieren. \cite{netedit}
-  \item \textbf{Manuelle Überprüfung aller TLS:} Jede einzelne Lichtsignalanlage wurde manuell in \texttt{netedit} geöffnet. Die Phasenpläne, gesteuerten Verbindungen und Zustandslängen (\texttt{state}) wurden dabei geprüft und bei Bedarf korrigiert.
+  \item \textbf{Visuelle Kontrolle:} Inspektion kritischer Knoten in der SUMO-GUI und in \texttt{netedit}, um Fehler wie unverbundene Spuren oder falsche Richtungen zu erkennen. \cite{netedit}
+  \item \textbf{TLS-Prüfung:} Alle 17 Lichtsignalanlagen wurden in \texttt{netedit} geöffnet. Phasenpläne, gesteuerte Verbindungen und Zustandslängen (\texttt{state}) wurden geprüft und bei Bedarf korrigiert.
 \end{itemize}
 
-Diese manuelle Validierung war äußerst zeitaufwändig, da fehlerhafte TLS nicht automatisch von SUMO erkannt werden. Die Identifikation von Problemen wie unpassenden \texttt{linkIndex}-Werten oder inkonsistenten Zustandslängen erforderte intensives Testen und systematisches Debugging. In mehreren Fällen mussten TLS-Definitionen komplett neu erstellt oder aufgelöst werden, was ein hohes Maß an Modellierungsverständnis und Geduld erforderte.
+Die manuelle Nachbearbeitung war zeitaufwändig, da fehlerhafte TLS nicht automatisch erkannt werden. In mehreren Fällen mussten Phasenpläne neu erstellt oder angepasst werden.
 
 \subsubsection{Szenarien und Referenzsimulationen}
 
-Zur Validierung der Verkehrsflüsse wurden unterschiedliche Simulationsszenarien implementiert:
+Zur Validierung der Verkehrsflüsse wurden unterschiedliche Szenarien umgesetzt:
 
 \begin{itemize}
-  \item \textbf{Morgenspitze (Rush Hour):} Verstärkte Einträge an den Süd- und Westzufahrten mit hoher Verkehrsdichte.
-  \item \textbf{Abendliche Rückstaus:} Stärkere Belastung der Ausfallstraßen und des Innenstadtrings.
-  \item \textbf{Gleichmäßiger Tagesverlauf:} Homogene Einträge (Fahrzeugen/h pro Richtung).
-  \item \textbf{Zentrumsfokus:} Fokus auf Verkehrsströme über die Reinhold-Frank-Straße und das Mühlburger Tor.
+  \item \textbf{Morgenspitze:} Verstärkte Einträge an Süd- und Westzufahrten.
+  \item \textbf{Abendliche Rückstaus:} Höhere Belastung der Ausfallstraßen und des Innenstadtrings.
+  \item \textbf{Gleichmäßiger Tagesverlauf:} Homogene Einträge über den Tag verteilt.
+  \item \textbf{Zentrumsfokus:} Stärkerer Verkehr über Reinhold-Frank-Straße und Mühlburger Tor.
 \end{itemize}
 
-Die resultierenden Simulationen dienten der Überprüfung der Netzdurchlässigkeit und der Validierung der physischen Kapazität der Kreuzungen.
-
+Die Simulationen dienten der Überprüfung der Netzdurchlässigkeit und der Kapazitäten der Knotenpunkte.
 
 \subsubsection{Signalsteuerung und Simulationsparameter}
 
-Das untersuchte Verkehrsnetz umfasst insgesamt 17 signalgesteuerte Kreuzungen. Diese wurden aus dem OpenStreetMap-Datensatz automatisch erkannt und im Rahmen der Netzkonvertierung mit \texttt{netconvert} \cite{netconvert} anhand der Option \texttt{--tls.guess-signals} initial als Lichtsignalanlagen (Traffic Light Systems, TLS \cite{Sumo-tls}) modelliert. Die generierten Ampelphasen wurden anschließend manuell überprüft und bei Bedarf über die mit SUMO mitgelieferte GUI \texttt{netedit} \cite{netedit} angepasst.
+Für das Reinforcement-Learning-Setup wurden die TLS so konfiguriert, dass sie in SUMO als „aktuiert“\footnote{„Aktuiert“ bedeutet in SUMO, dass die Signalanlagen nicht strikt einem festen Schaltplan folgen, sondern dynamisch mit Hilfe von Detektoren oder externen Eingaben reagieren können.Im Rahmen dieser Arbeit erfolgt die Steuerung ausschließlich über das \texttt{TraCI}-Interface.} \cite{sumo-doc} initialisiert und anschließend direkt durch das RL-Modul über \texttt{TraCI} gesteuert werden konnten \cite{sumo-rl_docs}.
 
-Für die initiale Simulation wurde eine feste Phasenlogik verwendet, um ein Grundverhalten zu etablieren. Dabei erhielten alle Kreuzungen definierte Signalphasen mit festen Umlaufzeiten zwischen 30 und 60 Sekunden, abhängig von der Knotentopologie. Zur Vorbereitung des Reinforcement-Learning-Trainings wurden alle relevanten Kreuzungen so konfiguriert, dass sie in SUMO als „aktuiert“ \cite{sumo-doc} geschaltet werden konnten. Dies ist erforderlich, damit die Steuerung durch externe Agenten via \texttt{TraCI} möglich ist. \cite{sumo-rl_docs}
 
 Die Simulation wurde mit folgenden Parametern durchgeführt:
 
@@ -63,8 +52,6 @@ Die Simulation wurde mit folgenden Parametern durchgeführt:
   \item \textbf{Simulationszeitraum:} 5000 Sekunden
   \item \textbf{Zeitschritt (step-length):} 1,0 s
   \item \textbf{Routengenerierung:} deterministisch mit fixer seed zur Reproduzierbarkeit
-  \item \textbf{Simulationstyp:} \texttt{meso}-Modus zur Beschleunigung des Trainings (später auch \texttt{default}-Modus für Evaluation)
-  \item \textbf{Verkehrsverteilung:} über \texttt{flows.xml} definiert und über Randkanten eingeleitet
+  \item \textbf{Simulationstyp:} \texttt{meso}-Modus für Training, \texttt{default}-Modus für Evaluation
+  \item \textbf{Verkehrsverteilung:} definiert über \texttt{flows.xml} und über Randkanten eingeleitet
 \end{itemize}
-
-Die Definition und Verwaltung der TLS-Systeme erfolgt in separaten Dateien (\texttt{*.add.xml}), welche in der \hyperref[app:sumocfg]{SUMO-Konfigurationsdatei} eingebunden werden. Für die spätere Anbindung an das Reinforcement-Learning-Modul wurden alle zu steuernden Ampelanlagen mit eindeutigen IDs versehen und überprüft.
