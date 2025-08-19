@@ -57,12 +57,12 @@ In dieser Arbeit wird ausschließlich \textbf{Proximal Policy Optimization (PPO)
 
 \subsection{SUMO-RL: Architektur und Funktionalität}
 
-\texttt{sumo-rl} ist ein Python-Framework, das die Verkehrssimulation mit SUMO und Reinforcement Learning kombiniert. Es bietet eine stabile Schnittstelle zu Gymnasium und PettingZoo, wodurch RL-Agenten problemlos in SUMO-Simulationen integriert werden können. Die zentrale Implementierung bildet die Klasse \texttt{SumoEnvironment}, die sowohl Single-Agent- als auch Multi-Agent-Setups unterstützt. Über Parameter wie \texttt{use\_gui}, \texttt{num\_seconds}, \texttt{min\_green}, \texttt{yellow\_time}, \texttt{delta\_time} usw. lässt sich das Verhalten der Umgebung sehr flexibel steuern.
+\texttt{sumo-rl} ist ein Python-Framework, das die Verkehrssimulation mit SUMO und Reinforcement Learning kombiniert. Es bietet eine stabile Schnittstelle zu Gymnasium und PettingZoo, wodurch RL-Agenten problemlos in SUMO-Simulationen integriert werden können. Die zentrale Implementierung bildet die Klasse \texttt{SumoEnvironment}, die sowohl Single-Agent- als auch Multi-Agent-Setups unterstützt. Über Parameter wie \texttt{use\_gui}, \texttt{num\_seconds}, \texttt{min\_green}, \texttt{yellow\_time}, \texttt{delta\_time} usw. lässt sich das Verhalten der Umgebung sehr flexibel steuern. \cite{sumo-rl_docs}
 
 \subsubsection{Observation- und Aktionsraum}
 
 \paragraph{Beobachtung (Observation)}
-Die Standard-Beobachtung für jeden Ampelagenten ist ein Vektor:
+Die Standard-Beobachtung für jeden Ampelagenten ist ein Vektor: \cite{sumo-rl_docs}
 
 \[
     \text{obs} = [\text{phase\_one\_hot},\; \text{min\_green},\; \text{lane}_1\_\text{density},\dots,\text{lane}_n\_\text{density},\; \text{lane}_1\_\text{queue},\dots,\text{lane}_n\_\text{queue}]
@@ -89,7 +89,7 @@ Der Aktionsraum ist diskret. Agents dürfen alle \texttt{delta\_time} Sekunden e
     \item \textbf{Systemmetriken (Infos)}: Die Umgebung kann global relevante Kennzahlen wie Wartezeit, Gesamtemissionen, Backlog etc. über das \texttt{infos}-Objekt bereitstellen – steuerbar über Parameter wie \texttt{add\_system\_info} oder \texttt{add\_per\_agent\_info}.
     \item \textbf{Kompatibilität mit RL-Bibliotheken}: Nativ kompatibel mit Stable-Baselines3, PyTorch, TensorFlow, RLlib etc., was eine einfache Einbettung in bestehende RL-Pipelines erlaubt.
     \item \textbf{Konfigurationsmöglichkeiten}: Belohnungsfunktionen (\texttt{reward\_fn}), Beobachtungsfunktion (\texttt{observation\_class}) und diverse Simulationsparameter können flexibel angepasst werden.
-\end{itemize}
+\end{itemize}\cite{sumo-rl_docs}
 
 Mit diesen Eigenschaften bietet \texttt{sumo-rl} eine robuste Grundlage zur Integration von Reinforcement Learning in SUMO-basierte Verkehrssteuerungssysteme und bildet das methodische Rückgrat dieser Arbeit.
 

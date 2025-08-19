@@ -55,11 +55,11 @@ Eine Übersicht der Varianten, ihrer Optimierungsziele und Bezüge zur Literatur
   \centering
   \begin{tabular}{p{3cm} p{6cm} p{3.5cm}}
     \toprule
-    \textbf{Reward-Variante}   & \textbf{Optimierungsziel}                                                                           & \textbf{Bezug zur Literatur}  \\ \midrule
-    \texttt{diff-waiting-time} & Reduktion der kumulierten Wartezeit durch Minimierung der Wartezeitdifferenz zwischen Zeitschritten & \cite{sumo-rl-tls}            \\
-    \texttt{queue}             & Minimierung von Staus, gemessen über die Anzahl gestoppter Fahrzeuge                                & \cite{sumo-rl-tls}            \\
-    \texttt{realworld}         & Kombination mehrerer in der Praxis messbarer Größen (Geschwindigkeit, Queues, Wartezeit)            & Eigene Erweiterung            \\
-    \texttt{emissions}         & Erweiterung um CO\textsubscript{2}-Emissionen zur Berücksichtigung von Nachhaltigkeit               & \cite{zheng2022, mschrader15} \\
+    \textbf{Reward-Variante}   & \textbf{Optimierungsziel}                                                                           & \textbf{Bezug zur Literatur}                      \\ \midrule
+    \texttt{diff-waiting-time} & Reduktion der kumulierten Wartezeit durch Minimierung der Wartezeitdifferenz zwischen Zeitschritten & \cite{sumo-rl-tls}                                \\
+    \texttt{queue}             & Minimierung von Staus, gemessen über die Anzahl gestoppter Fahrzeuge                                & \cite{sumo-rl-tls}                                \\
+    \texttt{realworld}         & Kombination mehrerer in der Praxis messbarer Größen (Geschwindigkeit, Queues, Wartezeit)            & Eigene Erweiterung                                \\
+    \texttt{emissions}         & Erweiterung um CO\textsubscript{2}-Emissionen zur Berücksichtigung von Nachhaltigkeit               & \cite{zheng2022, mschrader15}, Eigene Erweiterung \\
     \bottomrule
   \end{tabular}
   \caption{Übersicht der implementierten Reward-Funktionen und deren theoretische Motivation.}

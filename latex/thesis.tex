@@ -3,7 +3,11 @@
 % code
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+
+% Colors
 \usepackage{xcolor}
+\definecolor{hellblau}{RGB}{0,153,255}
+\definecolor{darkblue}{RGB}{0, 100, 170}
 \usepackage{minted}
 
 % Eingabecodierung und Sprachunterstützung
@@ -13,12 +17,30 @@
 \usepackage{float}
 \usepackage{lmodern}
 
+% Links und URLs
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  citecolor=hellblau,   % Zitate
+  urlcolor=darkblue,   % URLs
+  linkcolor=darkblue    % interne Links (TOC, Querverweise)
+}
+
+% Literatur
+\usepackage{csquotes}
+\usepackage[
+  backend=biber,
+  style=numeric,
+  sorting=nyt,
+  url=true,
+  doi=true,
+  isbn=false
+]{biblatex}
+\addbibresource{chapters/literatur.bib}
+
 % Typografie und Layout
 \usepackage{lmodern}
 \usepackage{microtype}
-
-% Links und URLs
-\usepackage{hyperref}
 
 % Bilder und Grafiken
 \usepackage{graphicx}
@@ -64,15 +86,6 @@
 
 % Image folder
 \graphicspath{{images/}}
-
-% Hyperlink setup
-\hypersetup{
-  colorlinks=true,
-  linkcolor=blue,
-  filecolor=magenta,      
-  urlcolor=cyan,
-}
-
 
 \title{Optimierung einer Verkehrssimulation mit KI-basierten Agenten in SUMO}
 \author{Sam Weiler}
@@ -190,6 +203,6 @@
 % Anhang
 \include{chapters/appendix.tex}
 
-\include{chapters/bibliography.tex}
+\printbibliography
 
 \end{document}
