@@ -57,33 +57,41 @@ In dieser Arbeit wird ausschließlich \textbf{Proximal Policy Optimization (PPO)
 
 \subsection{SUMO-RL: Architektur und Funktionalität}
 
-\texttt{sumo-rl} ist ein Python-Framework, das SUMO mit Reinforcement Learning verbindet. Es basiert auf der \texttt{gymnasium}-Schnittstelle\cite{Gymnasium} und abstrahiert typische Aufgaben wie die Definition von Beobachtungen, Aktionen und Belohnungen für RL-Agenten. Die Umgebung wird durch die Klasse \texttt{SumoEnvironment} bereitgestellt.
+\texttt{sumo-rl} ist ein Python-Framework, das die Verkehrssimulation mit SUMO und Reinforcement Learning kombiniert. Es bietet eine stabile Schnittstelle zu Gymnasium und PettingZoo, wodurch RL-Agenten problemlos in SUMO-Simulationen integriert werden können. Die zentrale Implementierung bildet die Klasse \texttt{SumoEnvironment}, die sowohl Single-Agent- als auch Multi-Agent-Setups unterstützt. Über Parameter wie \texttt{use\_gui}, \texttt{num\_seconds}, \texttt{min\_green}, \texttt{yellow\_time}, \texttt{delta\_time} usw. lässt sich das Verhalten der Umgebung sehr flexibel steuern.
 
-Zentrale Eigenschaften von \texttt{sumo-rl}\cite{sumo-rl}:
+\subsubsection{Observation- und Aktionsraum}
 
+\paragraph{Beobachtung (Observation)}
+Die Standard-Beobachtung für jeden Ampelagenten ist ein Vektor:
+
+\[
+    \text{obs} = [\text{phase\_one\_hot},\; \text{min\_green},\; \text{lane}_1\_\text{density},\dots,\text{lane}_n\_\text{density},\; \text{lane}_1\_\text{queue},\dots,\text{lane}_n\_\text{queue}]
+\]
+
+Diese Komponenten bedeuten im Detail:
 \begin{itemize}
-    \item \textbf{TraCI-Integration:} Ermöglicht über das Traffic Control Interface zur Laufzeit den Zugriff auf Fahrzeugdaten, Ampelphasen, Fahrzeugwarteschlangen u.\,v.\,m.
-    \item \textbf{Ein- und Mehragentenunterstützung:} \texttt{sumo-rl} unterstützt sowohl Single-Agent-Setups als auch Multi-Agent-Steuerung über die PettingZoo-API\cite{PettingZoo}. Jeder gesteuerte Knoten im Netz kann einem eigenen Agenten zugewiesen werden.
-    \item \textbf{Beobachtungen:} Die Umgebung liefert Beobachtungsvektoren mit kodierter Ampelphase, Rückstaulänge, Anzahl wartender Fahrzeuge und Fahrzeugdichte je Spur.
-    \item \textbf{Aktionen:} Die Agenten treffen diskrete Entscheidungen über Phasenwechsel, wobei \texttt{delta\_time}, \texttt{yellow\_time} und \texttt{min\_green} die zeitliche Dynamik definieren.
-    \item \textbf{Belohnungsfunktionen:} Der Standard-Reward basiert auf der Differenz kumulierter Wartezeiten. Eigene Funktionen können bei Initialisierung übergeben werden.
-    \item \textbf{Kompatibilität:} Das Framework ist kompatibel mit Stable-Baselines3\cite{Stable-Baselines3}, PyTorch\cite{pytorch}, TensorFlow\cite{TensorFlow}, RLlib\cite{RLlib} und anderen gängigen ML-Frameworks.
+    \item \textbf{phase\_one\_hot}: One-Hot-Kodierung der aktuell aktiven Grünphase.
+    \item \textbf{min\_green}: Binärwert, der anzeigt, ob die Mindestdauer (\texttt{min\_green}) der aktuellen Phase bereits erreicht wurde.
+    \item \textbf{lane\_i\_density}: Verhältnis der Fahrzeuge auf Spur \(i\) zur maximal möglichen Kapazität der Spur.
+    \item \textbf{lane\_i\_queue}: Anteil an Fahrzeugen mit Geschwindigkeit $<\,0{,}1$\,m/s auf Spur \(i\) im Verhältnis zur Kapazität.
 \end{itemize}
 
-Beispielhafte Initialisierung:
+Falls eine eigene Beobachtungsfunktion gewünscht ist, kann man eine Klasse von \texttt{ObservationFunction} ableiten und beim Initialisieren der Umgebung übergeben.
 
-\begin{verbatim}
-env = SumoEnvironment(
-    net_file='net.net.xml',
-    route_file='routes.rou.xml',
-    use_gui=True,
-    reward_fn='diff-waiting-time',
-    single_agent=True,
-    delta_time=5,
-    yellow_time=2,
-    min_green=5
-)
-\end{verbatim}
+\paragraph{Aktionsraum (Action Space)}
+Der Aktionsraum ist diskret. Agents dürfen alle \texttt{delta\_time} Sekunden eine neue Grünphase wählen. Jeder Aktionswert repräsentiert dabei eine bestimmte, zulässige Grünkonfiguration für die Kreuzung. Ein Phasenwechsel wird stets durch eine automatisch hinzugefügte Gelbphase (\texttt{yellow\_time} Sekunden) eingeleitet.
+
+\subsubsection{Weitere Eigenschaften}
+
+\begin{itemize}
+    \item \textbf{TraCI-Integration}: Echtzeit-Kommunikation mit SUMO, u. a. zum Abruf von Zustandsdaten und Auslösen von Phasenwechseln.
+    \item \textbf{Multi-Agent-Fähigkeit}: Unterstützt Einzel- und Mehragentenumgebungen; bei Verwendung von \texttt{parallel\_env} über PettingZoo werden alle Agenten synchron gesteuert.
+    \item \textbf{Systemmetriken (Infos)}: Die Umgebung kann global relevante Kennzahlen wie Wartezeit, Gesamtemissionen, Backlog etc. über das \texttt{infos}-Objekt bereitstellen – steuerbar über Parameter wie \texttt{add\_system\_info} oder \texttt{add\_per\_agent\_info}.
+    \item \textbf{Kompatibilität mit RL-Bibliotheken}: Nativ kompatibel mit Stable-Baselines3, PyTorch, TensorFlow, RLlib etc., was eine einfache Einbettung in bestehende RL-Pipelines erlaubt.
+    \item \textbf{Konfigurationsmöglichkeiten}: Belohnungsfunktionen (\texttt{reward\_fn}), Beobachtungsfunktion (\texttt{observation\_class}) und diverse Simulationsparameter können flexibel angepasst werden.
+\end{itemize}
+
+Mit diesen Eigenschaften bietet \texttt{sumo-rl} eine robuste Grundlage zur Integration von Reinforcement Learning in SUMO-basierte Verkehrssteuerungssysteme und bildet das methodische Rückgrat dieser Arbeit.
 
 \subsection{Verwandte Arbeiten}
 

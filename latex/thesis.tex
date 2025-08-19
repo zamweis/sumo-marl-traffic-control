@@ -115,8 +115,8 @@
       }
 
     % Ampeln
-    \foreach \pos/\col in {(-0.9,0.9)/red, (0.9,-0.9)/green,
-        (0.9,0.9)/red, (-0.9,-0.9)/green} {
+    \foreach \pos/\col in {(-0.9,0.9)/red, (0.9,-0.9)/red,
+        (0.9,0.9)/green, (-0.9,-0.9)/green} {
         \fill[\col] \pos circle (0.15);
       }
 
@@ -125,7 +125,7 @@
     \draw[-{Latex[length=2mm]},blue!60!black,thick] (-1.75,-0.3) -- ++(0.6,0);
 
     \filldraw[orange!80!black,rounded corners=1pt] (-0.1,2) rectangle (-0.5,1.5);
-    \draw[-{Latex[length=2mm]},orange!80!black,thick] (-0.3,1.75) -- ++(0,-0.6);
+    %\draw[-{Latex[length=2mm]},orange!80!black,thick] (-0.3,1.75) -- ++(0,-0.6);
 
     \filldraw[green!60!black,rounded corners=1pt] (1.5,0.5) rectangle (2,0.1);
     \draw[-{Latex[length=2mm]},green!60!black,thick] (1.75,0.3) -- ++(-0.6,0);

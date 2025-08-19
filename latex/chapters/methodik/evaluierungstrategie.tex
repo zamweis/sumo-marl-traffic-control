@@ -9,10 +9,10 @@ Statische Baselines werden direkt im Evaluationslauf mitgeführt (fester Phasenp
 Die Evaluation der RL-Agenten und der Baselines erfolgt vollautomatisch über \texttt{evaluate.py}.
 Vier Szenarien decken typische Lastprofile ab:
 \begin{itemize}
-    \item \textbf{morning\_peak} (\texttt{flows\_morning.rou.xml}): morgendliche Lastspitze,
-    \item \textbf{evening\_peak} (\texttt{flows\_evening.rou.xml}): abendliche Lastspitze,
-    \item \textbf{uniform} (\texttt{flows\_uniform.rou.xml}): gleichmäßige Zuflüsse,
-    \item \textbf{random\_heavy} (\texttt{flows\_random\_heavy.rou.xml}): stochastisch dichter Verkehr.
+  \item \textbf{morning\_peak} (\texttt{flows\_morning.rou.xml}): morgendliche Lastspitze,
+  \item \textbf{evening\_peak} (\texttt{flows\_evening.rou.xml}): abendliche Lastspitze,
+  \item \textbf{uniform} (\texttt{flows\_uniform.rou.xml}): gleichmäßige Zuflüsse,
+  \item \textbf{random\_heavy} (\texttt{flows\_random\_heavy.rou.xml}): stochastisch dichter Verkehr.
 \end{itemize}
 
 Die Lastprofile \emph{morning\_peak} und \emph{evening\_peak} wurden so definiert,
@@ -24,8 +24,8 @@ und die Robustheit der Steuerungsansätze unter hoher Last zu überprüfen.
 \subsubsection{Bewertete Modelle}
 Die zu evaluierenden RL-Modelle werden automatisch aus \texttt{runs/} ermittelt:
 \begin{itemize}
-    \item Alle Unterordner mit Präfix \texttt{ppo\_sumo\_*}.
-    \item Aus jedem Lauf wird das \textbf{beste Modell} \texttt{best\_model.zip} sowie die zugehörige \textbf{Normalisierung} \texttt{vecnormalize.pkl} geladen.
+  \item Alle Unterordner mit Präfix \texttt{ppo\_sumo\_*}.
+  \item Aus jedem Lauf wird das \textbf{beste Modell} \texttt{best\_model.zip} sowie die zugehörige \textbf{Normalisierung} \texttt{vecnormalize.pkl} geladen.
 \end{itemize}
 Zusätzlich zu den RL-Läufen werden im selben Skript die Baselines (Fixed-Time, Actuated) ausgeführt.
 
@@ -36,12 +36,12 @@ Dies stellt sicher, dass unterschiedliche Modelle und Baselines unabhängig von 
 \subsubsection{Simulations- und Umgebungsparameter}
 Für alle Simulationen (RL und Baselines) gelten konsistente Parameter:
 \begin{itemize}
-    \item Episodenlänge: \texttt{EP\_LENGTH\_S = 4096}~s,
-    \item Minimaldauer Grünphase: \texttt{min\_green = 5}~s,
-    \item Maximaler Abfahrtsverzug: \texttt{max\_depart\_delay = 100}~s,
-    \item Zusätzliche Systemmetriken: \texttt{add\_system\_info = True},
-    \item Pro-Agent-Infos: \texttt{add\_per\_agent\_info = False},
-    \item SUMO läuft ohne GUI (\texttt{use\_gui=False}).
+  \item Episodenlänge: \texttt{EP\_LENGTH\_S = 4096}~s,
+  \item Minimaldauer Grünphase: \texttt{min\_green = 5}~s,
+  \item Maximaler Abfahrtsverzug: \texttt{max\_depart\_delay = 100}~s,
+  \item Zusätzliche Systemmetriken: \texttt{add\_system\_info = True},
+  \item Pro-Agent-Infos: \texttt{add\_per\_agent\_info = False},
+  \item SUMO läuft ohne GUI (\texttt{use\_gui=False}).
 \end{itemize}
 
 \paragraph{RL-Umgebung.}
@@ -55,10 +55,10 @@ Ein \emph{Dummy-Reward} (\texttt{0.0}) stellt sicher, dass kein RL-Einfluss auf 
 \subsubsection{Ablauf je Episode}
 Der Ablauf ist für RL und Baselines einheitlich:
 \begin{enumerate}
-    \item Reset der Umgebung,
-    \item Simulation bis zum Terminalzustand,
-    \item Pro Schritt: (i) Aktion (bei RL deterministisch via \texttt{model.predict}, bei Baselines konstante Dummy-Aktion), (ii) \texttt{env.step}, (iii) Metrik-Sampling aus \texttt{infos},
-    \item Episodenende: Mittelwerte aller \texttt{system\_mean\_*}-Keys sowie Übernahme der finalen \texttt{system\_total\_*}-Werte.
+  \item Reset der Umgebung,
+  \item Simulation bis zum Terminalzustand,
+  \item Pro Schritt: (i) Aktion (bei RL deterministisch via \texttt{model.predict}, bei Baselines konstante Dummy-Aktion), (ii) \texttt{env.step}, (iii) Metrik-Sampling aus \texttt{infos},
+  \item Episodenende: Mittelwerte aller \texttt{system\_mean\_*}-Keys sowie Übernahme der finalen \texttt{system\_total\_*}-Werte.
 \end{enumerate}
 
 \subsubsection{Seeds und Replikationsdesign}
@@ -67,9 +67,9 @@ Pro Kombination aus \emph{Szenario}, \emph{Methode} und \emph{Modelllauf} werden
 Da zwei Baselines (Fixed-Time, Actuated) sowie alle RL-Läufe unter \texttt{runs/ppo\_sumo\_*} berücksichtigt werden, ergibt sich insgesamt (mit 4 Seeds):
 
 \begin{align*}
-    \#\text{Episoden} & = (2 + |\texttt{RUNS}|)\cdot |\texttt{SCENARIOS}|\cdot \texttt{N\_EPISODES} \\
-                      & = (2 + |\texttt{RUNS}|)\cdot 4 \cdot 10                                     \\
-                      & = 240
+  \#\text{Episoden} & = (2 + |\texttt{RUNS}|)\cdot |\texttt{SCENARIOS}|\cdot \texttt{N\_EPISODES} \\
+                    & = (2 + |\texttt{RUNS}|)\cdot 4 \cdot 10                                     \\
+                    & = 240
 \end{align*}
 
 
@@ -83,10 +83,10 @@ Die aggregierten Ergebnisse werden zusätzlich in \texttt{evaluation/eval\_resul
 \subsubsection{Reproduzierbarkeit}
 Die Evaluation ist deterministisch durch:
 \begin{enumerate}
-    \item feste \texttt{EP\_SEEDS},
-    \item deterministische Aktionswahl bei RL (\texttt{deterministic=True}),
-    \item eingefrorene \texttt{VecNormalize}-Parameter,
-    \item feste Simulationsdauer, identische Netz- und Routen-Dateien.
+  \item feste \texttt{EP\_SEEDS},
+  \item deterministische Aktionswahl bei RL (\texttt{deterministic=True}),
+  \item eingefrorene \texttt{VecNormalize}-Parameter,
+  \item feste Simulationsdauer, identische Netz- und Routen-Dateien.
 \end{enumerate}
 
 Diese Strategie stellt sicher, dass die in Kapitel~\ref{sec:validation} präsentierten Ergebnisse reproduzierbar, belastbar und zwischen RL-Varianten sowie Baselines vergleichbar sind.

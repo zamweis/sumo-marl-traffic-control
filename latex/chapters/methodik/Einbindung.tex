@@ -86,33 +86,6 @@ sowie eine zweischichtige MLP-Policy (\texttt{[128,128]}). Jede Run wird im Ordn
 
 Die Umgebung ist vollständig kompatibel mit \texttt{Gymnasium}, \texttt{PettingZoo} sowie den Wrapper-Bibliotheken \texttt{SuperSuit} und \texttt{VecEnv}, wodurch ein standardisiertes Interfacing mit RL-Algorithmen ermöglicht wird.
 
-\subsubsection{Beobachtungen und Aktionsraum}
-
-Jeder Agent erhält eine lokale Beobachtung, bestehend aus:
-\begin{itemize}
-    \item \textbf{Aktuelle Ampelphase:} als diskreter Index oder One-Hot-Encoding (dimensionslos),
-    \item \textbf{Dauer der aktuellen Phase:} Sekunden seit Beginn der Phase [s],
-    \item \textbf{Spurmesswerte:} für jede anliegende Fahrspur
-          \begin{itemize}
-              \item Anzahl wartender Fahrzeuge [Fz],
-              \item mittlere Geschwindigkeit [m/s],
-              \item Dichte (Verhältnis belegter zu maximal möglicher Fahrzeuge pro Spur, dimensionslos, $0\text{–}1$).
-          \end{itemize}
-\end{itemize}
-
-Da sich die Anzahl an Fahrspuren pro Kreuzung unterscheidet, variiert die Rohdimension des Beobachtungsvektors.
-Um eine feste Eingabelänge für die Policy zu gewährleisten, werden alle Vektoren mittels \texttt{pad\_observations\_v0} auf die maximale Spuranzahl aller gesteuerten Kreuzungen gepaddet; fehlende Spurwerte werden mit Null belegt.
-Dadurch ergibt sich für alle Agenten eine identische Beobachtungsdimension von
-\[
-    n_{\text{features}} \times n_{\text{max\_spuren}} + n_{\text{phasenfeatures}}
-\]
-mit $n_{\text{features}} = 3$ (Queue, Geschwindigkeit, Dichte) und $n_{\text{phasenfeatures}} = 2$ (Phase, Phasendauer).
-
-Der Aktionsraum ist diskret und erlaubt die Auswahl der nächsten Signalphase.
-Ein Phasenwechsel wird durch SUMO automatisch mit einer Zwischenphase (Gelbphase) ergänzt.
-Alle Agenten entscheiden synchron in Intervallen von \texttt{delta\_time = 5\,s}.
-
-
 \subsubsection{Trainingsalgorithmus und Hyperparameter}
 
 Das Training der Agenten erfolgte mittels \texttt{PPO}, wobei folgende Hyperparameter eingesetzt wurden (siehe Anhang \ref{app:train_script}):
