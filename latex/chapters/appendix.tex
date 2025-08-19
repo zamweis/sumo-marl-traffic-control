@@ -14,6 +14,7 @@ import os
 import re
 import time
 import datetime
+import random
 
 # SUMO-Interface (TraCI) für Simulation
 import traci
@@ -23,7 +24,6 @@ import numpy as np
 
 # PyTorch für neuronale Netze und Reproduzierbarkeit
 import torch
-from collections import defaultdict
 
 # Stable-Baselines3 (RL-Algorithmen, hier PPO)
 from stable_baselines3 import PPO
@@ -47,242 +47,12 @@ from gymnasium import Wrapper
 
 
 # ====== Trainings-Setup ======
-SEEDS = [546456, 678678, 234256, 678]  # Verschiedene Zufalls-Seed-Werte für reproduzierbare Runs
-
-# ====== Gemeinsamer Step-Cache ======
-_STEP_CACHE = {"step": None}
-
-# ====== Reward-Funktion: Emissions-Variante ======
-def emissions_with_speed_reward(ts):
-    current_step = int(traci.simulation.getTime())
-    if _STEP_CACHE.get("emis_step") != current_step:
-        vids = traci.vehicle.getIDList()
-        n_veh = len(vids)
-
-        if n_veh:
-            total_emis = sum(traci.vehicle.getCO2Emission(v) for v in vids)
-            total_speed = sum(traci.vehicle.getSpeed(v) for v in vids)
-            flow = traci.simulation.getArrivedNumber()
-            queue = ts.get_total_queued()
-            mean_emis = total_emis / n_veh
-            mean_speed = total_speed / n_veh
-        else:
-            mean_emis = mean_speed = flow = queue = 0.0
-
-        _STEP_CACHE.update({
-            "emis_step": current_step,
-            "mean_emis": mean_emis,
-            "mean_speed": mean_speed,
-            "flow": flow,
-            "queue": queue,
-        })
-
-    if not hasattr(ts, "_emis_state"):
-        ts._emis_state = {"ema_emis": 0.0, "ema_speed": 0.0, "ema_flow": 0.0}
-
-    alpha = 0.3
-    ts._emis_state["ema_emis"]  = (1 - alpha) * ts._emis_state["ema_emis"]  + alpha * _STEP_CACHE["mean_emis"]
-    ts._emis_state["ema_speed"] = (1 - alpha) * ts._emis_state["ema_speed"] + alpha * _STEP_CACHE["mean_speed"]
-    ts._emis_state["ema_flow"]  = (1 - alpha) * ts._emis_state["ema_flow"]  + alpha * _STEP_CACHE["flow"]
-
-    emis_term  = -np.tanh(ts._emis_state["ema_emis"] / 2000.0)
-    speed_term =  np.tanh(ts._emis_state["ema_speed"] / 15.0)
-    flow_term  =  np.tanh(ts._emis_state["ema_flow"] / 5.0)
-    queue_term = -np.tanh(_STEP_CACHE["queue"] / 30.0)
-
-    return float(np.clip(
-        0.4*emis_term + 0.3*speed_term + 0.2*flow_term + 0.1*queue_term,
-        -1.0, 1.0
-    ))
-
-
-# ====== Reward-Funktion: Reisezeit-Variante ======
-def travel_time_reward(ts):
-    current_step = int(traci.simulation.getTime())
-    if _STEP_CACHE.get("travel_step") != current_step:
-        vids = traci.vehicle.getIDList()
-        n_veh = len(vids)
-        if n_veh:
-            travel_times = [
-                traci.vehicle.getAccumulatedWaitingTime(v) + traci.vehicle.getTimeLoss(v)
-                for v in vids
-            ]
-            mean_time = float(np.mean(travel_times))
-        else:
-            mean_time = 0.0
-        _STEP_CACHE.update({
-            "travel_step": current_step,
-            "mean_travel_time": mean_time,
-            "n_veh": n_veh
-        })
-
-    if _STEP_CACHE["n_veh"] <= 0:
-        return 0.0
-
-    return float(np.clip(np.tanh((60.0 - _STEP_CACHE["mean_travel_time"]) / 60.0), -1.0, 1.0))
-
-
-# ====== Reward-Funktion: RealWorld-Variante ======
-def realworld_reward(ts):
-    current_step = int(traci.simulation.getTime())
-    if _STEP_CACHE.get("rw_step") != current_step:
-        _STEP_CACHE["queue"] = ts.get_total_queued()
-        _STEP_CACHE["flow"] = traci.simulation.getArrivedNumber()
-        _STEP_CACHE["rw_step"] = current_step
-
-    # Reset bei neuem Episode
-    if getattr(ts, "step_count", 0) == 0:
-        ts._rw_state = None
-
-    q = _STEP_CACHE["queue"]
-    f = _STEP_CACHE["flow"]
-
-    if not hasattr(ts, "_rw_state") or ts._rw_state is None:
-        ts._rw_state = {"prev_q": q, "ema_q": float(q), "ema_f": float(f)}
-        return 0.0
-
-    # Konstanten
-    ema = 0.3
-    clip = 5.0
-    max_storage = 40.0
-    max_outflow_per_step = 8.0
-    w_q, w_build, w_flow, w_switch = 1.0, 0.8, 0.7, 0.1
-
-    # Phase-Change (direkter Zugriff, falls Attribut immer existiert)
-    phase_sw = 1.0 if getattr(ts, "phase_changed", False) else 0.0
-
-    st = ts._rw_state
-    ema_q = (1 - ema) * st["ema_q"] + ema * q
-    ema_f = (1 - ema) * st["ema_f"] + ema * f
-
-    build = max(0, q - st["prev_q"])
-
-    # Normierungen (inline clamping statt np.clip)
-    q_norm = ema_q / max_storage
-    if q_norm < 0.0: q_norm = 0.0
-    elif q_norm > 1.5: q_norm = 1.5
-
-    b_norm = build / (max_storage * 0.2)
-    if b_norm < 0.0: b_norm = 0.0
-    elif b_norm > 1.5: b_norm = 1.5
-
-    f_norm = ema_f / max_outflow_per_step
-    if f_norm < 0.0: f_norm = 0.0
-    elif f_norm > 1.5: f_norm = 1.5
-
-    r = -w_q*q_norm - w_build*b_norm + w_flow*f_norm - w_switch*phase_sw
-
-    # Clip inline
-    if r < -clip: r = -clip
-    elif r > clip: r = clip
-
-    st["prev_q"], st["ema_q"], st["ema_f"] = q, ema_q, ema_f
-    ts._rw_state = st
-    return float(r)
-
-
-# ====== Reward-Funktion: Custom-Variante ======
-def custom_reward(ts):
-    current_step = int(traci.simulation.getTime())
-    if _STEP_CACHE.get("custom_step") != current_step:
-        queue = ts.get_total_queued()
-        wait_sum_total = float(np.sum(ts.get_accumulated_waiting_time_per_lane()))
-        arrived = traci.simulation.getArrivedNumber()
-        teleports = traci.simulation.getStartingTeleportNumber()
-        collisions = traci.simulation.getCollidingVehiclesNumber()
-        _STEP_CACHE.update({
-            "custom_step": current_step,
-            "queue": queue,
-            "wait_sum_total": wait_sum_total,
-            "arrived": arrived,
-            "teleports": teleports,
-            "collisions": collisions
-        })
-
-    if not hasattr(ts, "_prev_queue"):
-        ts._prev_queue = 0
-    if not hasattr(ts, "_prev_wait_sum"):
-        ts._prev_wait_sum = 0.0
-
-    queue = _STEP_CACHE["queue"]
-    wait_sum_total = _STEP_CACHE["wait_sum_total"]
-    arrived = _STEP_CACHE["arrived"]
-    teleports = _STEP_CACHE["teleports"]
-    collisions = _STEP_CACHE["collisions"]
-
-    delta_queue = queue - ts._prev_queue
-    delta_wait = max(0.0, wait_sum_total - ts._prev_wait_sum)
-    ts._prev_queue = queue
-    ts._prev_wait_sum = wait_sum_total
-
-    q_term       = -np.tanh(queue / 30.0)
-    dq_term      = -np.tanh(max(0, delta_queue) / 10.0)
-    wait_term    = -np.tanh(delta_wait / 60.0)
-    arrived_term =  np.tanh(arrived / 5.0)
-    tp_term      = -np.tanh(teleports / 1.0)
-    col_term     = -np.tanh(collisions / 1.0)
-
-    raw = (
-        0.35*q_term +
-        0.20*dq_term +
-        0.45*wait_term +
-        0.40*arrived_term +
-        0.90*tp_term +
-        1.20*col_term
-    )
-
-    if teleports > 0:
-        raw -= 0.5
-    if collisions > 0:
-        raw -= 0.8
-
-    return float(np.tanh(raw))
-
-
-# ====== Reward-Funktion: Time-Emission-Variante ======
-def travel_time_emissions_reward(ts, w_emis=0.2):
-    """
-    Einfacher Mix aus Reisezeit-Reward und Emissions-Reward.
-    - w_emis: Gewicht der Emissionen (0 = ignorieren, 1 = nur Emissionen)
-    """
-    current_step = int(traci.simulation.getTime())
-    if _STEP_CACHE.get("tte_step") != current_step:
-        vids = traci.vehicle.getIDList()
-        n_veh = len(vids)
-
-        if n_veh:
-            total_time = 0.0
-            total_emis = 0.0
-            for v in vids:
-                total_time += traci.vehicle.getAccumulatedWaitingTime(v)
-                total_time += traci.vehicle.getTimeLoss(v)
-                total_emis += traci.vehicle.getCO2Emission(v)
-
-            mean_time = total_time / n_veh
-            mean_emis = total_emis / n_veh
-        else:
-            mean_time = 0.0
-            mean_emis = 0.0
-
-        _STEP_CACHE.update({
-            "tte_step": current_step,
-            "tte_n_veh": n_veh,
-            "tte_mean_time": mean_time,
-            "tte_mean_emis": mean_emis,
-        })
-
-    if _STEP_CACHE["tte_n_veh"] <= 0:
-        return 0.0
-
-    # Reisezeit-Reward
-    r_time = np.tanh((60.0 - _STEP_CACHE["tte_mean_time"]) / 60.0)
-
-    # Emissions-Reward: einfach skalieren, niedriger ist besser
-    r_emis = -np.tanh(_STEP_CACHE["tte_mean_emis"] / 2000.0)
-
-    # Kombinieren
-    return float((1 - w_emis) * r_time + w_emis * r_emis)
-
+SEEDS = [143534, 456, 635768, 13755]  # Verschiedene Zufalls-Seed-Werte für reproduzierbare Runs
+ROUTE_FILES = [
+    "flows_low.rou.xml",
+    "flows_medium.rou.xml",
+    "flows_high.rou.xml",
+]
 
 # ====== Schedules für Hyperparameter-Anpassung ======
 # (Funktionen, die während des Trainings den Wert z. B. von Lernrate oder Clip-Bereich dynamisch anpassen)
@@ -314,7 +84,6 @@ def cosine_warmup_floor(start=3e-4, warmup_frac=0.05, min_lr_frac=0.1):
             base = min_lr + (start - min_lr) * cos_term
         return float(base)
     return schedule
-
 
 # ====== Hilfsfunktionen und Callbacks ======
 # (Modelle finden, Checkpoints speichern, Metriken loggen, bestes Modell sichern)
@@ -353,6 +122,42 @@ def find_latest_complete_run(base_dir="runs", prefix="ppo_sumo_"):
 
     return None
 
+def make_env(seed, route_files):
+    def _init():
+        env = parallel_env(
+            net_file="map.net.xml",
+            route_file=route_files[0],  # Platzhalter
+            use_gui=False,
+            num_seconds=4096,
+            reward_fn="diff-waiting-time",
+            min_green=5,
+            max_depart_delay=100,
+            sumo_seed=seed,
+            add_system_info=True,
+            add_per_agent_info=False,
+        )
+        if hasattr(env, "seed"):
+            env.seed(seed)
+
+        orig_reset = env.reset
+        idx = {"i": -1}  # mutierbares Zähl-Objekt im Closure
+
+        def reset_with_round_robin(**kwargs):
+            idx["i"] = (idx["i"] + 1) % len(route_files)
+            new_route = route_files[idx["i"]]
+            env.route_file = new_route
+            if hasattr(env, "sumo_seed"):
+                env.sumo_seed = seed
+            print(f"\n[DEBUG] Reset → Route: {new_route} | Seed: {seed}\n", flush=True)
+            return orig_reset(**kwargs)
+
+        env.reset = reset_with_round_robin
+        return env
+    return _init
+
+
+def shorten_key(orig_key: str) -> str:
+    return orig_key.replace("system_", "")
 
 # ====== Callback: Zeitbasiertes Speichern ======
 class TimeBasedCheckpointCallback(BaseCallback):
@@ -382,80 +187,75 @@ class TimeBasedCheckpointCallback(BaseCallback):
             self.last_save_time = current_time
         return True
 
+
 # ====== Callback: Metriken aus der Env loggen ======
-class EnvMetricsLoggerCallback(BaseCallback):
-    def __init__(self, prefix="env", verbose=0):
+class EpisodeMetricsLoggerCallback(BaseCallback):
+    def __init__(self, prefix="episode", verbose=0):
         super().__init__(verbose)
         self.prefix = prefix
-        self.sums = defaultdict(float)
-        self.counts = defaultdict(int)
-        self.key_map = {}  # Cache für umbenannte Keys
-        self._emi_sum = 0.0
-        self._emi_count = 0
-        self._last_logged_step = None
-
-    def _on_rollout_start(self) -> None:
-        self.sums.clear()
-        self.counts.clear()
-        self.key_map.clear()
-        self._emi_sum = 0.0
-        self._emi_count = 0
-        self._last_logged_step = None
+        self.verbose = verbose
+        self.sums = {}
+        self.counts = {}
+        self.last_totals = {}
 
     def _on_step(self) -> bool:
+        dones = self.locals.get("dones")
         infos = self.locals.get("infos")
-        if infos:
-            for info in infos:
-                if not isinstance(info, dict):
-                    continue
-                for orig_key, v in info.items():
-                    # Schneller als np.isfinite()
-                    if not isinstance(v, (int, float)) or v != v or v in (float("inf"), float("-inf")):
-                        continue
-                    mapped_key = self.key_map.get(orig_key)
-                    if mapped_key is None:
-                        if orig_key.startswith("system_"):
-                            short_key = orig_key[len("system_"):]
-                            if short_key.startswith("total"):
-                                short_key = short_key[len("total_"):]
-                            short_key = "mean_" + short_key
-                        else:
-                            short_key = orig_key
-                        mapped_key = f"{self.prefix}/{short_key}"
-                        self.key_map[orig_key] = mapped_key
-                    self.sums[mapped_key] += float(v)
-                    self.counts[mapped_key] += 1
+        if infos is None:
+            return True
 
-        # Emissionslogging nur 1× pro Sim-Step
-        try:
-            current_step = int(traci.simulation.getTime())
-            if self._last_logged_step != current_step:
-                vids = traci.vehicle.getIDList()
-                n_veh = len(vids)
-                if n_veh:
-                    total_emis = sum(traci.vehicle.getCO2Emission(vid) for vid in vids)
-                    mean_emis = total_emis / n_veh
-                else:
-                    mean_emis = 0.0
-                self._emi_sum += mean_emis
-                self._emi_count += 1
-                self._last_logged_step = current_step
-        except Exception:
-            pass
+        for i, info in enumerate(infos):
+            if not isinstance(info, dict):
+                continue
+
+            if dones is not None and dones[i]:
+                # --- Episode zu Ende ---
+                fin = info.get("final_info") or info.get("terminal_info")
+                if isinstance(fin, dict):
+                    for k, v in fin.items():
+                        if not isinstance(v, (int, float)) or not np.isfinite(v):
+                            continue
+                        if k.startswith("system_mean_"):
+                            self.sums[k] = self.sums.get(k, 0.0) + float(v)
+                            self.counts[k] = self.counts.get(k, 0) + 1
+                        elif k.startswith("system_total_"):
+                            self.last_totals[k] = float(v)
+            else:
+                # --- Nur Zwischenschritt, solange Episode noch läuft ---
+                for k, v in info.items():
+                    if not isinstance(v, (int, float)) or not np.isfinite(v):
+                        continue
+                    if k.startswith("system_mean_") or k in [
+                        "system_total_waiting_time",
+                        "system_total_stopped",
+                        "system_total_running",
+                    ]:
+                        self.sums[k] = self.sums.get(k, 0.0) + float(v)
+                        self.counts[k] = self.counts.get(k, 0) + 1
+                    elif k.startswith("system_total_"):
+                        self.last_totals[k] = float(v)
+
+        # Episode fertig → loggen
+        if dones is not None and any(dones):
+            for k, total in self.sums.items():
+                mean_val = total / max(1, self.counts.get(k, 1))
+                short_key = shorten_key(k)
+                self.logger.record(f"{self.prefix}/{short_key}", mean_val)
+                if self.verbose:
+                    print(f"[EpisodeMetrics] {short_key} (mean) = {mean_val:.3f}")
+
+            for k, v in self.last_totals.items():
+                short_key = shorten_key(k)
+                self.logger.record(f"{self.prefix}/{short_key}", v)
+                if self.verbose:
+                    print(f"[EpisodeMetrics] {short_key} (total) = {v:.0f}")
+
+            # Reset für nächste Episode
+            self.sums.clear()
+            self.counts.clear()
+            self.last_totals.clear()
 
         return True
-
-    def _on_rollout_end(self):
-        for tag, total in self.sums.items():
-            mean_val = total / max(1, self.counts[tag])
-            self.logger.record(tag, mean_val)
-
-        if self._emi_count > 0:
-            self.logger.record(
-                f"{self.prefix}/mean_emissions_per_vehicle",
-                self._emi_sum / self._emi_count
-            )
-
 
 # ====== Callback: Bestes Modell speichern ======
 class BestModelSaverCallback(BaseCallback):
@@ -498,18 +298,7 @@ for SEED in SEEDS:
     print(f"\n[INFO] Starte Training mit Seed: {SEED}")
 
     # SUMO-Umgebung initialisieren
-    env = parallel_env(
-        net_file="map.net.xml",
-        route_file="map.rou.xml",
-        use_gui=False,            # Kein GUI (schnelleres Training)
-        num_seconds=5000,         # Episodenlänge in Simulationssekunden
-        reward_fn=emissions_with_speed_reward,  # Reward-Funktion
-        min_green=5,              # Minimale Grünphase
-        max_depart_delay=100,     # Max. Verzögerung bei Fahrzeugstart
-        sumo_seed=SEED,           # Seed für SUMO
-        add_system_info=True,     # Zusätzliche Systemmetriken
-        add_per_agent_info=False, # Keine Metriken pro Agent (nur global)
-    )
+    env = make_env(SEED, ROUTE_FILES)()
 
     # Falls die Env einen seed()-Aufruf unterstützt
     if hasattr(env, "seed"):
@@ -519,7 +308,10 @@ for SEED in SEEDS:
     env = pad_observations_v0(env)
     env = pad_action_space_v0(env)
     env = pettingzoo_env_to_vec_env_v1(env)
-    env = concat_vec_envs_v1(env, num_vec_envs=1, num_cpus=8, base_class="stable_baselines3")
+
+    # WICHTIG: trotzdem concat_vec_envs_v1 mit num_vec_envs=1
+    env = concat_vec_envs_v1(env, num_vec_envs=1, num_cpus=1, base_class="stable_baselines3")
+
 
     # Logging und Normalisierung
     env = VecMonitor(env, filename=os.path.join(log_dir, "monitor.csv"))
@@ -531,7 +323,7 @@ for SEED in SEEDS:
         env=env,
         verbose=1,               # Ausführliches Logging
         tensorboard_log=log_dir, # TensorBoard-Pfad
-        batch_size=512,          # Minibatch-Größe für PPO
+        batch_size=256,          # Minibatch-Größe für PPO
         n_steps=2048,            # Rollout-Länge
         learning_rate=cosine_warmup_floor(start=3e-4, warmup_frac=0.05, min_lr_frac=0.1),
         clip_range=cosine_clip(), # Clipping-Range dynamisch
@@ -539,7 +331,7 @@ for SEED in SEEDS:
         gamma=0.99,               # Diskontfaktor
         gae_lambda=0.95,          # Lambda für GAE
         device="cpu",             # Training auf CPU
-        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])), # Netzarchitektur
+        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])), # Netzarchitekturgit
     )
 
     # Callback-Liste: Checkpoints, Logging, Best-Model-Speicherung
@@ -550,7 +342,7 @@ for SEED in SEEDS:
             name_prefix="ppo_sumo_model",
             verbose=1,
         ),
-        EnvMetricsLoggerCallback(),
+        EpisodeMetricsLoggerCallback(),
         BestModelSaverCallback(save_path=log_dir),
     ])
 
@@ -583,6 +375,7 @@ for SEED in SEEDS:
         except Exception as e:
             print(f"[WARNUNG] VecNormalize konnte nicht gespeichert werden: {e}")
         env.close()
+
 \end{minted}
 
 \subsection{\texttt{continuetrain.py} – Trainingsskript zum Weitertrainieren}
@@ -613,36 +406,6 @@ from gym import Wrapper
 SEED = 42
 np.random.seed(SEED)
 torch.manual_seed(SEED)
-
-# ==== Custom Reward Function ====
-def custom_reward(traffic_signal):
-    if not hasattr(traffic_signal, "prev_queue"):
-        traffic_signal.prev_queue = traffic_signal.get_total_queued()
-
-    queue = traffic_signal.get_total_queued()
-    waiting = np.sum(traffic_signal.get_accumulated_waiting_time_per_lane())
-
-    sim = traci.simulation
-    arrived = sim.getArrivedNumber()
-    teleport = sim.getStartingTeleportNumber()
-    collisions = sim.getCollidingVehiclesNumber()
-
-    delta_queue = traffic_signal.prev_queue - queue
-    traffic_signal.prev_queue = queue
-
-    reward = (
-        -0.1 * queue
-        - 0.05 * waiting
-        - 2.0 * teleport
-        - 10.0 * collisions
-        + 1.0 * arrived
-        + 0.3 * delta_queue
-    )
-
-    if teleport > 10 or collisions > 5:
-        reward -= 20
-
-    return np.clip(reward, -100, 100)
 
 # ==== Adaptive Parameter-Schedules ====
 def dynamic_clip_range(start=0.2):
@@ -719,16 +482,16 @@ os.makedirs(log_dir, exist_ok=True)
 
 # ==== SUMO-RL Umgebung ====
 env = parallel_env(
-    net_file="map.net.xml",
-    route_file="map.rou.xml",
+    net_file="network.net.xml",
+    route_file="flow.rou.xml",
     use_gui=False,
-    num_seconds=1000,
-    reward_fn=custom_reward,
+    num_seconds=4096,
+    reward_fn="diff-waiting-time",
     min_green=5,
     max_depart_delay=100,
     sumo_seed=SEED,
     add_system_info=True,
-    add_per_agent_info=True, 
+    add_per_agent_info=False,
 )
 
 if hasattr(env, "seed"):
@@ -760,19 +523,19 @@ else:
     print("[INFO] Kein vorheriges Modell gefunden. Starte frisches Training.\n")
     env = VecNormalize(env, norm_obs=True, norm_reward=True, clip_obs=10.0)
     model = PPO(
-        policy="MlpPolicy",
+        policy="MlpPolicy",      # Mehrschicht-Perzeptron-Policy
         env=env,
-        verbose=1,
-        tensorboard_log=log_dir,
-        batch_size=2048,
-        n_steps=2048,
-        learning_rate=linear_schedule(3e-4),
-        clip_range=dynamic_clip_range(0.2),
-        ent_coef=0.005,
-        gamma=0.99,
-        gae_lambda=0.95,
-        device="cpu",
-        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])),
+        verbose=1,               # Ausführliches Logging
+        tensorboard_log=log_dir, # TensorBoard-Pfad
+        batch_size=256,          # Minibatch-Größe für PPO
+        n_steps=2048,            # Rollout-Länge
+        learning_rate=cosine_warmup_floor(start=3e-4, warmup_frac=0.05, min_lr_frac=0.1),
+        clip_range=cosine_clip(), # Clipping-Range dynamisch
+        ent_coef=0.01,            # Entropie-Koeffizient (Exploration)
+        gamma=0.99,               # Diskontfaktor
+        gae_lambda=0.95,          # Lambda für GAE
+        device="cpu",             # Training auf CPU
+        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])), # Netzarchitekturgit
     )
 
 # ==== Automatisches Speichern bei verbessertem ep_rew_mean ====
@@ -806,7 +569,7 @@ class BestModelSaverCallback(BaseCallback):
 # ==== Callbacks kombinieren ====
 callbacks = CallbackList([
     TimeBasedCheckpointCallback(
-        save_interval_sec=300,
+        save_interval_sec=3600,
         save_path=log_dir,
         name_prefix="ppo_sumo_model",
         verbose=1,
@@ -839,6 +602,452 @@ finally:
     except Exception as e:
         print(f"[WARNUNG] VecNormalize konnte nicht gespeichert werden: {e}")
     env.close()
+\end{minted}
+
+\section{Belohnungsfunktionen}
+\label{app:rewardfunktionen}
+
+\subsection{\texttt{diff-waiting-time}}
+\label{app:reward_diff_waiting_time}
+Diese Belohnungsfunktion misst die Differenz der kumulierten Wartezeit zwischen zwei Zeitschritten. Sie belohnt eine Abnahme der Gesamtwartezeit.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+def diff_waiting_time_reward(traffic_signal):
+    ts_wait = sum(traffic_signal.get_accumulated_waiting_time_per_lane()) / 100.0
+    reward = traffic_signal.last_ts_waiting_time - ts_wait
+    traffic_signal.last_ts_waiting_time = ts_wait
+    return reward
+\end{minted}
+
+\subsection{\texttt{queue}}
+\label{app:reward_queue}
+Hier wird die Anzahl an gestoppten Fahrzeugen direkt als negativer Reward verwendet. Weniger Stau → höherer Reward.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+def queue_reward(traffic_signal):
+    return -traffic_signal.get_total_queued()
+
+def get_total_queued(traffic_signal) -> int:
+    """Returns the total number of vehicles halting in the intersection."""
+    return sum(traffic_signal.sumo.lane.getLastStepHaltingNumber(lane) for lane in traffic_signal.lanes)
+\end{minted}
+
+\subsection{\texttt{realworld}}
+\label{app:reward_realworld}
+Diese Funktion kombiniert Geschwindigkeit, Warteschlangenlänge und mittlere Wartezeit in einem additiven Reward.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+def realworld_reward(traffic_signal):
+    # Speed (0–7.5 m/s -> 0–1)
+    avg_speed = traffic_signal.get_average_speed()
+    speed_term = min(max(avg_speed, 0.0), 7.5) / 7.5
+
+    # Queue (0–20 Fzg -> 0–1)
+    total_queue = traffic_signal.get_total_queued()
+    queue_term = min(max(total_queue, 0), 20) / 20.0
+
+    # Mean waiting time (0–10 s -> 0–1)
+    waits_per_lane = traffic_signal.get_accumulated_waiting_time_per_lane()
+    mean_wait = sum(waits_per_lane) / len(waits_per_lane) if waits_per_lane else 0.0
+    wait_term = min(max(mean_wait, 0.0), 20.0) / 10.0
+
+    reward = speed_term - queue_term - wait_term
+    return reward
+\end{minted}
+
+\subsection{\texttt{emissions}}
+\label{app:reward_emissions}
+Diese Variante erweitert den Reward zusätzlich um einen Term für die CO\textsubscript{2}-Emissionen, sodass sowohl Verkehrsfluss als auch Nachhaltigkeit berücksichtigt werden.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+def emissions_reward(traffic_signal):
+    env = getattr(traffic_signal, "env", None)
+    if env is None or getattr(env, "sumo", None) is None:
+        return 0.0
+    if float(env.sim_step) >= float(env.sim_max_time):
+        return 0.0
+
+    sumo = env.sumo
+
+    # Speed (0–7.5 m/s → 0..1)
+    avg_speed = traffic_signal.get_average_speed()
+    speed_term = min(max(avg_speed, 0.0), 7.5) / 7.5
+
+    # Queue (0–20 → 0..1)
+    total_queue = traffic_signal.get_total_queued()
+    queue_term = min(max(total_queue, 0), 20) / 20.0
+
+    # Wait (0–10 s → 0..1)
+    waits = traffic_signal.get_accumulated_waiting_time_per_lane()
+    mean_wait = (sum(waits) / len(waits)) if waits else 0.0
+    wait_term = min(max(mean_wait, 0.0), 10.0) / 10.0
+
+    # Emissionen
+    try:
+        lanes = getattr(traffic_signal, "lanes", [])
+        total_co2 = sum(sumo.lane.getCO2Emission(lane) for lane in lanes)
+        n_veh = sum(sumo.lane.getLastStepVehicleNumber(lane) for lane in lanes)
+        BASELINE = 300.0 * max(1, len(lanes))
+        CAP      = 2000.0 * max(1, len(lanes))
+        co2_term = max(0.0, min(total_co2 - BASELINE, CAP - BASELINE)) / (CAP - BASELINE)
+    except Exception:
+        co2_term = 0.0
+
+    reward = speed_term - queue_term - wait_term - co2_term
+    return reward
+\end{minted}
+
+\section{Evaluierungs-Skripte}
+
+\subsection{\texttt{evaluate.py} – Evaluationsskript für PPO-Modelle und Baselines}
+\label{app:evaluate_script}
+Dieses Skript führt die Evaluation aller trainierten PPO-Modelle in SUMO durch und vergleicht sie mit den Baselines \emph{Fixed-Time} und \emph{Actuated}.
+Es rollt mehrere Episoden über verschiedene Seeds aus, extrahiert Metriken (z.\,B. Wartezeit, Geschwindigkeit, Emissionen) und speichert die Ergebnisse als \texttt{eval\_results.json}.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import os, json, numpy as np
+import glob
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import VecNormalize, VecMonitor
+from stable_baselines3.common.logger import configure
+from sumo_rl.environment.env import parallel_env
+from supersuit import pad_observations_v0, pad_action_space_v0
+from supersuit import pettingzoo_env_to_vec_env_v1, concat_vec_envs_v1
+
+# ----- Config -----
+RUNS = sorted(glob.glob(os.path.join("runs", "ppo_sumo_*")))
+MODEL_NAME  = "best_model.zip"
+N_EPISODES  = 10
+EP_LENGTH_S = 4096
+EP_SEEDS    = [12345, 67890, 13579, 24680, 11223, 44556, 77889, 99100, 31415, 27182]
+SCENARIOS   = [
+    {"name": "morning_peak", "route_file": "flows_morning.rou.xml"},
+    {"name": "evening_peak", "route_file": "flows_evening.rou.xml"},
+    {"name": "uniform",      "route_file": "flows_uniform.rou.xml"},
+    {"name": "random_heavy", "route_file": "flows_random_heavy.rou.xml"},
+]
+
+# ----- Env Factory -----
+def make_env(route_file, sumo_seed):
+    print(f"[DEBUG] Creating SUMO env with route={route_file}, seed={sumo_seed}")
+    env = parallel_env(
+        net_file="map.net.xml",
+        route_file=route_file,
+        use_gui=False,
+        num_seconds=EP_LENGTH_S,
+        reward_fn=dummy_reward,
+        min_green=5,
+        max_depart_delay=100,
+        sumo_seed=sumo_seed,
+        add_system_info=True,
+        add_per_agent_info=False,
+    )
+    env = pad_observations_v0(env)
+    env = pad_action_space_v0(env)
+    env = pettingzoo_env_to_vec_env_v1(env)
+    env = concat_vec_envs_v1(env, num_vec_envs=1, num_cpus=1, base_class="stable_baselines3")
+    env = VecMonitor(env)
+    return env
+
+# ----- Model Loader -----
+def load_model_and_norm(env, run_dir):
+    vecnorm_path = os.path.join(run_dir, "vecnormalize.pkl")
+    model_path   = os.path.join(run_dir, MODEL_NAME)
+
+    #print(f"[DEBUG] Loading VecNormalize from {vecnorm_path}")
+    env = VecNormalize.load(vecnorm_path, env)
+    env.training = False
+    env.norm_reward = False
+
+    #print(f"[DEBUG] Loading PPO model from {model_path}")
+    model = PPO.load(model_path, env=env, device="cpu")
+    return model, env
+
+# ----- Rollout -----
+def rollout(model, env):
+    obs = env.reset()
+    dones = [False]
+
+    sums = {}
+    counts = {}
+    last_totals = {}
+
+    while True:
+        action, _ = model.predict(obs, deterministic=True)
+        obs, rewards, dones, infos = env.step(action)
+
+        info = infos[0] if isinstance(infos, list) else infos
+        if not isinstance(info, dict):
+            info = {}
+
+        # Wenn Episode zu Ende ist:
+        if dones[0]:
+            # Falls vorhanden, final_info/terminal_info verwenden
+            fin = info.get("final_info") or info.get("terminal_info")
+            if isinstance(fin, dict):
+                # Mittelwerte vom finalen Step noch einrechnen
+                for k, v in fin.items():
+                    if k.startswith("system_mean_") and isinstance(v, (int, float)) and np.isfinite(v):
+                        sums[k] = sums.get(k, 0.0) + float(v)
+                        counts[k] = counts.get(k, 0) + 1
+                # Totals aus final_info (echte Endstände)
+                for k, v in fin.items():
+                    if k.startswith("system_total_") and isinstance(v, (int, float)) and np.isfinite(v):
+                        last_totals[k] = float(v)
+            break
+
+        # Normaler Zwischenschritt: Mittelwerte sammeln + Totals „letzten gültigen“ merken
+        for k, v in info.items():
+            if not isinstance(v, (int, float)) or not np.isfinite(v):
+                continue
+            if k.startswith("system_mean_") or k in ["system_total_waiting_time", "system_total_stopped", "system_total_running"]:
+                # momentane Werte mitteln
+                sums[k] = sums.get(k, 0.0) + float(v)
+                counts[k] = counts.get(k, 0) + 1
+            elif k.startswith("system_total_"):
+                # Totals: nur letzten Wert merken
+                last_totals[k] = float(v)
+
+    mean_metrics = {k: (sums[k] / max(1, counts.get(k, 0))) for k in sums}
+    mean_metrics.update(last_totals)
+    return mean_metrics
+
+
+def shorten_key(orig_key: str) -> str:
+    return orig_key.replace("system_", "")
+
+# ----- Env Factory für Baselines -----
+def make_env_baseline(route_file, sumo_seed, fixed_time=True):
+    """
+    Erstellt eine SUMO-Umgebung, die den internen Controller verwendet.
+    fixed_time=True  -> Fester Phasenplan aus net.xml
+    fixed_time=False -> SUMO Actuated Control (falls in net.xml konfiguriert)
+    """
+    env = parallel_env(
+        net_file="map.net.xml",
+        route_file=route_file,
+        use_gui=False,
+        num_seconds=EP_LENGTH_S,
+        reward_fn=dummy_reward,            # Kein RL-Reward
+        fixed_ts=fixed_time,       # True = fixed, False = actuated
+        sumo_seed=sumo_seed,
+        add_system_info=True,
+        add_per_agent_info=False,
+    )
+    env = pad_observations_v0(env)
+    env = pad_action_space_v0(env)
+    env = pettingzoo_env_to_vec_env_v1(env)
+    env = concat_vec_envs_v1(env, num_vec_envs=1, num_cpus=1, base_class="stable_baselines3")
+    env = VecMonitor(env)
+    return env
+
+def dummy_reward(_ts):
+    return 0.0
+
+def rollout_baseline(env):
+    obs = env.reset()
+    dones = [False]
+
+    # Mittelwerte über die Episode
+    sums = {}
+    counts = {}
+    # Letzte gültige Totals (vor Reset)
+    last_totals = {}
+
+    # gültige Dummy-Aktion aus dem Action Space
+    dummy_action = np.array([env.action_space.sample() for _ in range(env.num_envs)])
+
+    while True:
+        obs, rewards, dones, infos = env.step(dummy_action)
+
+        info = infos[0] if isinstance(infos, list) else infos
+        if not isinstance(info, dict):
+            info = {}
+
+        # Wenn Episode zu Ende ist:
+        if dones[0]:
+            # Falls vorhanden, final_info/terminal_info verwenden
+            fin = info.get("final_info") or info.get("terminal_info")
+            if isinstance(fin, dict):
+                # Mittelwerte vom finalen Step noch einrechnen
+                for k, v in fin.items():
+                    if k.startswith("system_mean_") and isinstance(v, (int, float)) and np.isfinite(v):
+                        sums[k] = sums.get(k, 0.0) + float(v)
+                        counts[k] = counts.get(k, 0) + 1
+                # Totals aus final_info (echte Endstände)
+                for k, v in fin.items():
+                    if k.startswith("system_total_") and isinstance(v, (int, float)) and np.isfinite(v):
+                        last_totals[k] = float(v)
+            break
+
+        # Normaler Zwischenschritt: Mittelwerte sammeln + Totals „letzten gültigen“ merken
+        for k, v in info.items():
+            if not isinstance(v, (int, float)) or not np.isfinite(v):
+                continue
+            if k.startswith("system_mean_") or k in ["system_total_waiting_time", "system_total_stopped", "system_total_running"]:
+                # momentane Werte mitteln
+                sums[k] = sums.get(k, 0.0) + float(v)
+                counts[k] = counts.get(k, 0) + 1
+            elif k.startswith("system_total_"):
+                # Totals: nur letzten Wert merken
+                last_totals[k] = float(v)
+
+    # Mittelwerte berechnen
+    mean_metrics = {k: (sums[k] / max(1, counts.get(k, 0))) for k in sums}
+    # Letzte gültige Totals übernehmen
+    mean_metrics.update(last_totals)
+
+    return mean_metrics
+
+
+def to_serializable(obj):
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    elif isinstance(obj, (np.floating,)):
+        return float(obj)
+    elif isinstance(obj, (np.ndarray,)):
+        return obj.tolist()
+    return str(obj)
+
+# ----- Evaluation Loop -----
+# ----- Evaluation Loop -----
+def evaluate():
+    results = []
+    log_dir_root = os.path.join("evaluation", "logs")
+
+    # Zählung: 2 Baselines + len(RUNS) RL pro (scenario × episode)
+    total_episodes = (2 + len(RUNS)) * len(SCENARIOS) * N_EPISODES
+    ep_counter = 0
+
+    for sc in SCENARIOS:
+        scen_log_dir = os.path.join(log_dir_root, f"eval_{sc['name']}")
+        os.makedirs(scen_log_dir, exist_ok=True)
+        logger = configure(scen_log_dir, ["tensorboard", "stdout"])
+
+        print(f"[INFO] Evaluating scenario={sc['name']}")
+
+        for ep in range(N_EPISODES):
+            ep_seed = EP_SEEDS[ep]
+
+            # --- 1) Fixed-Time ---
+            env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=True)
+            ep_counter += 1
+            print(f"[PROGRESS] FixedTime | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
+                  f"({ep_counter}/{total_episodes})")
+            m = rollout_baseline(env)
+            m.update({
+                "scenario": sc["name"],
+                "episode": ep,
+                "method": "Baseline_FixedTime"
+            })
+            results.append(m)
+
+            # --- 2) Actuated ---
+            env = make_env_baseline(sc["route_file"], sumo_seed=ep_seed, fixed_time=False)
+            ep_counter += 1
+            print(f"[PROGRESS] Actuated | {sc['name']} | Ep {ep+1}/{N_EPISODES} "
+                  f"({ep_counter}/{total_episodes})")
+            m = rollout_baseline(env)
+            m.update({
+                "scenario": sc["name"],
+                "episode": ep,
+                "method": "Baseline_Actuated"
+            })
+            results.append(m)
+
+            # --- 3) RL-Modelle ---
+            for run_dir in RUNS:
+                env_raw = make_env(sc["route_file"], sumo_seed=ep_seed)
+                model, env = load_model_and_norm(env_raw, run_dir)
+                ep_counter += 1
+                model_name = os.path.basename(run_dir)
+                print(f"[PROGRESS] RL | {sc['name']} | {model_name} "
+                      f"| Ep {ep+1}/{N_EPISODES} ({ep_counter}/{total_episodes})")
+                m = rollout(model, env)
+                
+                # Seed extrahieren (3. Teil vom Namen)
+                parts = model_name.split("_")
+                model_seed = parts[2] if len(parts) > 2 else "unknown"
+
+                m.update({
+                    "scenario": sc["name"],
+                    "episode": ep,
+                    "method": f"{model_name}_{model_seed}"
+                })
+                results.append(m)
+
+            # --- Logging dieser Episode (Baselines + alle RL) ---
+            for entry in results[-(2 + len(RUNS)):]:
+                for k, v in entry.items():
+                    if isinstance(v, (int, float)) and k not in ["episode", "ep_seed"]:
+                        short_key = shorten_key(k)
+                        logger.record(f"{entry['method']}/{short_key}", v)
+            logger.dump(step=ep)
+
+    results_path = os.path.join("evaluation", "eval_results.json")
+    os.makedirs(os.path.dirname(results_path), exist_ok=True)
+    with open(results_path, "w") as f:
+        json.dump(results, f, indent=2, default=to_serializable)
+
+    print(f"[INFO] Evaluation abgeschlossen. Ergebnisse: {results_path}")
+
+if __name__ == "__main__":
+    evaluate()
+
+\end{minted}
+
+\section{Postprocessing der Evaluationsergebnisse}
+
+\subsection{\texttt{json2csv.py} – Konvertierung und Aggregation von Evaluationsergebnissen}
+\label{app:json2csv_script}
+Dieses Skript verarbeitet die von \texttt{evaluate.py} erzeugte JSON-Datei \texttt{eval\_results.json}.
+Es wandelt die Rohdaten zunächst in ein CSV-Format um, berechnet anschließend Mittelwerte und Standardabweichungen pro \emph{Scenario × Methode} und erzeugt sowohl eine aggregierte Gesamttabelle als auch separate CSV-Dateien pro Methode.
+\begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
+import json
+import pandas as pd
+import os
+
+# Pfade
+json_path = "evaluation/eval_results.json"
+raw_csv_path = "evaluation/eval_results_raw.csv"
+agg_csv_path = "evaluation/eval_results_agg.csv"
+
+# -----------------------------
+# Schritt 1: JSON -> Raw CSV
+# -----------------------------
+print(f"Lese JSON-Datei: {json_path}")
+with open(json_path, "r") as f:
+    data = json.load(f)
+
+df = pd.DataFrame(data)
+df.to_csv(raw_csv_path, index=False)
+print(f"Raw CSV geschrieben: {raw_csv_path}")
+
+# -----------------------------
+# Schritt 2: Aggregation
+# -----------------------------
+# numerische Spalten automatisch finden (alles außer scenario, method, episode)
+numeric_cols = df.select_dtypes(include="number").columns.tolist()
+numeric_cols = [c for c in numeric_cols if c not in ["episode"]]  # episode nicht mitteln
+
+# Aggregationsdict
+agg_dict = {}
+for col in numeric_cols:
+    agg_dict[f"{col}_mean"] = (col, "mean")
+    agg_dict[f"{col}_std"] = (col, "std")
+
+# Gruppieren nach Szenario + Methode
+agg = df.groupby(["scenario", "method"]).agg(**agg_dict).reset_index()
+
+# Gesamte Aggregation speichern
+agg.to_csv(agg_csv_path, index=False)
+print(f"Aggregierte Datei geschrieben: {agg_csv_path}")
+print("Zeilen:", len(agg))
+
+# -----------------------------
+# Schritt 3: Pro-Methode CSVs
+# -----------------------------
+for method, df_method in agg.groupby("method"):
+    safe_name = method.replace(" ", "_").replace("/", "_")
+    out_path = f"evaluation/{safe_name}.csv"
+    df_method.to_csv(out_path, index=False)
+    print(f"Datei für Methode '{method}' geschrieben: {out_path}")
+
 \end{minted}
 
 \section{Netzwerk-Skripte}

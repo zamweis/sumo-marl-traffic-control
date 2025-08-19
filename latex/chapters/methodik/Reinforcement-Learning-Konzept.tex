@@ -45,67 +45,54 @@ Die Aktionsmenge \(A\) beschreibt die Eingriffsmöglichkeiten in die Steuerung d
 \end{enumerate}
 Einschränkungen sind u.\,a. Mindestgrünzeiten, automatisch generierte Zwischenphasen (Gelb, Räumzeit) und die Synchronität mehrerer Agentenentscheidungen.
 Zur Vermeidung hektischer Schaltungen wird ein Action-Interval (z.\,B. 5\,s) definiert.
-
 \subsubsection{Belohnungsfunktionen}
+\label{sec:rewardfunktionen}
 
-\texttt{sumo-rl} unterstützt verschiedene standardisierte Reward-Funktionen: \cite{sumo-rl_docs}
-
-\begin{itemize}
-  \item \texttt{"diff-waiting-time"}: Reduktion der Differenz kumulierter Wartezeiten,
-  \item \texttt{"average-speed"}: Maximierung der mittleren Geschwindigkeit im Netz,
-  \item \texttt{"queue"}: Minimierung der Gesamtlänge aller Warteschlangen.
-\end{itemize}
-
-Im Rahmen dieser Arbeit wurden zusätzlich mehrere eigene Reward-Funktionen implementiert.
-Eine Übersicht zeigt Tabelle~\ref{tab:reward-overview}.
+Im Rahmen dieser Arbeit wurden vier unterschiedliche Belohnungsfunktionen entwickelt und getestet.
+Eine Übersicht der Varianten, ihrer Optimierungsziele und Bezüge zur Literatur zeigt Tabelle~\ref{tab:reward-overview}.
 
 \begin{table}[H]
   \centering
-  \begin{tabular}{p{3cm} p{5cm} p{3.5cm}}
+  \begin{tabular}{p{3cm} p{6cm} p{3.5cm}}
     \toprule
-    \textbf{Reward-Variante} & \textbf{Optimierungsziel}                   & \textbf{Bezug zur Literatur} \\ \midrule
-    Emissions-basiert        & Reduktion lokaler Emissionen                & \cite{mschrader15,zheng2022} \\
-    Reisezeit-basiert        & Minimierung mittlerer Reisezeit             & Eigene Erweiterung           \\
-    Realworld-Variante       & Praktisch messbare Größen (Queues, Fluss)   & Eigene Erweiterung           \\
-    Custom-Variante          & Kombination mehrerer Indikatoren            & Eigene Erweiterung           \\
-    Zeit-Emission-Mix        & Trade-off zwischen Zeit und Umweltbelastung & \cite{mschrader15}           \\ \bottomrule
+    \textbf{Reward-Variante}   & \textbf{Optimierungsziel}                                                                           & \textbf{Bezug zur Literatur}  \\ \midrule
+    \texttt{diff-waiting-time} & Reduktion der kumulierten Wartezeit durch Minimierung der Wartezeitdifferenz zwischen Zeitschritten & \cite{sumo-rl-tls}            \\
+    \texttt{queue}             & Minimierung von Staus, gemessen über die Anzahl gestoppter Fahrzeuge                                & \cite{sumo-rl-tls}            \\
+    \texttt{realworld}         & Kombination mehrerer in der Praxis messbarer Größen (Geschwindigkeit, Queues, Wartezeit)            & Eigene Erweiterung            \\
+    \texttt{emissions}         & Erweiterung um CO\textsubscript{2}-Emissionen zur Berücksichtigung von Nachhaltigkeit               & \cite{zheng2022, mschrader15} \\
+    \bottomrule
   \end{tabular}
   \caption{Übersicht der implementierten Reward-Funktionen und deren theoretische Motivation.}
   \label{tab:reward-overview}
 \end{table}
 
-Für das Haupttraining wurde die \texttt{realworld\_reward}-Funktion verwendet, da sie ausschließlich auf Metriken basiert,
-die in der Praxis mit vergleichsweise einfacher Sensorik (z.\,B. Kameras, Induktionsschleifen) erfasst werden können.
-Für Vergleichsläufe kamen die weiteren Varianten aus Tabelle~\ref{tab:reward-overview} zum Einsatz (siehe Anhang \ref{app:train_script}).
+Für das Haupttraining wurde die Funktion \texttt{realworld} verwendet, da sie ausschließlich auf Metriken basiert,
+die in realen Städten mit vergleichsweise einfacher Sensorik (z.\,B. Induktionsschleifen, Kameras) erhoben werden können.
+Die übrigen Varianten wurden für Vergleichsstudien eingesetzt (siehe Anhang~\ref{app:rewardfunktionen}).
 
-\paragraph{Formale Definition der Realworld-Belohnungsfunktion}
-Die Belohnungsfunktion \texttt{realworld\_reward} berechnet für jede Zeiteinheit $t$ den Reward $R_t$ wie folgt:
+\paragraph{Beschreibung der implementierten Funktionen}
 
-\begin{equation}
-  R_t = - w_q \cdot q_{\mathrm{norm}} - w_{\mathrm{build}} \cdot b_{\mathrm{norm}} + w_f \cdot f_{\mathrm{norm}} - w_{\mathrm{switch}} \cdot \mathrm{phase\_sw}
-\end{equation}
-
-mit:
-\begin{align}
-  q_{\mathrm{norm}} & = \frac{\mathrm{EMA}(Q_t)}{Q_{\max}}                \\
-  b_{\mathrm{norm}} & = \frac{\max(0, Q_t - Q_{t-1})}{0.2 \cdot Q_{\max}} \\
-  f_{\mathrm{norm}} & = \frac{\mathrm{EMA}(F_t)}{F_{\max}}
-\end{align}
-
-wobei gilt:
 \begin{itemize}
-  \item $Q_t$: aktuelle Warteschlangenlänge
-  \item $F_t$: aktuelle Durchflussrate
-  \item $\mathrm{EMA}(\cdot)$: Exponentieller gleitender Mittelwert mit $\alpha = 0.3$
-  \item $Q_{\max} = 40$ Fahrzeuge
-  \item $F_{\max} = 8$ Fahrzeuge/Zeitschritt
-  \item $\mathrm{phase\_sw} \in \{0, 1\}$: Indikator für Phasenwechsel im aktuellen Schritt
-  \item Gewichtungen: $w_q = 1.0$, $w_{\mathrm{build}} = 0.8$, $w_f = 0.7$, $w_{\mathrm{switch}} = 0.1$
+  \item \textbf{\texttt{diff-waiting-time}}
+        (siehe Anhang~\ref{app:reward_diff_waiting_time})
+        Diese Funktion misst die Differenz der akkumulierten Wartezeit zwischen zwei Zeitschritten.
+        Eine Abnahme der Gesamtwartezeit wird positiv belohnt.
+
+  \item \textbf{\texttt{queue}}
+        (siehe Anhang~\ref{app:reward_queue})
+        Hier wird die Anzahl der gestoppten Fahrzeuge direkt als negativer Reward verwendet.
+        Weniger Fahrzeuge im Stau führen zu höherem Reward.
+
+  \item \textbf{\texttt{realworld}}
+        (siehe Anhang~\ref{app:reward_realworld})
+        Diese Belohnungsfunktion kombiniert drei Metriken: durchschnittliche Geschwindigkeit, Länge der Warteschlangen und mittlere Wartezeit.
+        Sie bildet einen Kompromiss zwischen Verkehrsfluss und Staureduktion.
+
+  \item \textbf{\texttt{emissions}}
+        (siehe Anhang~\ref{app:reward_emissions})
+        Neben den Metriken aus \texttt{realworld} wird zusätzlich ein Term für CO\textsubscript{2}-Emissionen berücksichtigt.
+        Damit soll eine Balance zwischen Verkehrsleistung und Umweltverträglichkeit gefunden werden.
 \end{itemize}
-
-Der Reward wird auf $[-5, 5]$ geclippt, um Ausreißer zu begrenzen.
-Er belohnt hohe Durchflussraten und stabile Warteschlangen, während unnötige Phasenwechsel sowie starker Warteschlangenaufbau bestraft werden.
-
 
 \subsubsection{Hyperparameter-Anpassung}
 Für PPO wurden neben festen Werten auch dynamische \emph{Schedules} eingesetzt, um Lernrate, Clip-Range oder Entropiekoeffizient während des Trainings anzupassen.
