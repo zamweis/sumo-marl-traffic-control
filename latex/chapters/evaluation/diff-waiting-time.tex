@@ -1,8 +1,76 @@
-
 \subsection{Reward: Diff-Waiting-Time}
 Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Differenz der Wartezeiten minimiert.
 
 \subsubsection{Mittlere Wartezeit}
+\label{sec:diff-waiting-time-wartezeit}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=10cm,
+                enlarge x limits=0.15,
+                ylabel={Mittlere Wartezeit},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
+                ] {chapters/evaluation/results/diff-waiting-time/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_456_2025-08-18_01-18-32_456.csv};
+            \addlegendentry{Model 1}
+
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_13755_2025-08-18_04-48-47_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_143534_2025-08-17_23-30-08_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_635768_2025-08-18_03-03-29_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+
+    \caption{Durchschnit Wartezeiten}
+    \label{fig:diff-waiting-time-wartezeit}
+\end{figure}
+
+
 
 \begin{figure}[H]
     \centering
@@ -16,90 +84,39 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 ylabel={Mittlere Wartezeit},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
-                ymax=100
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/diff-waiting-time/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
-            % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
-                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_456_2025-08-18_01-18-32_456.csv};
-            \addlegendentry{Model 1}
-
-
-            % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
-                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_13755_2025-08-18_04-48-47_13755.csv};
-            \addlegendentry{Model 2}
-
-            % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
-                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_143534_2025-08-17_23-30-08_143534.csv};
-            \addlegendentry{Model 3}
-
-            % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
-                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_635768_2025-08-18_03-03-29_635768.csv};
-            \addlegendentry{Model 4}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                height=8cm,
-                enlarge x limits=0.15,
-                ylabel={Mittlere Wartezeit},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
-                ymajorgrids=true,
-                grid style=dashed
-            ]
-
-            % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
             \addlegendentry{Baseline Actuated}
         \end{axis}
     \end{tikzpicture}
+    \caption{Durchschnit Wartezeiten}
+    \label{fig:diff-waiting-time-wartezeit2}
 \end{figure}
 
-\subsubsection{Gesammte Wartezeit}
+Die Analyse der mittleren Wartezeit zeigt, dass die RL-Modelle in den meisten Szenarien bessere Ergebnisse als die Baselines erzielen. Insbesondere in den Szenarien uniform, morning\_peak und evening\_peak konnten mehrere Modelle die durchschnittliche Wartezeit signifikant reduzieren. Gleichzeitig ist zu beobachten, dass einzelne Modelle in bestimmten Szenarien auffällig schlechter abschnitten: Modell 3 in morning\_peak sowie Modell 2 und Modell 3 in random\_heavy weisen deutlich erhöhte Wartezeiten auf. Diese hohen Werte gehen zudem mit einer stark erhöhten Standardabweichung einher, was auf eine erhöhte Variabilität im Verhalten der Modelle in diesen Konfigurationen hinweist.
 
+\subsubsection{Stoppende Fahrzeuge}
+In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}
@@ -107,61 +124,66 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
+                height=10cm,
                 enlarge x limits=0.15,
-                ylabel={Gesammte Wartezeit},
+                ylabel={Stoppende Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
-                ymax=12000
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
                 ] {chapters/evaluation/results/diff-waiting-time/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
             % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_456_2025-08-18_01-18-32_456.csv};
             \addlegendentry{Model 1}
 
+
             % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_13755_2025-08-18_04-48-47_13755.csv};
             \addlegendentry{Model 2}
 
             % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_143534_2025-08-17_23-30-08_143534.csv};
             \addlegendentry{Model 3}
 
             % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_635768_2025-08-18_03-03-29_635768.csv};
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Stoppende Fahrzeuge}
+    \label{fig:diff-waiting-time-stopped}
 \end{figure}
+
+
 
 \begin{figure}[H]
     \centering
@@ -172,28 +194,42 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 width=12cm,
                 height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Gesammte Wartezeit},
+                ylabel={Stoppende Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
-                grid style=dashed
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
-            % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/diff-waiting-time/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
                 ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
             \addlegendentry{Baseline Actuated}
         \end{axis}
     \end{tikzpicture}
+    \caption{Stoppende Fahrzeuge}
+    \label{fig:diff-waiting-time-stopped2}
 \end{figure}
 
-\subsubsection{Anzahl angekommener Fahrzeuge}
+Ein besonders klarer Vorteil der RL-Modelle zeigt sich bei der Anzahl der stoppenden Fahrzeuge. Über alle Szenarien hinweg konnten die Modelle den Wert im Vergleich zur Fixed-Time-Baseline drastisch reduzieren. Teilweise stoppten Fahrzeuge nur in einem Fünftel der Fälle im Vergleich zur Baseline, was eine deutliche Verbesserung des Verkehrsflusses widerspiegelt. Dieser Effekt ist konsistent über alle Modelle und Szenarien hinweg nachweisbar.
+
+\subsubsection{Anzahl ankommender Fahrzeuge}
+\label{sec:diff-waiting-time-ankommend}
 
 \begin{figure}[H]
     \centering
@@ -202,93 +238,78 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
+                height=10cm,
                 enlarge x limits=0.15,
-                ylabel={Anzahl angekommener Fahrzeuge},
+                ylabel={Anzahl ankommender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/diff-waiting-time/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
+                ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
             % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_456_2025-08-18_01-18-32_456.csv};
             \addlegendentry{Model 1}
 
             % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_13755_2025-08-18_04-48-47_13755.csv};
             \addlegendentry{Model 2}
 
             % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_143534_2025-08-17_23-30-08_143534.csv};
             \addlegendentry{Model 3}
 
             % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_635768_2025-08-18_03-03-29_635768.csv};
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Anzahl ankommender Fahrzeuge}
+    \label{fig:diff-waiting-time-arrived}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                height=8cm,
-                enlarge x limits=0.15,
-                ylabel={Anzahl angekommener Fahrzeuge},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
-                ymajorgrids=true,
-                grid style=dashed,
-            ]
+Hinsichtlich der Anzahl ankommender Fahrzeuge unterscheiden sich die RL-Modelle kaum von der Fixed-Time-Baseline. Alle Modelle erreichen nahezu identische Werte, was darauf hinweist, dass die Steuerungsstrategien trotz der reduzierten Warte- und Stoppzeiten keine signifikanten Auswirkungen auf die Durchsatzkapazität des Netzes haben. Einzig die Actuated-Baseline zeigt hier, wie auch in den anderen Metriken, ein deutlich schlechteres Abschneiden.
 
-            % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
-                ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
 
 
 \subsubsection{Durchschnitt fahrender Fahrzeuge}
+\label{sec:diff-waiting-time-fahrende}
 
 \begin{figure}[H]
     \centering
@@ -297,94 +318,77 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
+                height=10cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnitt fahrender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/diff-waiting-time/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
+                ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
 
             % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_456_2025-08-18_01-18-32_456.csv};
             \addlegendentry{Model 1}
 
             % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_13755_2025-08-18_04-48-47_13755.csv};
             \addlegendentry{Model 2}
 
             % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_143534_2025-08-17_23-30-08_143534.csv};
             \addlegendentry{Model 3}
 
             % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_635768_2025-08-18_03-03-29_635768.csv};
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Durchschnitt fahrender Fahrzeuge}
+    \label{fig:diff-waiting-time-running}
 \end{figure}
 
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                height=8cm,
-                enlarge x limits=0.15,
-                ylabel={Durchschnitt fahrender Fahrzeuge},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
-                ymajorgrids=true,
-                grid style=dashed,
-            ]
-            % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
-                ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
+Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistentes Muster sichtbar: In allen Szenarien liegen die Werte der RL-Modelle unterhalb der Fixed-Time-Baseline. Typischerweise beträgt der Unterschied etwa 10-15 Prozent, so dass bei einem Fixed-Time-Wert von 120 Fahrzeugen die RL-Modelle bei rund 105 Fahrzeugen liegen. Dies deutet darauf hin, dass die RL-Agenten den Verkehrsfluss stärker bündeln und damit die Anzahl gleichzeitig im Netz befindlicher Fahrzeuge reduzieren.
 
 
 \subsubsection{Durchschnittsgeschwindigkeit}
+\label{sec:diff-waiting-time-geschwindigkeit}
 
 \begin{figure}[H]
     \centering
@@ -393,61 +397,77 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
+                height=10cm,
                 enlarge x limits=0.15,
-                ylabel={Durchschnittsgeschwindigkeit},
+                ylabel={Durchschnittsgeschwindigkeit [m/s]} ,
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/diff-waiting-time/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
-            % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_speed_mean, col sep=comma
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_456_2025-08-18_01-18-32_456.csv};
             \addlegendentry{Model 1}
 
             % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_13755_2025-08-18_04-48-47_13755.csv};
             \addlegendentry{Model 2}
 
             % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_143534_2025-08-17_23-30-08_143534.csv};
             \addlegendentry{Model 3}
 
             % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_635768_2025-08-18_03-03-29_635768.csv};
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Durchschnittsgeschwindigkeit}
+    \label{fig:diff-waiting-time-speed}
 \end{figure}
 
+Die durchschnittliche Geschwindigkeit ist bei den RL-Modellen durchweg höher als bei der Fixed-Time-Baseline. Im Mittel beträgt der Vorsprung rund ein Sechstel, was eine signifikante Verbesserung der Reisegeschwindigkeit darstellt. Dieser Befund unterstreicht, dass die Modelle in der Lage sind, die Stoppzeiten und Stausituationen effektiv zu reduzieren und damit einen flüssigeren Verkehrsfluss zu ermöglichen.
+
+
+\subsubsection{Teleportationen}
+\label{sec:diff-waiting-time-teleport}
 
 \begin{figure}[H]
     \centering
@@ -456,28 +476,70 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
+                height=5cm,
                 enlarge x limits=0.15,
-                ylabel={Durchschnittsgeschwindigkeit},
+                ylabel={Teleportationen},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
-            % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
                 ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
             \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_456_2025-08-18_01-18-32_456.csv};
+            \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_13755_2025-08-18_04-48-47_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_143534_2025-08-17_23-30-08_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_635768_2025-08-18_03-03-29_635768.csv};
+            \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Teleportationen}
+    \label{fig:diff-waiting-time-teleports}
 \end{figure}
 
-
-
-% ggf. weitere Metriken: stopped, arrived/departed
+Ein Sonderfall ergibt sich bei der Metrik der Teleportationen: Während in fast allen Szenarien keine Teleportationen auftraten, kam es in einzelnen Episoden zu vereinzelten Fällen. Konkret traten bei Modell 3 und Modell 1 im Szenario random\_heavy sowie bei Modell 1 im Szenario uniform jeweils einzelne Teleportationen auf. Angesichts der insgesamt geringen Häufigkeit lassen sich diese Ereignisse als Ausnahmen werten, die die Gesamtbewertung der Modelle kaum beeinflussen.

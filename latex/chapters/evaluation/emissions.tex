@@ -10,30 +10,29 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Mittlere Wartezeit},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
-                ymax=100
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
             % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
@@ -41,24 +40,24 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
 
 
             % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
             \addlegendentry{Model 2}
 
             % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
             \addlegendentry{Model 3}
 
             % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
@@ -74,118 +73,31 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Mittlere Wartezeit},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
-                ymajorgrids=true,
-                grid style=dashed
-            ]
-
-            % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
-                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
-\subsubsection{Gesammte Wartezeit}
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                height=8cm,
-                enlarge x limits=0.15,
-                ylabel={Gesammte Wartezeit},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
-                ymax=12000
+                every axis plot post/.append style={thick, fill=.!50}
             ]
+
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
+                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
-
-            % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
-                ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
-            \addlegendentry{Model 1}
-
-            % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
-                ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
-            \addlegendentry{Model 2}
-
-            % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
-                ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
-            \addlegendentry{Model 3}
-
-            % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
-                ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
-            \addlegendentry{Model 4}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                height=8cm,
-                enlarge x limits=0.15,
-                ylabel={Gesammte Wartezeit},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
-                ymajorgrids=true,
-                grid style=dashed
-            ]
-
             % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_waiting_time_mean, col sep=comma, y error=system_total_waiting_time_std
+                    x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
             \addlegendentry{Baseline Actuated}
         \end{axis}
@@ -201,53 +113,53 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Anzahl angekommener Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
             % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
             \addlegendentry{Model 1}
 
             % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
             \addlegendentry{Model 2}
 
             % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
             \addlegendentry{Model 3}
 
             % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
@@ -263,21 +175,29 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Anzahl angekommener Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
+                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
             % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
@@ -296,21 +216,21 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnitt fahrender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
@@ -318,32 +238,32 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
 
 
             % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
             \addlegendentry{Model 1}
 
             % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
             \addlegendentry{Model 2}
 
             % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
             \addlegendentry{Model 3}
 
             % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
@@ -360,20 +280,27 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnitt fahrender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
+                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
             % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
@@ -392,53 +319,53 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnittsgeschwindigkeit},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
             % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
             \addlegendentry{Model 1}
 
             % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
             \addlegendentry{Model 2}
 
             % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
             \addlegendentry{Model 3}
 
             % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
@@ -455,20 +382,27 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnittsgeschwindigkeit},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
             % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
@@ -479,7 +413,7 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
 
 
 
-\subsubsection{Emissionen}
+\subsubsection{Mittlere CO$_2$-Emissionen pro Fahrzeug}
 
 \begin{figure}[H]
     \centering
@@ -488,65 +422,66 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Emissionen},
+                ylabel={CO$_2$ [mg/s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
                 x tick label style={rotate=45,anchor=east},
-                legend style={at={(0.5,-0.35)}, anchor=north, legend columns=-2},
+                legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
             ]
 
             % Baseline FixedTime
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
+            % Baseline Actuated
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
             % RL Modell 1
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
             \addlegendentry{Model 1}
 
             % RL Modell 2
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
             \addlegendentry{Model 2}
 
             % RL Modell 3
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
             \addlegendentry{Model 3}
 
             % RL Modell 4
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
                     x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
             \addlegendentry{Model 4}
 
-            % Baseline Actuated
-            \addplot+[error bars/.cd,
-                y dir=both, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
-                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
         \end{axis}
     \end{tikzpicture}
 \end{figure}

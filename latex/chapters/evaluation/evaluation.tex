@@ -5,12 +5,13 @@ In diesem Kapitel werden die Ergebnisse der Evaluationsläufe präsentiert.
 Alle Modelle (vier Trainingsseeds pro Reward-Variante) sowie die beiden Baselines (Fixed-Time, Actuated)
 wurden in allen vier Szenarien (\texttt{morning\_peak}, \texttt{evening\_peak}, \texttt{uniform}, \texttt{random\_heavy})
 jeweils über zehn Episoden evaluiert.
-Die Resultate sind Mittelwerte pro Kombination aus \emph{Methode} und \emph{Szenario}.
+
+\texttt{Bemerkung:} Die Resultate sind Mittelwerte pro Kombination aus \emph{Methode} und \emph{Szenario}. Die Baseline Actuated hat in allen Evaluierungen realtiv schlecht abgeschlossen und wurde größten teils separat in Diagrammen dargestellt um sicherzustellen, dass die deutlich besser performende Baseline TimeFixed, visuell deutlich mit den Modellen vergleichbar bleibt. Bei allen Episoden sind gleich viele Fahrzeuge in das Netz gespeist worden.
 
 \input{chapters/evaluation/diff-waiting-time.tex}
-\input{chapters/evaluation/queue.tex}
-\input{chapters/evaluation/realworld.tex}
-\input{chapters/evaluation/emissions.tex}
+%\input{chapters/evaluation/queue.tex}
+%\input{chapters/evaluation/realworld.tex}
+%\input{chapters/evaluation/emissions.tex}
 
 \subsection{Robustheit und Replikationsanalyse}
 Um die Stabilität der Ergebnisse zu bewerten, werden die Verteilungen über
