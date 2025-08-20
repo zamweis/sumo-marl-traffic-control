@@ -1,7 +1,7 @@
 \subsection{Reward: Diff-Waiting-Time}
 Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Differenz der Wartezeiten minimiert.
 
-\subsubsection{Mittlere Wartezeit}
+\subsubsection{Mittlere Wartezeiten}
 \label{sec:diff-waiting-time-wartezeit}
 \begin{figure}[H]
     \centering
@@ -10,9 +10,9 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=10cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Mittlere Wartezeit},
+                ylabel={Mittlere Wartezeit [s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
@@ -65,8 +65,7 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-
-    \caption{Durchschnit Wartezeiten}
+    \caption{Mittlere Wartezeiten}
     \label{fig:diff-waiting-time-wartezeit}
 \end{figure}
 
@@ -81,7 +80,7 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 width=12cm,
                 height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Mittlere Wartezeit},
+                ylabel={Mittlere Wartezeit [s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
@@ -109,13 +108,13 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
             \addlegendentry{Baseline Actuated}
         \end{axis}
     \end{tikzpicture}
-    \caption{Durchschnit Wartezeiten}
+    \caption{Mittlere Wartezeiten}
     \label{fig:diff-waiting-time-wartezeit2}
 \end{figure}
 
 Die Analyse der mittleren Wartezeit zeigt, dass die RL-Modelle in den meisten Szenarien bessere Ergebnisse als die Baselines erzielen. Insbesondere in den Szenarien uniform, morning\_peak und evening\_peak konnten mehrere Modelle die durchschnittliche Wartezeit signifikant reduzieren. Gleichzeitig ist zu beobachten, dass einzelne Modelle in bestimmten Szenarien auffällig schlechter abschnitten: Modell 3 in morning\_peak sowie Modell 2 und Modell 3 in random\_heavy weisen deutlich erhöhte Wartezeiten auf. Diese hohen Werte gehen zudem mit einer stark erhöhten Standardabweichung einher, was auf eine erhöhte Variabilität im Verhalten der Modelle in diesen Konfigurationen hinweist.
 
-\subsubsection{Stoppende Fahrzeuge}
+\subsubsection{Anzahl stoppender Fahrzeuge}
 In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
 \begin{figure}[H]
     \centering
@@ -124,9 +123,9 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=10cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Stoppende Fahrzeuge},
+                ylabel={Anzahl stoppender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
@@ -179,7 +178,7 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Stoppende Fahrzeuge}
+    \caption{Anzahl stoppender Fahrzeuge}
     \label{fig:diff-waiting-time-stopped}
 \end{figure}
 
@@ -194,7 +193,7 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
                 width=12cm,
                 height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Stoppende Fahrzeuge},
+                ylabel={Anzahl stoppender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
@@ -222,7 +221,7 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
             \addlegendentry{Baseline Actuated}
         \end{axis}
     \end{tikzpicture}
-    \caption{Stoppende Fahrzeuge}
+    \caption{Anzahl stoppender Fahrzeuge}
     \label{fig:diff-waiting-time-stopped2}
 \end{figure}
 
@@ -238,7 +237,7 @@ Ein besonders klarer Vorteil der RL-Modelle zeigt sich bei der Anzahl der stoppe
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=10cm,
+                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Anzahl ankommender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
@@ -318,7 +317,7 @@ Hinsichtlich der Anzahl ankommender Fahrzeuge unterscheiden sich die RL-Modelle 
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=10cm,
+                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnitt fahrender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
@@ -387,8 +386,8 @@ Hinsichtlich der Anzahl ankommender Fahrzeuge unterscheiden sich die RL-Modelle 
 Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistentes Muster sichtbar: In allen Szenarien liegen die Werte der RL-Modelle unterhalb der Fixed-Time-Baseline. Typischerweise beträgt der Unterschied etwa 10-15 Prozent, so dass bei einem Fixed-Time-Wert von 120 Fahrzeugen die RL-Modelle bei rund 105 Fahrzeugen liegen. Dies deutet darauf hin, dass die RL-Agenten den Verkehrsfluss stärker bündeln und damit die Anzahl gleichzeitig im Netz befindlicher Fahrzeuge reduzieren.
 
 
-\subsubsection{Durchschnittsgeschwindigkeit}
-\label{sec:diff-waiting-time-geschwindigkeit}
+\subsubsection{Durchschnittsgeschwindigkeiten}
+\label{sec:diff-waiting-time-geschwindigkeiten}
 
 \begin{figure}[H]
     \centering
@@ -397,7 +396,7 @@ Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistent
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=10cm,
+                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnittsgeschwindigkeit [m/s]} ,
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
@@ -422,7 +421,7 @@ Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistent
             \addplot+[color6, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
             \addlegendentry{Baseline Actuated}
 
@@ -430,7 +429,7 @@ Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistent
             \addplot+[color2, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_456_2025-08-18_01-18-32_456.csv};
             \addlegendentry{Model 1}
 
@@ -438,7 +437,7 @@ Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistent
             \addplot+[color3, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_13755_2025-08-18_04-48-47_13755.csv};
             \addlegendentry{Model 2}
 
@@ -446,7 +445,7 @@ Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistent
             \addplot+[color4, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_143534_2025-08-17_23-30-08_143534.csv};
             \addlegendentry{Model 3}
 
@@ -454,19 +453,19 @@ Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistent
             \addplot+[color5, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_635768_2025-08-18_03-03-29_635768.csv};
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Durchschnittsgeschwindigkeit}
+    \caption{Durchschnittsgeschwindigkeiten}
     \label{fig:diff-waiting-time-speed}
 \end{figure}
 
 Die durchschnittliche Geschwindigkeit ist bei den RL-Modellen durchweg höher als bei der Fixed-Time-Baseline. Im Mittel beträgt der Vorsprung rund ein Sechstel, was eine signifikante Verbesserung der Reisegeschwindigkeit darstellt. Dieser Befund unterstreicht, dass die Modelle in der Lage sind, die Stoppzeiten und Stausituationen effektiv zu reduzieren und damit einen flüssigeren Verkehrsfluss zu ermöglichen.
 
 
-\subsubsection{Teleportationen}
+\subsubsection{Anzahl teleportierender Fahrzeuge}
 \label{sec:diff-waiting-time-teleport}
 
 \begin{figure}[H]
@@ -478,7 +477,7 @@ Die durchschnittliche Geschwindigkeit ist bei den RL-Modellen durchweg höher al
                 width=12cm,
                 height=5cm,
                 enlarge x limits=0.15,
-                ylabel={Teleportationen},
+                ylabel={Anzahl teleportierender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
@@ -538,8 +537,95 @@ Die durchschnittliche Geschwindigkeit ist bei den RL-Modellen durchweg höher al
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Teleportationen}
+    \caption{Anzahl teleportierender Fahrzeuge}
     \label{fig:diff-waiting-time-teleports}
 \end{figure}
 
 Ein Sonderfall ergibt sich bei der Metrik der Teleportationen: Während in fast allen Szenarien keine Teleportationen auftraten, kam es in einzelnen Episoden zu vereinzelten Fällen. Konkret traten bei Modell 3 und Modell 1 im Szenario random\_heavy sowie bei Modell 1 im Szenario uniform jeweils einzelne Teleportationen auf. Angesichts der insgesamt geringen Häufigkeit lassen sich diese Ereignisse als Ausnahmen werten, die die Gesamtbewertung der Modelle kaum beeinflussen.
+
+\subsubsection{Anzahl zurückgehaltener Zahrzeuge}
+\label{sec:diff-waiting-time-backlogged}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=5cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl zurückgehaltener Zahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_456_2025-08-18_01-18-32_456.csv};
+            \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_13755_2025-08-18_04-48-47_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_143534_2025-08-17_23-30-08_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/diff-waiting-time/ppo_sumo_635768_2025-08-18_03-03-29_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl zurückgehaltener Zahrzeuge}
+    \label{fig:diff-waiting-time-backlogged}
+\end{figure}
+
+Es ist klar erkenntbar, dass das Netz nicht an ihre maximal Auslastung gerät. Dies bedeutet jedoch nicht, dass keine Staus oder überlastetet Teilgebiete gibt.
+\texttt{Bemerkung:} Das hier zu sehende verhalten wird sich auch bei den anderen Belohungsfunktionen wiederholen. Aus diesem Grund werden sie nicht weiter erwähnt.
+
+\subsection{Einstufung}
+\label{sec:diff-waiting-time-einstufung}
+Zusammenfassend lässt sich feststellen, dass die RL-Modelle in nahezu allen betrachteten Metriken eine deutliche Überlegenheit gegenüber den Baselines, insbesondere gegenüber der Actuated-Steuerung, aufweisen. Während die Anzahl ankommender Fahrzeuge weitgehend unverändert blieb, konnten die RL-Ansätze die mittlere Wartezeit in mehreren Szenarien spürbar reduzieren und zugleich die Anzahl stoppender Fahrzeuge drastisch senken. Dies schlägt sich auch in einer höheren durchschnittlichen Reisegeschwindigkeit nieder, die bei den RL-Modellen im Mittel rund ein Sechstel über der Fixed-Time-Baseline liegt. Die Anzahl gleichzeitig im Netz befindlicher Fahrzeuge war bei den RL-Modellen konsistent geringer, was auf einen insgesamt flüssigeren Verkehrsfluss schließen lässt.
+
+Auffällig ist jedoch, dass einzelne Modelle in spezifischen Szenarien (z. B. Modell 2 und 3 in random\_heavy sowie Modell 3 in morning\_peak) vergleichsweise schwach abschnitten und dabei hohe Varianzen aufwiesen. Diese Ausreißer mindern jedoch nicht die generelle Tendenz, dass die RL-Ansätze eine robuste und konsistente Verbesserung gegenüber den statischen Baselines darstellen.
+
+Die Baseline Fixed-Time erweist sich im direkten Vergleich als deutlich konkurrenzfähiger als die Actuated-Variante, die über alle Metriken hinweg das schwächste Ergebnis liefert. In der Gesamtbetrachtung lässt sich daher schlussfolgern, dass RL-Agenten in der Lage sind, klassische Steuerungsverfahren zu übertreffen, indem sie Wartezeiten reduzieren, den Verkehrsfluss stabilisieren und die Effizienz des Gesamtsystems verbessern, auch wenn in Lastspitzen-Szenarien teilweise noch Optimierungspotenzial besteht.

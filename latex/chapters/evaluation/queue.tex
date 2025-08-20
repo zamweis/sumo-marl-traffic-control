@@ -2,8 +2,8 @@
 \subsection{Reward: Queue}
 Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
 
-\subsubsection{Mittlere Wartezeit}
-
+\subsubsection{Mittlere Wartezeiten}
+\label{sec:queue-wartezeit}
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}
@@ -11,12 +11,12 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=15cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Mittlere Wartezeit},
+                ylabel={Mittlere Wartezeit [s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -40,7 +40,6 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                 ] {chapters/evaluation/results/queue/ppo_sumo_456_2025-08-17_00-45-04_456.csv};
             \addlegendentry{Model 1}
 
-
             % RL Modell 3
             \addplot+[color4, error bars/.cd,
                 y dir=minus, y explicit,
@@ -56,10 +55,13 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/queue/ppo_sumo_635768_2025-08-17_02-53-28_635768.csv};
             \addlegendentry{Model 4}
-
         \end{axis}
     \end{tikzpicture}
+    \caption{Mittlere Wartezeiten}
+    \label{fig:queue-wartezeit}
 \end{figure}
+
+
 
 \begin{figure}[H]
     \centering
@@ -68,11 +70,12 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Mittlere Wartezeit},
+                ylabel={Mittlere Wartezeit [s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -88,7 +91,7 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                 ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
-            % Baseline Actuated
+            % Baseline FixedTime
             \addplot+[color6, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
@@ -105,9 +108,81 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
             \addlegendentry{Model 2}
         \end{axis}
     \end{tikzpicture}
+    \caption{Mittlere Wartezeiten}
+    \label{fig:queue-wartezeit2}
 \end{figure}
 
-\subsubsection{Anzahl angekommener Fahrzeuge}
+Die Betrachtung der mittleren Wartezeit zeigt, dass die mit der Queue-Rewardfunktion trainierten Modelle in den meisten Szenarien sehr gute Ergebnisse erzielen. Insbesondere in morning\_peak, evening\_peak und uniform übertreffen die Modelle die Baselines deutlich. Eine Ausnahme bildet Modell 2, das im Szenario morning\_peak eine auffällig schwache Performance aufweist. Zudem ist im Szenario random\_heavy die Fixed-Time-Baseline den RL-Modellen überlegen, während alle Modelle in diesem Hochlastfall insgesamt schwache Ergebnisse erzielen.
+
+\subsubsection{Anzahl stoppender Fahrzeuge}
+In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=8cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl stoppender Fahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/queue/ppo_sumo_456_2025-08-17_00-45-04_456.csv};
+            \addlegendentry{Model 1}
+
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/queue/ppo_sumo_13755_2025-08-17_05-02-15_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/queue/ppo_sumo_143534_2025-08-16_22-31-07_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/queue/ppo_sumo_635768_2025-08-17_02-53-28_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl stoppender Fahrzeuge}
+    \label{fig:queue-stopped}
+\end{figure}
+
+
 
 \begin{figure}[H]
     \centering
@@ -116,11 +191,58 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Anzahl angekommener Fahrzeuge},
+                ylabel={Anzahl stoppender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/queue/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl stoppender Fahrzeuge}
+    \label{fig:queue-stopped2}
+\end{figure}
+
+Auch bei der Anzahl stoppender Fahrzeuge schneiden die RL-Modelle durchweg deutlich besser ab als die Baselines. Die Werte liegen auf einem sehr niedrigen Niveau, teilweise fast bei null, was eine hohe Effizienz im Verkehrsfluss widerspiegelt. Erneut bildet Modell 2 im Szenario random\_heavy eine Ausnahme, wo es im Vergleich zu den übrigen Modellen deutlich schlechter abschneidet. Die Actuated-Baseline bestätigt auch hier ihre schwache Gesamtperformance.
+
+\subsubsection{Anzahl ankommender Fahrzeuge}
+\label{sec:queue-ankommend}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=8cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl ankommender Fahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -135,6 +257,14 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
+                ] {chapters/evaluation/results/queue/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
 
             % RL Modell 1
             \addplot+[color2, error bars/.cd,
@@ -169,46 +299,14 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Anzahl ankommender Fahrzeuge}
+    \label{fig:queue-arrived}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                enlarge x limits=0.15,
-                ylabel={Anzahl angekommener Fahrzeuge},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(1.05,0.5)}, anchor=west},
-                ymajorgrids=true,
-                grid style=dashed,
-                every axis plot post/.append style={thick, fill=.!50}
-            ]
-            % Baseline FixedTime
-            \addplot+[color1, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
-                ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
-            \addlegendentry{Baseline FixedTime}
-            % Baseline Actuated
-            \addplot+[color6, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
-                ] {chapters/evaluation/results/queue/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
+Hinsichtlich der Anzahl ankommender Fahrzeuge erreichen alle Modelle in nahezu allen Szenarien die maximale Durchsatzleistung. Lediglich Modell 2 weist im Szenario random\_heavy leichte Defizite auf, was die zuvor beobachtete schwache Performance bestätigt. Abgesehen davon zeigen die RL-Modelle eine robuste und konsistente Leistungsfähigkeit.
 
 \subsubsection{Durchschnitt fahrender Fahrzeuge}
+\label{sec:queue-fahrende}
 
 \begin{figure}[H]
     \centering
@@ -217,11 +315,12 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnitt fahrender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -237,6 +336,13 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                 ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
+                ] {chapters/evaluation/results/queue/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
 
             % RL Modell 1
             \addplot+[color2, error bars/.cd,
@@ -245,6 +351,14 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                     x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
                 ] {chapters/evaluation/results/queue/ppo_sumo_456_2025-08-17_00-45-04_456.csv};
             \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
+                ] {chapters/evaluation/results/queue/ppo_sumo_13755_2025-08-17_05-02-15_13755.csv};
+            \addlegendentry{Model 2}
 
             % RL Modell 3
             \addplot+[color4, error bars/.cd,
@@ -263,8 +377,14 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Durchschnitt fahrender Fahrzeuge}
+    \label{fig:queue-running}
 \end{figure}
 
+Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge zeigt sich ein differenziertes Bild: Die Actuated-Baseline weist überhöhte Werte auf, was ihre schwache Steuerungsleistung unterstreicht. Modell 2 fällt im Szenario random\_heavy ebenfalls negativ auf und bestätigt so seine insgesamt schlechtere Performance. In allen anderen Szenarien schneiden die RL-Modelle besser ab als Fixed-Time, wobei die Unterschiede im Mittel bei etwa 10 Prozent liegen.
+
+\subsubsection{Durchschnittsgeschwindigkeiten}
+\label{sec:queue-geschwindigkeiten}
 
 \begin{figure}[H]
     \centering
@@ -273,59 +393,12 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Durchschnitt fahrender Fahrzeuge},
+                ylabel={Durchschnittsgeschwindigkeit [m/s]} ,
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(1.05,0.5)}, anchor=west},
-                ymajorgrids=true,
-                grid style=dashed,
-                every axis plot post/.append style={thick, fill=.!50}
-            ]
-            % Baseline FixedTime
-            \addplot+[color1, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
-                ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
-            \addlegendentry{Baseline FixedTime}
-
-            % Baseline Actuated
-            \addplot+[color6, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
-                ] {chapters/evaluation/results/queue/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-
-            % RL Modell 2
-            \addplot+[color3, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
-                ] {chapters/evaluation/results/queue/ppo_sumo_13755_2025-08-17_05-02-15_13755.csv};
-            \addlegendentry{Model 2}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
-
-\subsubsection{Durchschnittsgeschwindigkeit}
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                enlarge x limits=0.15,
-                ylabel={Durchschnittsgeschwindigkeit},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -340,6 +413,14 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                     x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                ] {chapters/evaluation/results/queue/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
 
             % RL Modell 1
             \addplot+[color2, error bars/.cd,
@@ -374,8 +455,14 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Durchschnittsgeschwindigkeiten}
+    \label{fig:queue-speed}
 \end{figure}
 
+Ein besonders deutlicher Vorteil der RL-Modelle zeigt sich bei der durchschnittlichen Geschwindigkeit. Während Fixed-Time im Bereich von 5,5 bis 6 m/s liegt, erreichen die Modelle im Mittel Geschwindigkeiten von etwa 7 m/s über alle Szenarien hinweg. Dies deutet auf einen flüssigeren Verkehrsfluss und eine effiziente Reduzierung von Stopps und Wartezeiten hin. Die Actuated-Baseline schneidet auch hier am schlechtesten ab.
+
+\subsubsection{Anzahl teleportierender Fahrzeuge}
+\label{sec:queue-teleport}
 
 \begin{figure}[H]
     \centering
@@ -384,32 +471,156 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=5cm,
                 enlarge x limits=0.15,
-                ylabel={Durchschnittsgeschwindigkeit},
+                ylabel={Anzahl teleportierender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
                 every axis plot post/.append style={thick, fill=.!50}
             ]
+
             % Baseline FixedTime
             \addplot+[color1, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
                 ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
-            % Baseline Actuated
+            % Baseline FixedTime
             \addplot+[color6, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
                 ] {chapters/evaluation/results/queue/Baseline_Actuated.csv};
             \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/ppo_sumo_456_2025-08-17_00-45-04_456.csv};
+            \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/ppo_sumo_13755_2025-08-17_05-02-15_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/ppo_sumo_143534_2025-08-16_22-31-07_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/ppo_sumo_635768_2025-08-17_02-53-28_635768.csv};
+            \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Anzahl teleportierender Fahrzeuge}
+    \label{fig:queue-teleports}
 \end{figure}
+
+Bei den Queue-basierten Modellen traten in keiner der Episoden Teleportationen auf. Damit konnte in allen Szenarien eine stabile und konsistente Steuerung ohne kritische Netzüberlastungen gewährleistet werden.
+
+\subsubsection{Anzahl zurückgehaltener Fahrzeuge}
+\label{sec:queue-backlogged}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=5cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl zurückgehaltener Zahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/ppo_sumo_456_2025-08-17_00-45-04_456.csv};
+            \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/ppo_sumo_13755_2025-08-17_05-02-15_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/ppo_sumo_143534_2025-08-16_22-31-07_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/queue/ppo_sumo_635768_2025-08-17_02-53-28_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl zurückgehaltener Zahrzeuge}
+    \label{fig:queue-backlogged}
+\end{figure}
+
+Die Metrik der zurückgehaltenen Fahrzeuge zeigt ebenfalls ein sehr positives Bild: Abgesehen von einem minimalen Rückstau bei Modell 2 im Szenario random\_heavy treten bei keinem der Modelle relevante Rückstaueffekte auf. Lediglich die Actuated-Baseline verzeichnet regelmäßig hohe Werte, was ihre mangelnde Robustheit erneut bestätigt.
+
+\subsection{Einstufung}
+\label{sec:queue-einstufung}
+Die Evaluation der mit der Queue-Rewardfunktion trainierten Modelle zeigt insgesamt eine deutliche Überlegenheit gegenüber den Baselines, insbesondere gegenüber der Actuated-Steuerung. In den meisten Szenarien konnten die Modelle die mittlere Wartezeit erheblich senken, die Anzahl stoppender Fahrzeuge nahezu eliminieren und die durchschnittliche Reisegeschwindigkeit signifikant steigern. Zudem wurde in allen Szenarien eine maximale Anzahl ankommender Fahrzeuge erreicht, was auf eine hohe Durchsatzleistung hindeutet. Auch hinsichtlich zurückgehaltener Fahrzeuge und Teleportationen zeigen die Modelle eine robuste Performance, da in nahezu allen Fällen keine nennenswerten Rückstaueffekte oder Teleportationen auftraten.
+
+Gleichzeitig offenbart die Analyse Schwächen in spezifischen Szenarien: Vor allem Modell 2 zeigt im Szenario random\_heavy (und in geringerem Maße auch in morning\_peak) eine deutlich schlechtere Performance, die sich in höheren Wartezeiten, mehr Stopps sowie leicht reduzierten Ankunftszahlen widerspiegelt. Dennoch bleibt das Gesamtbild klar positiv, da die übrigen Modelle konsistent gute Ergebnisse liefern und die Fixed-Time-Baseline in den meisten Szenarien übertreffen.
+
+Insgesamt belegt die Auswertung, dass Queue-basierte Rewards einen robusten Ansatz für die Verkehrsflussoptimierung darstellen, der Wartezeiten und Rückstau effektiv reduziert und dabei eine hohe Systemstabilität gewährleistet.

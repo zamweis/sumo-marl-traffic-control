@@ -1,9 +1,9 @@
 
 \subsection{Reward: Reale Welt}
-Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau, Phasenwechsel).
+Die dritte Gruppe ziel auf ein kombiniertes Minimieren der Wartezeiten, Anzahl an Phasenwechsel und Staus.
 
-\subsubsection{Mittlere Wartezeit}
-
+\subsubsection{Mittlere Wartezeiten}
+\label{sec:realworld-wartezeit}
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}
@@ -11,12 +11,12 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=15cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Mittlere Wartezeit},
+                ylabel={Mittlere Wartezeit [s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -39,7 +39,6 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/realworld/ppo_sumo_456_2025-08-18_01-08-35_456.csv};
             \addlegendentry{Model 1}
-
 
             % RL Modell 2
             \addplot+[color3, error bars/.cd,
@@ -64,10 +63,13 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/realworld/ppo_sumo_635768_2025-08-18_04-23-15_635768.csv};
             \addlegendentry{Model 4}
-
         \end{axis}
     \end{tikzpicture}
+    \caption{Mittlere Wartezeiten}
+    \label{fig:realworld-wartezeit}
 \end{figure}
+
+
 
 \begin{figure}[H]
     \centering
@@ -76,11 +78,12 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Mittlere Wartezeit},
+                ylabel={Mittlere Wartezeit [s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -96,7 +99,7 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                 ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
-            % Baseline Actuated
+            % Baseline FixedTime
             \addplot+[color6, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
@@ -105,9 +108,80 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
             \addlegendentry{Baseline Actuated}
         \end{axis}
     \end{tikzpicture}
+    \caption{Mittlere Wartezeiten}
+    \label{fig:realworld-wartezeit2}
 \end{figure}
 
-\subsubsection{Anzahl angekommener Fahrzeuge}
+
+\subsubsection{Anzahl stoppender Fahrzeuge}
+In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=8cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl stoppender Fahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/realworld/ppo_sumo_456_2025-08-18_01-08-35_456.csv};
+            \addlegendentry{Model 1}
+
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/realworld/ppo_sumo_13755_2025-08-18_07-38-05_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/realworld/ppo_sumo_143534_2025-08-17_21-54-21_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/realworld/ppo_sumo_635768_2025-08-18_04-23-15_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl stoppender Fahrzeuge}
+    \label{fig:realworld-stopped}
+\end{figure}
+
+
 
 \begin{figure}[H]
     \centering
@@ -116,11 +190,57 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Anzahl angekommener Fahrzeuge},
+                ylabel={Anzahl stoppender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/realworld/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl stoppender Fahrzeuge}
+    \label{fig:realworld-stopped2}
+\end{figure}
+
+
+\subsubsection{Anzahl ankommender Fahrzeuge}
+\label{sec:realworld-ankommend}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=8cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl ankommender Fahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -135,6 +255,14 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
+                ] {chapters/evaluation/results/realworld/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
 
             % RL Modell 1
             \addplot+[color2, error bars/.cd,
@@ -169,46 +297,13 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                enlarge x limits=0.15,
-                ylabel={Anzahl angekommener Fahrzeuge},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(1.05,0.5)}, anchor=west},
-                ymajorgrids=true,
-                grid style=dashed,
-                every axis plot post/.append style={thick, fill=.!50}
-            ]
-            % Baseline FixedTime
-            \addplot+[color1, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
-                ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
-            \addlegendentry{Baseline FixedTime}
-            % Baseline Actuated
-            \addplot+[color6, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
-                ] {chapters/evaluation/results/realworld/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-        \end{axis}
-    \end{tikzpicture}
+    \caption{Anzahl ankommender Fahrzeuge}
+    \label{fig:realworld-arrived}
 \end{figure}
 
 
 \subsubsection{Durchschnitt fahrender Fahrzeuge}
+\label{sec:realworld-fahrende}
 
 \begin{figure}[H]
     \centering
@@ -217,11 +312,12 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnitt fahrender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -237,6 +333,13 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                 ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
+                ] {chapters/evaluation/results/realworld/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
 
             % RL Modell 1
             \addplot+[color2, error bars/.cd,
@@ -271,8 +374,13 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Durchschnitt fahrender Fahrzeuge}
+    \label{fig:realworld-running}
 \end{figure}
 
+
+\subsubsection{Durchschnittsgeschwindigkeiten}
+\label{sec:realworld-geschwindigkeiten}
 
 \begin{figure}[H]
     \centering
@@ -281,51 +389,12 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Durchschnitt fahrender Fahrzeuge},
+                ylabel={Durchschnittsgeschwindigkeit [m/s]} ,
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(1.05,0.5)}, anchor=west},
-                ymajorgrids=true,
-                grid style=dashed,
-                every axis plot post/.append style={thick, fill=.!50}
-            ]
-            % Baseline FixedTime
-            \addplot+[color1, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
-                ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
-            \addlegendentry{Baseline FixedTime}
-
-            % Baseline Actuated
-            \addplot+[color6, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
-                ] {chapters/evaluation/results/realworld/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
-
-\subsubsection{Durchschnittsgeschwindigkeit}
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                enlarge x limits=0.15,
-                ylabel={Durchschnittsgeschwindigkeit},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -340,6 +409,14 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                     x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                ] {chapters/evaluation/results/realworld/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
 
             % RL Modell 1
             \addplot+[color2, error bars/.cd,
@@ -374,8 +451,13 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Durchschnittsgeschwindigkeiten}
+    \label{fig:realworld-speed}
 \end{figure}
 
+
+\subsubsection{Anzahl teleportierender Fahrzeuge}
+\label{sec:realworld-teleport}
 
 \begin{figure}[H]
     \centering
@@ -384,32 +466,148 @@ Diese Reward-Definition kombiniert verschiedene Faktoren (Durchfluss, Stauaufbau
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=5cm,
                 enlarge x limits=0.15,
-                ylabel={Durchschnittsgeschwindigkeit},
+                ylabel={Anzahl teleportierender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
                 every axis plot post/.append style={thick, fill=.!50}
             ]
+
             % Baseline FixedTime
             \addplot+[color1, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
                 ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
-            % Baseline Actuated
+            % Baseline FixedTime
             \addplot+[color6, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
                 ] {chapters/evaluation/results/realworld/Baseline_Actuated.csv};
             \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/ppo_sumo_456_2025-08-18_01-08-35_456.csv};
+            \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/ppo_sumo_13755_2025-08-18_07-38-05_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/ppo_sumo_143534_2025-08-17_21-54-21_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/ppo_sumo_635768_2025-08-18_04-23-15_635768.csv};
+            \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Anzahl teleportierender Fahrzeuge}
+    \label{fig:realworld-teleports}
 \end{figure}
+
+
+\subsubsection{Anzahl zurückgehaltener Fahrzeuge}
+\label{sec:realworld-backlogged}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=5cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl zurückgehaltener Zahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline FixedTime
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/ppo_sumo_456_2025-08-18_01-08-35_456.csv};
+            \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/ppo_sumo_13755_2025-08-18_07-38-05_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/ppo_sumo_143534_2025-08-17_21-54-21_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/realworld/ppo_sumo_635768_2025-08-18_04-23-15_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl zurückgehaltener Zahrzeuge}
+    \label{fig:realworld-backlogged}
+\end{figure}
+
+\subsection{Einstufung}
+\label{sec:realworld-einstufung}

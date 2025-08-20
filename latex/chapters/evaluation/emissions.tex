@@ -1,8 +1,91 @@
-\subsection{Reward: Emissionen}
-Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Emission als zentrale Metrik betrachtet.
+\subsection{Reward: CO\textsubscript{2}-Emissionen}
+Die vierte Gruppe zielt auf eine Minimierung der CO\textsubscript{2}-Emissionen, während gleichzeitig versucht wird die Stabilität aufrecht zu erhalten.
+Für diese Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Emission als zentrale Metrik betrachtet.
 
-\subsubsection{Mittlere Wartezeit}
 
+\subsubsection{CO\textsubscript{2}-Emissionen}
+\label{sec:emissions-emissions}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar,
+            bar width=0.25cm,
+            width=12cm,
+            height=8cm,
+            enlarge x limits=0.15,
+            ylabel={CO\textsubscript{2}-Emissionen [mg/s]},
+            symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+            xtick=data,
+            xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+            x tick label style={rotate=45,anchor=east},
+            legend style={at={(1.05,0.5)}, anchor=west},
+            ymajorgrids=true,
+            grid style=dashed,
+            every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline Actuated
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
+            \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{CO\textsubscript{2}-Emissionen}
+    \label{fig:emissions-emissions}
+\end{figure}
+
+Die Analyse der CO\textsubscript{2}-Emissionen verdeutlicht die Vorteile der RL-Modelle gegenüber den Baselines. Während die Baselines in allen Szenarien relativ konstante Werte zwischen 1.490 und 1.560 mg/s aufweisen, liegen die Modelle fast durchweg darunter. Besonders in den Szenarien uniform, morning\_peak und evening\_peak erreichen die Modelle signifikant niedrigere Emissionen.
+
+Konkret bewegen sich die Baselines im Bereich von 1.496 mg/s (Fixed-Time, uniform) bis 1.532 mg/s (Fixed-Time, random\_heavy). Die Modelle erzielen dagegen Werte von 1.405 mg/s (Modell 2, uniform) bis 1.501 mg/s (Modell 1, random\_heavy). Auffällig ist, dass in random\_heavy alle Modelle zwar höhere Emissionen verzeichnen, diese jedoch weiterhin im Bereich oder leicht unterhalb der Baselines liegen.
+
+Im Mittel schneiden Modell 2 und Modell 4 besonders positiv ab und zeigen in fast allen Szenarien die niedrigsten Emissionen. Damit belegt die Auswertung, dass die Emissions-basierten RL-Agenten in der Lage sind, die Gesamtemissionen signifikant zu reduzieren, ohne die Stabilität des Systems wesentlich zu beeinträchtigen.
+
+\subsubsection{Mittlere Wartezeiten}
+\label{sec:emissions-wartezeit}
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}
@@ -10,11 +93,12 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Mittlere Wartezeit},
+                ylabel={Mittlere Wartezeit [s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -37,7 +121,6 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
             \addlegendentry{Model 1}
-
 
             % RL Modell 2
             \addplot+[color3, error bars/.cd,
@@ -64,6 +147,8 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Mittlere Wartezeiten}
+    \label{fig:emissions-wartezeit}
 \end{figure}
 
 \begin{figure}[H]
@@ -73,18 +158,18 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Mittlere Wartezeit},
+                ylabel={Mittlere Wartezeit [s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
                 grid style=dashed,
                 every axis plot post/.append style={thick, fill=.!50}
             ]
-
 
             % Baseline FixedTime
             \addplot+[color1, error bars/.cd,
@@ -93,6 +178,7 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                     x=scenario, y=system_mean_waiting_time_mean, col sep=comma, y error=system_mean_waiting_time_std
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
+
             % Baseline Actuated
             \addplot+[color6, error bars/.cd,
                 y dir=minus, y explicit,
@@ -102,9 +188,85 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addlegendentry{Baseline Actuated}
         \end{axis}
     \end{tikzpicture}
+    \caption{Mittlere Wartezeiten}
+    \label{fig:emissions-wartezeit2}
 \end{figure}
 
-\subsubsection{Anzahl angekommener Fahrzeuge}
+Die Analyse der mittleren Wartezeit unterstreicht den deutlichen Vorteil der RL-Modelle gegenüber den Baselines - mit Ausnahme bestimmter Hochlastszenarien. Die Fixed-Time-Baseline liegt in allen Szenarien bei soliden, aber nicht optimalen Werten zwischen 3,7 und 4,4 Sekunden, während die Actuated-Baseline erneut massiv schlechter abschneidet (zwischen 935 und 1 029 Sekunden).
+
+Die RL-Modelle zeigen in evening\_peak und uniform hervorragende Ergebnisse: Modell 4 erreicht hier mit 0,4 Sekunden extrem niedrige Werte, während auch Modell 1 mit 1,8 Sekunden (evening\_peak) bzw. 12,7 Sekunden (uniform) deutlich besser als die Baselines performt. Modell 2 und Modell 3 fallen dagegen negativ auf: Beide Modelle weisen in morning\_peak und vor allem in random\_heavy drastisch erhöhte Wartezeiten auf. Mit bis zu 26 745 Sekunden bei Modell 3 im Hochlastszenario überschreiten sie die Baselines deutlich und zeigen starke Instabilität.
+
+Insgesamt lässt sich feststellen, dass die Emissions-basierten Modelle in Szenarien mit normaler Last die Wartezeiten signifikant reduzieren können, in Hochlastsituationen jedoch teilweise versagen und dadurch ihre Vorteile verlieren.
+
+\subsubsection{Anzahl stoppender Fahrzeuge}
+In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=8cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl stoppender Fahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
+            \addlegendentry{Model 1}
+
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl stoppender Fahrzeuge}
+    \label{fig:emissions-stopped}
+\end{figure}
+
+
 
 \begin{figure}[H]
     \centering
@@ -113,11 +275,62 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Anzahl angekommener Fahrzeuge},
+                ylabel={Anzahl stoppender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline Actuated
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_stopped_mean, col sep=comma, y error=system_total_stopped_std
+                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl stoppender Fahrzeuge}
+    \label{fig:emissions-stopped2}
+\end{figure}
+
+Bei der Metrik der stoppenden Fahrzeuge wird erneut ein klarer Unterschied zwischen Baselines und RL-Modellen sichtbar. Die Fixed-Time-Baseline erreicht mit Werten zwischen 10 und 27 stoppenden Fahrzeugen pro Szenario ein moderates Niveau, während die Actuated-Baseline mit extrem hohen Werten (z. B. 879 im random\_heavy) durchgehend die schlechteste Performance zeigt.
+
+Die RL-Modelle hingegen weisen in den meisten Szenarien nur sehr wenige Stopps auf. Besonders Modell 1 und Modell 4 schneiden konsistent am besten ab und liegen teilweise bei nahezu null Stopps (z. B. 1,0-1,2 Fahrzeuge in uniform bzw. evening\_peak). Modell 2 und Modell 3 zeigen dagegen in random\_heavy eine deutliche Schwäche: Mit 45 bzw. 70 stoppenden Fahrzeugen liegen ihre Werte hier deutlich über den übrigen RL-Modellen und sogar über Fixed-Time.
+
+Insgesamt zeigt sich, dass die Emissions-basierten Modelle den Verkehrsfluss in normalen Lastszenarien äußerst effektiv stabilisieren, während in Hochlastsituationen (random\_heavy) einzelne Modelle ihre Vorteile nicht aufrechterhalten können.
+
+\subsubsection{Anzahl ankommender Fahrzeuge}
+\label{sec:emissions-ankommend}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=8cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl ankommender Fahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -132,6 +345,14 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                     x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
+
+            % Baseline Actuated
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
+                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
 
             % RL Modell 1
             \addplot+[color2, error bars/.cd,
@@ -166,48 +387,18 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Anzahl ankommender Fahrzeuge}
+    \label{fig:emissions-arrived}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                enlarge x limits=0.15,
-                ylabel={Anzahl angekommener Fahrzeuge},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(1.05,0.5)}, anchor=west},
-                ymajorgrids=true,
-                grid style=dashed,
-                every axis plot post/.append style={thick, fill=.!50}
-            ]
+Bei der Anzahl ankommender Fahrzeuge erzielen die Emissions-basierten Modelle durchweg sehr gute Ergebnisse. In allen Szenarien erreichen nahezu alle Modelle die maximale Anzahl an Zielankünften, was auf einen stabilen Verkehrsfluss und eine hohe Netzkapazität hinweist. Die Fixed-Time-Baseline bestätigt dies ebenfalls mit konstanten Maximalwerten, während die Actuated-Baseline erneut deutlich schlechter abschneidet und in keinem Szenario die volle Ankunftsleistung erreicht.
 
+Einzig im Szenario random\_heavy zeigen Modell 2 und Modell 3 Schwächen: Mit 2 421 bzw. 2 284 ankommenden Fahrzeugen liegen sie unterhalb des Maximums von 2 602 Fahrzeugen (Fixed-Time und andere Modelle). Dieser Rückstand deckt sich mit den zuvor beobachteten Leistungseinbußen in Hochlastsituationen, insbesondere bei Wartezeiten und Stopps.
 
-            % Baseline FixedTime
-            \addplot+[color1, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
-                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
-            \addlegendentry{Baseline FixedTime}
-            % Baseline Actuated
-            \addplot+[color6, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_arrived_mean, col sep=comma, y error=system_total_arrived_std
-                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
+Insgesamt bestätigt die Metrik, dass die Emissions-basierten Modelle eine hohe Durchsatzleistung erzielen, mit Ausnahme vereinzelter Schwächen unter extremer Belastung.
 
 \subsubsection{Durchschnitt fahrender Fahrzeuge}
+\label{sec:emissions-fahrende}
 
 \begin{figure}[H]
     \centering
@@ -216,11 +407,12 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
                 ylabel={Durchschnitt fahrender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -270,8 +462,18 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
+    \caption{Durchschnitt fahrender Fahrzeuge}
+    \label{fig:emissions-running}
 \end{figure}
 
+Die Analyse der durchschnittlich fahrenden Fahrzeuge bestätigt das bereits aus den anderen Metriken erkennbare Muster. Die Actuated-Baseline zeigt erneut die schlechteste Performance und liegt mit deutlich überhöhten Werten weit außerhalb des erwartbaren Bereichs. Die Fixed-Time-Baseline dient als stabiler Referenzpunkt, wird jedoch in den meisten Szenarien klar von den RL-Modellen unterboten.
+
+Die Emissions-basierten Modelle reduzieren in evening\_peak, uniform und teilweise auch morning\_peak die Anzahl gleichzeitig fahrender Fahrzeuge um etwa 20-50 Prozent im Vergleich zu Fixed-Time. Dies deutet auf eine effizientere Steuerung hin, bei der sich weniger Fahrzeuge gleichzeitig im Netz befinden und der Verkehrsfluss stabiler wird. Auffällig ist jedoch, dass Modell 2 und Modell 3 in random\_heavy sowie leicht auch in morning\_peak schwächere Werte aufweisen, was die zuvor beobachteten Probleme unter hoher Last widerspiegelt.
+
+Insgesamt verdeutlicht die Metrik, dass die Emissions-basierten Modelle in normalen Szenarien eine deutliche Entlastung des Netzes erreichen, während unter Hochlastbedingungen insbesondere Modell 2 und 3 ihre Vorteile nicht aufrechterhalten können.
+
+\subsubsection{Durchschnittsgeschwindigkeiten}
+\label{sec:emissions-geschwindigkeiten}
 
 \begin{figure}[H]
     \centering
@@ -280,50 +482,12 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
+                height=8cm,
                 enlarge x limits=0.15,
-                ylabel={Durchschnitt fahrender Fahrzeuge},
+                ylabel={Durchschnittsgeschwindigkeit [m/s]} ,
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(1.05,0.5)}, anchor=west},
-                ymajorgrids=true,
-                grid style=dashed,
-                every axis plot post/.append style={thick, fill=.!50}
-            ]
-            % Baseline FixedTime
-            \addplot+[color1, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
-                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
-            \addlegendentry{Baseline FixedTime}
-            % Baseline Actuated
-            \addplot+[color6, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
-                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
-
-\subsubsection{Durchschnittsgeschwindigkeit}
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                enlarge x limits=0.15,
-                ylabel={Durchschnittsgeschwindigkeit},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
                 x tick label style={rotate=45,anchor=east},
                 legend style={at={(1.05,0.5)}, anchor=west},
                 ymajorgrids=true,
@@ -335,110 +499,7 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addplot+[color1, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
-                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
-            \addlegendentry{Baseline FixedTime}
-
-            % RL Modell 1
-            \addplot+[color2, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
-                ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
-            \addlegendentry{Model 1}
-
-            % RL Modell 2
-            \addplot+[color3, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
-                ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
-            \addlegendentry{Model 2}
-
-            % RL Modell 3
-            \addplot+[color4, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
-                ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
-            \addlegendentry{Model 3}
-
-            % RL Modell 4
-            \addplot+[color5, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
-                ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
-            \addlegendentry{Model 4}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                enlarge x limits=0.15,
-                ylabel={Durchschnittsgeschwindigkeit},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(1.05,0.5)}, anchor=west},
-                ymajorgrids=true,
-                grid style=dashed,
-                every axis plot post/.append style={thick, fill=.!50}
-            ]
-            % Baseline FixedTime
-            \addplot+[color1, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
-                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
-            \addlegendentry{Baseline FixedTime}
-            % Baseline Actuated
-            \addplot+[color6, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
-                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
-            \addlegendentry{Baseline Actuated}
-        \end{axis}
-    \end{tikzpicture}
-\end{figure}
-
-
-
-\subsubsection{Mittlere CO$_2$-Emissionen pro Fahrzeug}
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-                ybar,
-                bar width=0.25cm,
-                width=12cm,
-                enlarge x limits=0.15,
-                ylabel={CO$_2$ [mg/s]},
-                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
-                xtick=data,
-                xticklabels={evening\_peak,morning\_peak,random\_heavy,uniform},
-                x tick label style={rotate=45,anchor=east},
-                legend style={at={(1.05,0.5)}, anchor=west},
-                ymajorgrids=true,
-                grid style=dashed,
-                every axis plot post/.append style={thick, fill=.!50}
-            ]
-
-            % Baseline FixedTime
-            \addplot+[color1, error bars/.cd,
-                y dir=minus, y explicit,
-                error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
@@ -446,7 +507,7 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addplot+[color6, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
             \addlegendentry{Baseline Actuated}
 
@@ -454,7 +515,7 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addplot+[color2, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
             \addlegendentry{Model 1}
 
@@ -462,7 +523,7 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addplot+[color3, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
             \addlegendentry{Model 2}
 
@@ -470,7 +531,7 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addplot+[color4, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
             \addlegendentry{Model 3}
 
@@ -478,12 +539,185 @@ Für die Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Em
             \addplot+[color5, error bars/.cd,
                 y dir=minus, y explicit,
                 error bar style={line width=1pt, black}] table [
-                    x=scenario, y=system_mean_co2_mean, col sep=comma, y error=system_mean_co2_std
+                    x=scenario, y=system_mean_speed_mean, col sep=comma, y error=system_mean_speed_std
                 ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
             \addlegendentry{Model 4}
-
         \end{axis}
     \end{tikzpicture}
+    \caption{Durchschnittsgeschwindigkeiten}
+    \label{fig:emissions-speed}
 \end{figure}
 
-% ggf. weitere Metriken: stopped, arrived/departed
+Die Analyse der durchschnittlichen Geschwindigkeit zeigt ein konsistentes Bild zur Metrik der durchschnittlich fahrenden Fahrzeuge. Die Actuated-Baseline erreicht durchweg die schlechtesten Ergebnisse, während die Fixed-Time-Baseline mit einer maximalen Durchschnittsgeschwindigkeit von rund 6 m/s einen stabilen Referenzwert darstellt.
+
+Die Emissions-basierten RL-Modelle übertreffen diese Werte in allen Szenarien deutlich. Im Mittel erreichen sie etwa 7 m/s, wobei im Szenario uniform sogar 7,3 m/s erzielt werden. Dies unterstreicht die Fähigkeit der Modelle, den Verkehrsfluss effizienter zu gestalten und die Reisegeschwindigkeit im Netz spürbar zu erhöhen.
+
+Wie bereits bei den vorherigen Metriken fallen jedoch Modell 2 und Modell 3 in den Szenarien random\_heavy und teilweise morning\_peak durch schwächere Ergebnisse auf. Trotz dieser Einbußen liegen ihre Werte jedoch größtenteils immer noch oberhalb der Fixed-Time-Baseline.
+
+Insgesamt bestätigen die Ergebnisse, dass die Emissions-basierten Modelle den Verkehrsfluss in normalen Szenarien deutlich verbessern können, auch wenn in Hochlastsituationen erneut Leistungseinbußen sichtbar werden.
+
+\subsubsection{Anzahl teleportierender Fahrzeuge}
+\label{sec:emissions-teleport}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=5cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl teleportierender Fahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline Actuated
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
+            \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_teleported_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl teleportierender Fahrzeuge}
+    \label{fig:emissions-teleports}
+\end{figure}
+
+In den Evaluationsläufen der Emissions-basierten Modelle traten keinerlei Teleportationen auf. Damit zeigt sich, dass die Steuerung auch unter Belastungsszenarien stabil arbeitet und keine kritischen Netzüberlastungen entstehen, die ein Eingreifen des Simulators erforderlich machen würden. Dieses Ergebnis gilt gleichermaßen für alle Modelle und hebt sie deutlich von der Actuated-Baseline ab, die in anderen Metriken wiederholt Schwächen aufweist.
+
+\subsubsection{Anzahl zurückgehaltener Fahrzeuge}
+\label{sec:emissions-backlogged}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                ybar,
+                bar width=0.25cm,
+                width=12cm,
+                height=5cm,
+                enlarge x limits=0.15,
+                ylabel={Anzahl zurückgehaltener Zahrzeuge},
+                symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
+                xtick=data,
+                xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
+                x tick label style={rotate=45,anchor=east},
+                legend style={at={(1.05,0.5)}, anchor=west},
+                ymajorgrids=true,
+                grid style=dashed,
+                every axis plot post/.append style={thick, fill=.!50}
+            ]
+
+            % Baseline FixedTime
+            \addplot+[color1, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
+            \addlegendentry{Baseline FixedTime}
+
+            % Baseline Actuated
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
+            % RL Modell 1
+            \addplot+[color2, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/ppo_sumo_456_2025-08-18_16-05-49_456.csv};
+            \addlegendentry{Model 1}
+
+            % RL Modell 2
+            \addplot+[color3, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/ppo_sumo_13755_2025-08-18_21-51-17_13755.csv};
+            \addlegendentry{Model 2}
+
+            % RL Modell 3
+            \addplot+[color4, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/ppo_sumo_143534_2025-08-18_13-16-03_143534.csv};
+            \addlegendentry{Model 3}
+
+            % RL Modell 4
+            \addplot+[color5, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_backlogged_mean, col sep=comma
+                ] {chapters/evaluation/results/emissions/ppo_sumo_635768_2025-08-18_18-57-01_635768.csv};
+            \addlegendentry{Model 4}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Anzahl zurückgehaltener Zahrzeuge}
+    \label{fig:emissions-backlogged}
+\end{figure}
+
+Bei der Metrik der zurückgehaltenen Fahrzeuge bestätigen die Emissions-basierten Modelle ihre Robustheit: In keinem der Szenarien kam es zu nennenswerten Rückstaueffekten. Alle Modelle erreichen hier konsistent einen Wert von null. Einzige Ausnahme ist die Actuated-Baseline, die regelmäßig Fahrzeuge zurückhält und damit ihre unzureichende Leistungsfähigkeit im Umgang mit hoher Netzlast erneut unterstreicht.
+
+\subsection{Einstufung}
+\label{sec:emissions-einstufung}
+Die mit der Emissions-Rewardfunktion trainierten Modelle zeigen insgesamt ein sehr positives Bild. In nahezu allen betrachteten Metriken übertreffen sie die Baselines deutlich. Besonders in Bezug auf die CO₂-Emissionen erreichen alle Modelle konsistent niedrigere Werte als Fixed-Time und Actuated. Gleichzeitig werden in normalen Lastszenarien auch die mittlere Wartezeit, die Anzahl stoppender Fahrzeuge sowie die Durchschnittsgeschwindigkeit signifikant verbessert. So erzielen die Modelle durchschnittliche Geschwindigkeiten von etwa 7 m/s gegenüber 5,5-6 m/s bei Fixed-Time und reduzieren die Zahl stoppender Fahrzeuge teilweise auf nahezu null.
+
+Die Systemstabilität bleibt ebenfalls hoch: Es treten weder Teleportationen noch nennenswerte Rückstaueffekte auf. Zudem wird die maximale Anzahl ankommender Fahrzeuge in allen Szenarien (mit Ausnahme einzelner Schwächen in random\_heavy) erreicht.
+
+Auffällig ist allerdings, dass Modell 2 und Modell 3 in den Szenarien random\_heavy sowie teilweise in morning\_peak deutlich schwächere Ergebnisse zeigen. Dort verzeichnen sie teils drastisch erhöhte Wartezeiten und eine erhöhte Anzahl stoppender Fahrzeuge, was ihre Effizienz unter extremer Belastung einschränkt. Dennoch liegen ihre Ergebnisse in diesen Fällen meist noch im Bereich der Fixed-Time-Baseline.
+
+Insgesamt lässt sich festhalten, dass die Emissions-basierten Modelle die gesteckten Ziele weitgehend erfüllen: Sie reduzieren die Gesamtemissionen und verbessern zugleich den Verkehrsfluss in normalen Szenarien erheblich. Lediglich in Hochlastsituationen besteht noch Optimierungspotenzial, insbesondere bei einzelnen Modellvarianten.
