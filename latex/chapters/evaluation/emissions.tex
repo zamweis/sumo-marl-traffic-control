@@ -428,6 +428,14 @@ Insgesamt bestätigt die Metrik, dass die Emissions-basierten Modelle eine hohe 
                 ] {chapters/evaluation/results/emissions/Baseline_FixedTime.csv};
             \addlegendentry{Baseline FixedTime}
 
+            % Baseline Actuated
+            \addplot+[color6, error bars/.cd,
+                y dir=minus, y explicit,
+                error bar style={line width=1pt, black}] table [
+                    x=scenario, y=system_total_running_mean, col sep=comma, y error=system_total_running_std
+                ] {chapters/evaluation/results/emissions/Baseline_Actuated.csv};
+            \addlegendentry{Baseline Actuated}
+
 
             % RL Modell 1
             \addplot+[color2, error bars/.cd,
@@ -712,7 +720,7 @@ In den Evaluationsläufen der Emissions-basierten Modelle traten keinerlei Telep
 
 Bei der Metrik der zurückgehaltenen Fahrzeuge bestätigen die Emissions-basierten Modelle ihre Robustheit: In keinem der Szenarien kam es zu nennenswerten Rückstaueffekten. Alle Modelle erreichen hier konsistent einen Wert von null. Einzige Ausnahme ist die Actuated-Baseline, die regelmäßig Fahrzeuge zurückhält und damit ihre unzureichende Leistungsfähigkeit im Umgang mit hoher Netzlast erneut unterstreicht.
 
-\subsection{Einstufung}
+\subsubsection{Einstufung}
 \label{sec:emissions-einstufung}
 Die mit der Emissions-Rewardfunktion trainierten Modelle zeigen insgesamt ein sehr positives Bild. In nahezu allen betrachteten Metriken übertreffen sie die Baselines deutlich. Besonders in Bezug auf die CO\textsubscript{2}-Emissionen erreichen alle Modelle konsistent niedrigere Werte als Fixed-Time und Actuated. Gleichzeitig werden in normalen Lastszenarien auch die mittlere Wartezeit, die Anzahl stoppender Fahrzeuge sowie die Durchschnittsgeschwindigkeit signifikant verbessert. So erzielen die Modelle durchschnittliche Geschwindigkeiten von etwa 7 m/s gegenüber 5,5-6 m/s bei Fixed-Time und reduzieren die Zahl stoppender Fahrzeuge teilweise auf nahezu null.
 

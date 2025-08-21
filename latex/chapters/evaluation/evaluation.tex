@@ -8,27 +8,11 @@ jeweils über zehn Episoden evaluiert.
 
 \texttt{Bemerkung:} Die Resultate sind Mittelwerte pro Kombination aus \emph{Methode} und \emph{Szenario}. Die Baseline Actuated hat in allen Evaluierungen realtiv schlecht abgeschlossen und wurde größten teils separat in Diagrammen dargestellt um sicherzustellen, dass die deutlich besser performende Baseline TimeFixed, visuell deutlich mit den Modellen vergleichbar bleibt. Bei allen Episoden sind gleich viele Fahrzeuge in das Netz gespeist worden.
 
-%\input{chapters/evaluation/diff-waiting-time.tex}
-%\input{chapters/evaluation/queue.tex}
-%\input{chapters/evaluation/realworld.tex}
+\input{chapters/evaluation/diff-waiting-time.tex}
+\input{chapters/evaluation/queue.tex}
+\input{chapters/evaluation/realworld.tex}
 \input{chapters/evaluation/emissions.tex}
 
 \subsection{Robustheit und Replikationsanalyse}
-Um die Stabilität der Ergebnisse zu bewerten, werden die Verteilungen über
-\begin{itemize}
-    \item die 4 Trainingsseeds pro Reward-Variante,
-    \item die 10 Evaluations-Episoden pro Szenario
-\end{itemize}
-analysiert.
-Boxplots verdeutlichen die Streuung.
-Die RL-Modelle zeigen dabei konsistente Verbesserungen,
-auch wenn die Varianz zwischen den Seeds nicht vernachlässigbar ist.
 
 \subsection{Zusammenfassung}
-
-\begin{itemize}
-    \item \textbf{Diff-Waiting-Time:} Starke Reduktion der Wartezeit, stabil über Szenarien hinweg.
-    \item \textbf{Queue:} Effektive Stauvermeidung, aber teils geringere Geschwindigkeit.
-    \item \textbf{Reale Welt:} Ausgewogenes Verhalten, moderate Verbesserungen ohne starke Einbußen.
-    \item \textbf{Emissionen:} Reduktion der CO\textsubscript{2}-Emissionen, dafür teils höhere Wartezeiten.
-\end{itemize}
