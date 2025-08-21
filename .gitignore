@@ -25,6 +25,7 @@ latex/*.config.minted
 
 # Ignore output folder
 latex/out/
+!latex/out/thesis.pdf
 
 # Optional: ignore compiled PDF
 latex/*.pdf
