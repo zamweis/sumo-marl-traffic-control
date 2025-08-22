@@ -112,6 +112,13 @@ Die dritte Gruppe ziel auf ein kombiniertes Minimieren der Wartezeiten, Anzahl a
     \label{fig:realworld-wartezeit2}
 \end{figure}
 
+Die Ergebnisse zur mittleren Wartezeit sind in Abbildung~X dargestellt. Die Fixed-Time-Baseline erreicht im Szenario morning\_peak einen Mittelwert von 3.74 s sowie im Szenario evening\_peak 4.24 s. In den Szenarien random\_heavy und uniform liegen die Werte bei 4.44 s bzw. 3.93 s, womit die Methode insgesamt stabile Resultate erzielt.
+
+Die Actuated-Baseline weist demgegenüber deutlich höhere Wartezeiten auf. So werden im morning\_peak durchschnittlich 960 s und im evening\_peak 968 s gemessen. Besonders ausgeprägt sind die Werte in den Szenarien random\_heavy (1031 s) und uniform (953 s), was auf erhebliche Ineffizienz dieser Steuerungsstrategie hindeutet.
+
+Unter den trainierten Modellen zeigt Modell 1 in morning\_peak mit 0.17 s sowie in uniform mit 0.25 s die niedrigsten Wartezeiten aller Verfahren. Im evening\_peak werden 44.78 s und im random\_heavy 31.19 s erreicht. Modell 2 erzielt Werte von 0.10 s (morning\_peak), 0.10 s (evening\_peak), 34.13 s (random\_heavy) und 0.08 s (uniform). Bei Modell 3 zeigen sich mit 0.12 s (morning\_peak), 51.40 s (evening\_peak), 157.72 s (random\_heavy) und 4.48 s (uniform) deutlich größere Unterschiede zwischen den Szenarien. Modell 4 verhält sich ähnlich und erreicht 0.34 s (morning\_peak), 47.77 s (evening\_peak), 132.16 s (random\_heavy) sowie 5.32 s (uniform).
+
+Auffällig ist, dass insbesondere bei Modell 3 und Modell 4 die deutlich erhöhten Mittelwerte in den Szenarien random\_heavy und evening\_peak jeweils mit einer hohen Standardabweichung einhergehen. Dies weist auf eine ausgeprägte Varianz zwischen den einzelnen Evaluationsläufen hin und deutet darauf, dass die Modelle in manchen Episoden sehr niedrige, in anderen jedoch stark erhöhte Wartezeiten produzierten.
 
 \subsubsection{Anzahl stoppender Fahrzeuge}
 In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
@@ -224,6 +231,13 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:realworld-stopped2}
 \end{figure}
 
+Die mittlere Anzahl stoppender Fahrzeuge unterscheidet sich deutlich zwischen den Baselines und den trainierten Modellen. Die Fixed-Time-Baseline erreicht im Szenario morning\_peak durchschnittlich 12.09 Fahrzeuge, im evening\_peak 14.64 Fahrzeuge, im random\_heavy 27.60 Fahrzeuge und im uniform-Szenario 10.33 Fahrzeuge.
+
+Die Actuated-Baseline weist deutlich höhere Werte auf. Im morning\_peak ergeben sich im Mittel 541.53 Fahrzeuge, im evening\_peak 567 Fahrzeuge, im random\_heavy 873 Fahrzeuge und im uniform 461 Fahrzeuge. Diese Resultate bestätigen das schwache Abschneiden der Actuated-Baseline auch in dieser Metrik.
+
+Die trainierten Modelle zeigen demgegenüber eine deutliche Reduktion der Stopps. Modell 1 erreicht Werte von 1.40 (morning\_peak), 6.25 (evening\_peak), 9.17 (random\_heavy) und 1.07 (uniform). Modell 2 erzielt 1.26, 1.38, 36.52 und 0.87 Fahrzeuge in den entsprechenden Szenarien. Bei Modell 3 liegen die Mittelwerte bei 1.30 (morning\_peak), 6.46 (evening\_peak), 45.62 (random\_heavy) und 1.26 (uniform). Modell 4 erreicht 1.29, 5.93, 37.27 und 1.34 Fahrzeuge.
+
+Es zeigt sich, dass insbesondere die Modelle 2-4 im Szenario random\_heavy deutlich erhöhte Werte im Vergleich zu den übrigen Szenarien aufweisen. In diesen Fällen geht der Anstieg jeweils mit einer sehr hohen Standardabweichung einher, was auf starke Schwankungen zwischen den einzelnen Evaluationsläufen hinweist. Dies legt nahe, dass die Modelle teilweise sehr effiziente Steuerungsstrategien erlernen konnten, während in anderen Episoden suboptimale Strategien dominierten.
 
 \subsubsection{Anzahl ankommender Fahrzeuge}
 \label{sec:realworld-ankommend}
@@ -301,6 +315,11 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:realworld-arrived}
 \end{figure}
 
+Die Auswertung der Anzahl ankommender Fahrzeuge zeigt über alle Szenarien hinweg sehr ähnliche Ergebnisse für die Fixed-Time-Baseline und die trainierten Modelle. Sowohl die Baseline als auch die Modelle erreichen in den meisten Szenarien nahezu das Maximum, was darauf hindeutet, dass der Verkehrsfluss grundsätzlich zuverlässig abgewickelt wird.
+
+Auffällig ist lediglich, dass in random\_heavy einzelne Modelle eine leicht geringere Performance aufweisen als die Fixed-Time-Baseline. Dieser Rückgang bleibt jedoch moderat, und die Anzahl ankommender Fahrzeuge liegt weiterhin auf einem hohen Niveau. In den übrigen Szenarien (morning\_peak, evening\_peak, uniform) stimmen die Resultate nahezu exakt mit der Fixed-Time-Baseline überein.
+
+Die Actuated-Baseline bestätigt erneut ihre Schwäche und fällt in allen Szenarien deutlich ab. Das deutliche Defizit dieser Steuerungsstrategie kontrastiert stark mit den stabil hohen Werten der Fixed-Time-Baseline und der Modelle.
 
 \subsubsection{Durchschnitt fahrender Fahrzeuge}
 \label{sec:realworld-fahrende}
@@ -378,6 +397,15 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:realworld-running}
 \end{figure}
 
+Die Ergebnisse zum Durchschnitt der sich im Netz befindlichen Fahrzeuge zeigen deutliche Unterschiede zwischen den Verfahren. Ein geringerer Wert ist hierbei positiv zu bewerten, da er auf eine schnellere Abwicklung des Verkehrs hinweist.
+
+Die Fixed-Time-Baseline erreicht im morning\_peak durchschnittlich 63.64 Fahrzeuge, im evening\_peak 69 Fahrzeuge, im random\_heavy 121 Fahrzeuge und im uniform-Szenario 52 Fahrzeuge. Damit ergibt sich ein insgesamt konsistentes Niveau mit moderaten Unterschieden zwischen den Szenarien.
+
+Die Actuated-Baseline fällt erneut deutlich ab und erreicht im morning\_peak 555 Fahrzeuge, im evening\_peak 581 Fahrzeuge, im random\_heavy 890 Fahrzeuge und im uniform 473 Fahrzeuge. Diese Werte liegen um ein Vielfaches über denen der Fixed-Time-Baseline und verdeutlichen die unzureichende Leistungsfähigkeit der Methode.
+
+Die trainierten Modelle zeigen durchweg Werte, die sehr nah an der Fixed-Time-Baseline liegen. Modell 1 erreicht 52, 59, 100, 43 Fahrzeuge, Modell 2 weist 52, 55, 123, 42 Fahrzeuge auf, während Modell 3 mit 52, 59, 132, 43 Fahrzeuge und Modell 4 mit 51, 59, 125, 43 Fahrzeuge vergleichbare Resultate erzielen.
+
+Auffällig ist, dass insbesondere im Szenario random\_heavy einzelne Modelle (Modell 2-4) leicht erhöhte Werte im Vergleich zur Fixed-Time-Baseline aufweisen. Diese Abweichungen gehen zugleich mit einer erhöhten Standardabweichung einher, was auf instabilere Performanz in diesem Szenario schließen lässt. In den übrigen Szenarien zeigen alle Modelle nahezu identische Ergebnisse zur Fixed-Time-Baseline.
 
 \subsubsection{Durchschnittsgeschwindigkeiten}
 \label{sec:realworld-geschwindigkeiten}
@@ -455,6 +483,15 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:realworld-speed}
 \end{figure}
 
+Die Analyse der Durchschnittsgeschwindigkeiten verdeutlicht klare Unterschiede zwischen den Baselines und den trainierten Modellen. Höhere Werte sind hierbei positiv zu bewerten, da sie auf einen effizienteren Verkehrsfluss hinweisen.
+
+Die Fixed-Time-Baseline erreicht im morning\_peak durchschnittlich 5.9 m/s, im evening\_peak 5.7 m/s, im random\_heavy 5.4 m/s sowie im uniform-Szenario 5.9 m/s. Damit liefert sie insgesamt solide Ergebnisse, die in allen Szenarien oberhalb der Actuated-Baseline liegen.
+
+Die Actuated-Baseline weist durchgehend die niedrigsten Geschwindigkeiten auf: 0.6 m/s (morning\_peak), 0.5 m/s (evening\_peak), 0.52 m/s (random\_heavy) und 0.6 m/s (uniform). Diese Werte sind um eine Größenordnung geringer als die der Fixed-Time-Baseline und bestätigen erneut die unzureichende Leistungsfähigkeit dieses Ansatzes.
+
+Die trainierten Modelle erzielen durchweg höhere Durchschnittsgeschwindigkeiten als die Fixed-Time-Baseline. Modell 1 erreicht 7.2, 6.7, 6.6 und 7.3 m/s in den vier Szenarien. Modell 2 weist mit 7.2, 7.2, 6.5 und 7.3 m/s ein sehr stabiles Niveau auf. Modell 3 zeigt Werte von 7.2, 6.7, 5.5 und 7.2 m/s, wobei insbesondere im random\_heavy-Szenario ein deutlicher Rückgang erkennbar ist. Modell 4 erzielt vergleichbare Resultate mit 7.2, 6.7, 5.8 und 7.2 m/s.
+
+Besonders im Szenario random\_heavy fällt auf, dass Modell 3 und Modell 4 geringere Durchschnittsgeschwindigkeiten erreichen als die übrigen Modelle. Auch hier zeigt sich eine erhöhte Standardabweichung, die auf instabile Ergebnisse zwischen den Evaluationsläufen hindeutet. In den übrigen Szenarien liegen alle Modelle konsistent über der Fixed-Time-Baseline und markieren eine deutliche Verbesserung des Verkehrsflusses.
 
 \subsubsection{Anzahl teleportierender Fahrzeuge}
 \label{sec:realworld-teleport}
@@ -532,6 +569,7 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:realworld-teleports}
 \end{figure}
 
+Die Auswertung der Teleportationen zeigt, dass in nahezu allen Szenarien keine Fahrzeuge teleportiert werden mussten. Dies gilt sowohl für die beiden Baselines als auch für die trainierten Modelle. Eine Ausnahme bildet das Szenario random\_heavy bei Modell 3, in dem vereinzelt Teleportationen auftraten. Dieses Ergebnis steht im Einklang mit den zuvor beobachteten Schwächen desselben Modells in diesem Szenario.
 
 \subsubsection{Anzahl zurückgehaltener Fahrzeuge}
 \label{sec:realworld-backlogged}
@@ -609,5 +647,15 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:realworld-backlogged}
 \end{figure}
 
+n allen Szenarien zeigen die vier Modelle sowie die Fixed-Time-Baseline keine zurückgehaltenen Fahrzeuge. Lediglich die Actuated-Baseline weist in sämtlichen Szenarien deutliche Werte auf, die mit der insgesamt schwachen Performance dieser Methode konsistent sind. Dieses Ergebnis bestätigt, dass ausschließlich die Actuated-Steuerung Fahrzeuge im Netz blockiert, während alle anderen Verfahren einen stabilen Verkehrsfluss ohne Zurückhalten sicherstellen konnten.
+
 \subsubsection{Einstufung}
 \label{sec:realworld-einstufung}
+
+Die Auswertung der verschiedenen Metriken zeigt, dass die trainierten Modelle die klassischen Baselines insgesamt deutlich übertreffen. Während die Actuated-Baseline durchgehend schwache Ergebnisse liefert und selbst von der Fixed-Time-Steuerung klar geschlagen wird, gelingt es den Modellen in nahezu allen Szenarien, sowohl die mittlere Wartezeit als auch die Anzahl stoppender Fahrzeuge deutlich zu reduzieren und gleichzeitig höhere Durchschnittsgeschwindigkeiten zu erreichen.
+
+Besonders deutlich wird der Vorteil der Modelle in den Szenarien mit regulärer oder gleichmäßiger Verkehrslast, wo sie konsistent nahe am Optimum operieren. Auch die Anzahl ankommender Fahrzeuge bleibt in diesen Fällen auf dem maximalen Niveau, sodass die Effizienzsteigerung nicht mit einem Verlust an Durchsatz erkauft wird.
+
+Einschränkungen zeigen sich jedoch im random\_heavy-Szenario: hier treten bei mehreren Modellen signifikante Verschlechterungen auf, die zugleich mit einer hohen Standardabweichung verbunden sind. Dies weist auf eine eingeschränkte Robustheit unter komplexeren und schwer vorhersagbaren Verkehrssituationen hin. Besonders ausgeprägt sind diese Schwächen bei einem Modell, das zusätzlich vereinzelt Teleportationen aufweist und damit strukturelle Instabilitäten erkennen lässt.
+
+Insgesamt lässt sich festhalten, dass die lernbasierten Steuerungsansätze das Potenzial besitzen, klassische Verfahren im Hinblick auf Wartezeiten, Staus und Geschwindigkeiten deutlich zu übertreffen. Gleichzeitig verdeutlichen die Ergebnisse, dass die Generalisierungsfähigkeit insbesondere in Szenarien mit unregelmäßiger und schwer prognostizierbarer Verkehrslast eine zentrale Herausforderung bleibt.

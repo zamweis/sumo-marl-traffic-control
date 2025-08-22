@@ -15,4 +15,94 @@ jeweils über zehn Episoden evaluiert.
 
 \subsection{Robustheit und Replikationsanalyse}
 
-\subsection{Zusammenfassung}
+Ein zentrales Ziel der Evaluation bestand darin, nicht nur die absolute Leistungsfähigkeit
+der Modelle zu messen, sondern auch deren \textbf{Robustheit} und \textbf{Replikationsfähigkeit}
+zu bewerten. Unter Robustheit wird hier die Fähigkeit verstanden, auch unter variierenden
+Verkehrsbedingungen (verschiedene Szenarien) und unterschiedlichen Initialisierungen (Seeds)
+konsistente Resultate zu erzielen. Replikationsfähigkeit bezeichnet hingegen die Eigenschaft,
+dass ein Modell mit gleicher Konfiguration über mehrere Trainingsläufe hinweg vergleichbare
+Ergebnisse liefert.
+
+\paragraph{Methodisches Vorgehen}
+Für die Robustheitsanalyse wurden alle Modelle sowie die beiden Baselines in den vier Szenarien
+(morning\_peak, evening\_peak, uniform, random\_heavy) jeweils über zehn Episoden evaluiert.
+Unterschiedliche Seeds stellten dabei sicher, dass sowohl Zufallseinflüsse im Verkehrsfluss
+als auch in der Modellinitialisierung berücksichtigt wurden. Pro Reward-Funktion lagen vier
+unabhängige Trainingsseeds vor, sodass neben der Szenario-Robustheit auch die Replikationsfähigkeit
+geprüft werden konnte.
+
+Die Evaluationsumgebung protokollierte sowohl \textit{mittlere Metriken} (z.\,B. durchschnittliche
+Wartezeit, mittlere Geschwindigkeit) als auch \textit{Totals} (z.\,B. Anzahl ankommender Fahrzeuge,
+Gesamtemissionen) pro Episode. Diese Auswertung erlaubte es, systematische Leistungsunterschiede
+von stochastischen Schwankungen zu trennen. Besonders aufschlussreich war dabei die Betrachtung
+der Standardabweichungen: hohe Varianz bei gleicher Reward-Funktion weist auf eine eingeschränkte
+Replikationsfähigkeit hin.
+
+\paragraph{Ergebnisse}
+Über alle Reward-Funktionen hinweg zeigte sich ein konsistentes Muster:
+\begin{itemize}
+    \item \textbf{Baselines:} Die Actuated-Baseline erwies sich in allen Szenarien als instabil und deutlich unterlegen.
+          Die Fixed-Time-Baseline blieb robust, konnte jedoch nur in Szenarien mit regulärer Last überzeugen.
+    \item \textbf{Diff-Waiting-Time:} Modelle auf Basis dieser Reward-Funktion waren insgesamt robust, insbesondere
+          Modell~1 und Modell~4. Modelle~2 und~3 zeigten dagegen in random\_heavy erhöhte Varianz und teilweise deutliche
+          Leistungseinbrüche, was die eingeschränkte Replikationsfähigkeit einzelner Seeds verdeutlicht.
+    \item \textbf{Queue:} Die Queue-basierten Modelle erzielten eine durchgängig hohe Stabilität und reduzierten
+          Wartezeiten und Stopps stark. Lediglich Modell~2 zeigte in random\_heavy und morning\_peak eine geringere Robustheit.
+    \item \textbf{Real-World:} Diese Reward-Funktion lieferte in allen Szenarien außer random\_heavy sehr stabile
+          und nahe am Optimum liegende Ergebnisse. Unter hoher und unregelmäßiger Last traten jedoch erhöhte
+          Standardabweichungen auf, was auf eingeschränkte Robustheit hindeutet.
+    \item \textbf{CO\textsubscript{2}-Emissionen:} Die Emissions-basierten Modelle kombinierten hohe Effizienz mit
+          ökologischer Optimierung und erwiesen sich als besonders stabil. Lediglich in Hochlastszenarien (insb. Modell~2 und~3)
+          zeigten sich Replikationsprobleme, die sich jedoch auf ein Niveau im Bereich der Fixed-Time-Baseline einpendelten.
+\end{itemize}
+
+\paragraph{Schlussfolgerung}
+Die Analyse zeigt, dass die Robustheit und Replikationsfähigkeit stark von der gewählten
+Reward-Funktion abhängen. Während Queue- und CO\textsubscript{2}-basierte Ansätze eine besonders
+stabile Performanz liefern, neigen Diff-Waiting-Time- und Real-World-Rewards unter Hochlastbedingungen
+zu Instabilitäten. In allen Fällen bleiben die Modelle den klassischen Baselines jedoch überlegen.
+Damit bestätigt sich, dass Deep-RL-basierte Verkehrssteuerungen grundsätzlich robuste Strategien
+hervorbringen, deren Generalisierungsfähigkeit sich jedoch insbesondere in unregelmäßigen
+Verkehrssituationen weiter verbessern muss.
+
+
+\subsection{Gesamtevaluierung und Schlussfolgerung}
+
+Die durchgeführte Evaluation verdeutlicht, dass alle untersuchten Reinforcement-Learning-Ansätze
+die klassischen Baselines (Fixed-Time und Actuated) in nahezu allen Metriken deutlich übertreffen.
+Insbesondere die Actuated-Baseline bestätigt sich über sämtliche Szenarien hinweg als instabil und
+ineffizient. Die Fixed-Time-Baseline hingegen zeigt, wie bereits aus der realen Welt zu erwarten, sehr gute und robuste Resultate, da diese Steuerungsstrategie seit Jahrzehnten in vielen Städten
+standardmäßig eingesetzt wird. Sie stellt damit eine starke Referenz dar, die von den RL-Modellen
+erst übertroffen werden musste.
+
+Über alle Rewardfunktionen hinweg konnten die Modelle signifikante Verbesserungen in Bezug auf
+\textit{mittlere Wartezeit}, \textit{Anzahl stoppender Fahrzeuge} und \textit{Durchschnittsgeschwindigkeit}
+erzielen. Ebenso wurde in fast allen Szenarien die maximale Anzahl ankommender Fahrzeuge erreicht,
+sodass die Effizienzsteigerungen nicht mit einem reduzierten Gesamtdurchsatz einhergingen.
+
+Gleichzeitig zeigen die Ergebnisse, dass die Wahl der Rewardfunktion maßgeblichen Einfluss auf die
+Robustheit und Stabilität der Modelle hat:
+\begin{itemize}
+    \item Mit der \textbf{Diff-Waiting-Time}-Funktion wurden Modelle generiert, die klassische Verfahren
+          in den meisten Szenarien klar übertreffen. Allerdings weisen einzelne Varianten unter hoher Last
+          (*random\_heavy*, *evening\_peak*) starke Varianz und Leistungseinbrüche auf.
+    \item Die \textbf{Queue}-Funktion führte zu besonders konsistenten Resultaten, bei denen Wartezeiten
+          und Rückstaus nahezu vollständig reduziert werden konnten. Die Stabilität über verschiedene Seeds hinweg
+          war hier am höchsten.
+    \item Die \textbf{Real-World}-Funktion ermöglichte praxisnahe Modelle, die in regulären Szenarien
+          sehr effizient arbeiteten. Unter unregelmäßigen und schwer prognostizierbaren Lastbedingungen
+          zeigte sich jedoch eine eingeschränkte Generalisierungsfähigkeit.
+    \item Mit der \textbf{CO\textsubscript{2}-Emissions}-Funktion konnten neben Effizienzgewinnen auch
+          ökologische Verbesserungen erzielt werden. Diese Modelle kombinierten niedrige Emissionen mit hoher
+          Verkehrseffizienz und erwiesen sich insgesamt als besonders stabile Variante, mit Ausnahme einzelner
+          Schwächen in Hochlastszenarien.
+\end{itemize}
+
+Zusammenfassend lässt sich feststellen, dass Deep-RL-gestützte Steuerungsstrategien ein hohes Potenzial
+zur Optimierung urbaner Verkehrsflüsse besitzen. Während sich je nach Rewardfunktion unterschiedliche
+Stärken und Schwächen zeigen, übertreffen alle untersuchten Ansätze die etablierten Baselines teils
+deutlich. Zugleich wird ersichtlich, dass die Fixed-Time-Steuerung, trotz ihres Alters und ihrer
+vereinfachten Logik, nach wie vor ein leistungsstarker und praxisrelevanter Vergleichsmaßstab ist.
+Die Ergebnisse unterstreichen jedoch zugleich die Notwendigkeit, die Generalisierungsfähigkeit
+unter variierenden und komplexen Lastbedingungen weiter zu verbessern, um den Übergang von
+simulationsbasierten Experimenten hin zu robusten Realweltanwendungen zu ermöglichen.

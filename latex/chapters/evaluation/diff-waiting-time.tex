@@ -112,7 +112,13 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
     \label{fig:diff-waiting-time-wartezeit2}
 \end{figure}
 
-Die Analyse der mittleren Wartezeit zeigt, dass die RL-Modelle in den meisten Szenarien bessere Ergebnisse als die Baselines erzielen. Insbesondere in den Szenarien uniform, morning\_peak und evening\_peak konnten mehrere Modelle die durchschnittliche Wartezeit signifikant reduzieren. Gleichzeitig ist zu beobachten, dass einzelne Modelle in bestimmten Szenarien auffällig schlechter abschnitten: Modell 3 in morning\_peak sowie Modell 2 und Modell 3 in random\_heavy weisen deutlich erhöhte Wartezeiten auf. Diese hohen Werte gehen zudem mit einer stark erhöhten Standardabweichung einher, was auf eine erhöhte Variabilität im Verhalten der Modelle in diesen Konfigurationen hinweist.
+Die mittlere Wartezeit für die Diff-Waiting-Time-Rewardfunktion zeigt erneut deutliche Unterschiede zwischen den Baselines und den trainierten Modellen.
+
+Die Fixed-Time-Baseline erreicht im morning\_peak 3.74 s, im evening\_peak 4.20 s, im random\_heavy 4.40 s und im uniform-Szenario 3.90 s. Diese Werte bilden eine stabile Referenz. Die Actuated-Baseline fällt dagegen erneut durch extrem hohe Wartezeiten auf: 964 s, 965 s, 1030 s und 935 s in den vier Szenarien.
+
+Unter den trainierten Modellen zeigen sich differenzierte Muster. Modell 1 erreicht sehr geringe Werte mit 0.20 s, 4.27 s, 8.90 s und 0.21 s. Modell 2 weist im morning\_peak mit 7.9 s sowie im random\_heavy mit 82 s deutlich höhere Wartezeiten auf, während die Werte im evening\_peak (2.1 s) und im uniform (1.5 s) niedrig bleiben. Modell 3 zeigt ebenfalls inkonsistente Ergebnisse: 2.5 s im morning\_peak, aber 95 s im evening\_peak und 77 s im random\_heavy, während das uniform-Szenario mit 0.4 s vergleichsweise gut abschneidet. Modell 4 erzielt insgesamt die besten Resultate mit 0.11 s, 0.18 s, 33 s und 0.10 s, wenngleich auch hier im random\_heavy ein Anstieg erkennbar ist.
+
+Die erhöhten Mittelwerte in einzelnen Szenarien, insbesondere bei Modell 2 und Modell 3, gehen jeweils mit einer hohen Standardabweichung einher. Dies weist auf eine deutliche Instabilität zwischen den Runs hin und deutet darauf, dass die Modelle zwar vereinzelt effiziente Strategien entwickeln konnten, diese jedoch nicht konsistent reproduziert werden.
 
 \subsubsection{Anzahl stoppender Fahrzeuge}
 In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
@@ -225,7 +231,15 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:diff-waiting-time-stopped2}
 \end{figure}
 
-Ein besonders klarer Vorteil der RL-Modelle zeigt sich bei der Anzahl der stoppenden Fahrzeuge. Über alle Szenarien hinweg konnten die Modelle den Wert im Vergleich zur Fixed-Time-Baseline drastisch reduzieren. Teilweise stoppten Fahrzeuge nur in einem Fünftel der Fälle im Vergleich zur Baseline, was eine deutliche Verbesserung des Verkehrsflusses widerspiegelt. Dieser Effekt ist konsistent über alle Modelle und Szenarien hinweg nachweisbar.
+Die Ergebnisse zur Anzahl stoppender Fahrzeuge zeigen deutliche Unterschiede zwischen den Baselines und den trainierten Modellen.
+
+Die Fixed-Time-Baseline erreicht im morning\_peak durchschnittlich 12 Fahrzeuge, im evening\_peak 14 Fahrzeuge, im random\_heavy 27 Fahrzeuge und im uniform-Szenario 10 Fahrzeuge. Diese Werte bilden eine stabile und vergleichsweise effiziente Referenz.
+
+Die Actuated-Baseline zeigt dagegen eine massiv erhöhte Zahl an Stopps. So ergeben sich im morning\_peak 539 Fahrzeuge, im evening\_peak 566 Fahrzeuge, im random\_heavy 883 Fahrzeuge und im uniform 442 Fahrzeuge. Damit bestätigt sich auch in dieser Metrik die unzureichende Leistungsfähigkeit der Actuated-Steuerung.
+
+Die trainierten Modelle liefern deutlich geringere Werte. Modell 1 erreicht 1.8, 4.1, 6.6 und 1.5 Fahrzeuge in den vier Szenarien. Modell 2 erzielt mit 2.12, 2.1, 17 und 1.2 Fahrzeugen ebenfalls niedrige Werte, allerdings mit einem deutlichen Anstieg im random\_heavy-Szenario. Modell 3 weist Werte von 2.64, 10, 16 und 1.6 Fahrzeugen auf, wobei insbesondere im evening\_peak und im random\_heavy eine Verschlechterung gegenüber den übrigen Szenarien erkennbar ist. Modell 4 erzielt mit 1.4, 1.7, 9.9 und 1.06 Fahrzeugen die insgesamt besten Resultate und bleibt in allen Szenarien unterhalb der Fixed-Time-Baseline.
+
+Die erhöhten Werte bei Modell 2 und Modell 3 im random\_heavy-Szenario gehen mit einer hohen Standardabweichung einher, was auf starke Schwankungen zwischen den Runs hindeutet. Dies verdeutlicht, dass die Modelle zwar in der Lage sind, den Verkehrsfluss erheblich zu verbessern, ihre Robustheit unter unregelmäßigen Verkehrslasten jedoch eingeschränkt bleibt.
 
 \subsubsection{Anzahl ankommender Fahrzeuge}
 \label{sec:diff-waiting-time-ankommend}
@@ -383,8 +397,15 @@ Hinsichtlich der Anzahl ankommender Fahrzeuge unterscheiden sich die RL-Modelle 
     \label{fig:diff-waiting-time-running}
 \end{figure}
 
-Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistentes Muster sichtbar: In allen Szenarien liegen die Werte der RL-Modelle unterhalb der Fixed-Time-Baseline. Typischerweise beträgt der Unterschied etwa 10-15 Prozent, so dass bei einem Fixed-Time-Wert von 120 Fahrzeugen die RL-Modelle bei rund 105 Fahrzeugen liegen. Dies deutet darauf hin, dass die RL-Agenten den Verkehrsfluss stärker bündeln und damit die Anzahl gleichzeitig im Netz befindlicher Fahrzeuge reduzieren.
+Die Auswertung des Durchschnitts fahrender Fahrzeuge (weniger ist besser) zeigt deutliche Unterschiede zwischen den Baselines und den trainierten Modellen.
 
+Die Fixed-Time-Baseline erreicht im morning\_peak durchschnittlich 63 Fahrzeuge, im evening\_peak 69 Fahrzeuge, im random\_heavy 121 Fahrzeuge und im uniform-Szenario 52 Fahrzeuge. Diese Werte bilden eine stabile Referenz.
+
+Die Actuated-Baseline weist deutlich höhere Werte auf, mit 553 Fahrzeugen im morning\_peak, 481 Fahrzeugen im evening\_peak, 900 Fahrzeugen im random\_heavy und 455 Fahrzeugen im uniform-Szenario. Damit bestätigt sich das schwache Abschneiden dieser Steuerung auch in dieser Metrik.
+
+Die trainierten Modelle erreichen insgesamt Werte, die sehr nahe an der Fixed-Time-Baseline liegen. Modell 1 erzielt 53, 58, 98 und 44 Fahrzeuge. Modell 2 liegt bei 53, 55, 108 und 43 Fahrzeugen. Modell 3 weist 54, 64, 108 und 44 Fahrzeuge auf, während Modell 4 mit 52, 55, 101 und 43 Fahrzeugen die niedrigsten Werte liefert.
+
+Insgesamt zeigen die Modelle konsistent bessere oder vergleichbare Ergebnisse zur Fixed-Time-Baseline. Auffällig ist, dass im random\_heavy-Szenario die Werte von Modell 2 und Modell 3 leicht über der Referenz liegen, was mit einer erhöhten Standardabweichung einhergeht und auf Instabilität in komplexen Verkehrslagen hinweist.
 
 \subsubsection{Durchschnittsgeschwindigkeiten}
 \label{sec:diff-waiting-time-geschwindigkeiten}
@@ -462,8 +483,15 @@ Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge wird ein konsistent
     \label{fig:diff-waiting-time-speed}
 \end{figure}
 
-Die durchschnittliche Geschwindigkeit ist bei den RL-Modellen durchweg höher als bei der Fixed-Time-Baseline. Im Mittel beträgt der Vorsprung rund ein Sechstel, was eine signifikante Verbesserung der Reisegeschwindigkeit darstellt. Dieser Befund unterstreicht, dass die Modelle in der Lage sind, die Stoppzeiten und Stausituationen effektiv zu reduzieren und damit einen flüssigeren Verkehrsfluss zu ermöglichen.
+Die Analyse der Durchschnittsgeschwindigkeiten verdeutlicht klare Unterschiede zwischen den Baselines und den trainierten Modellen.
 
+Die Fixed-Time-Baseline erreicht im morning\_peak durchschnittlich 5.9 m/s, im evening\_peak 5.7 m/s, im random\_heavy 5.4 m/s sowie im uniform-Szenario 5.9 m/s. Damit liefert sie konsistente, aber nicht optimale Werte.
+
+Die Actuated-Baseline weist durchgehend extrem niedrige Geschwindigkeiten auf: 0.6, 0.5, 0.5 und 0.7 m/s in den vier Szenarien. Diese Werte liegen um eine Größenordnung unterhalb der Fixed-Time-Baseline und bestätigen die unzureichende Leistungsfähigkeit dieser Steuerung.
+
+Die trainierten Modelle übertreffen die Fixed-Time-Baseline deutlich. Modell 1 erreicht 7.0, 6.8, 6.7 und 7.1 m/s. Modell 2 erzielt sehr stabile Werte mit 7.1, 7.1, 6.2 und 7.2 m/s. Modell 3 liegt mit 6.9, 6.2, 6.1 und 7.1 m/s insgesamt ebenfalls über der Fixed-Time-Baseline, zeigt jedoch im evening\_peak und random\_heavy leicht reduzierte Ergebnisse. Modell 4 liefert mit 7.1, 7.1, 6.5 und 7.2 m/s die besten Resultate, insbesondere durch die hohe Stabilität über alle Szenarien hinweg.
+
+Auffällig ist, dass die Modelle 2 und 4 durchgehend eine nahezu konstante Verbesserung gegenüber der Fixed-Time-Baseline erzielen, während Modell 3 in den Szenarien evening\_peak und random\_heavy leichten Performanceverlust zeigt. In diesen Fällen geht die Verschlechterung mit einer erhöhten Standardabweichung einher, was auf eine weniger stabile Performanz hindeutet.
 
 \subsubsection{Anzahl teleportierender Fahrzeuge}
 \label{sec:diff-waiting-time-teleport}
@@ -623,8 +651,12 @@ Es ist klar erkenntbar, dass das Netz nicht an ihre maximal Auslastung gerät. D
 
 \subsubsection{Einstufung}
 \label{sec:diff-waiting-time-einstufung}
-Zusammenfassend lässt sich feststellen, dass die RL-Modelle in nahezu allen betrachteten Metriken eine deutliche Überlegenheit gegenüber den Baselines, insbesondere gegenüber der Actuated-Steuerung, aufweisen. Während die Anzahl ankommender Fahrzeuge weitgehend unverändert blieb, konnten die RL-Ansätze die mittlere Wartezeit in mehreren Szenarien spürbar reduzieren und zugleich die Anzahl stoppender Fahrzeuge drastisch senken. Dies schlägt sich auch in einer höheren durchschnittlichen Reisegeschwindigkeit nieder, die bei den RL-Modellen im Mittel rund ein Sechstel über der Fixed-Time-Baseline liegt. Die Anzahl gleichzeitig im Netz befindlicher Fahrzeuge war bei den RL-Modellen konsistent geringer, was auf einen insgesamt flüssigeren Verkehrsfluss schließen lässt.
+Die Modelle, die mit der Diff-Waiting-Time-Rewardfunktion trainiert wurden, zeigen in den meisten Metriken eine klare Überlegenheit gegenüber den Baselines. Die Fixed-Time-Baseline dient als stabile Referenz, wird jedoch in nahezu allen Szenarien von den Modellen deutlich übertroffen. Die Actuated-Baseline bestätigt auch hier ihre Schwäche und liefert durchweg die schlechtesten Ergebnisse.
 
-Auffällig ist jedoch, dass einzelne Modelle in spezifischen Szenarien (z. B. Modell 2 und 3 in random\_heavy sowie Modell 3 in morning\_peak) vergleichsweise schwach abschnitten und dabei hohe Varianzen aufwiesen. Diese Ausreißer mindern jedoch nicht die generelle Tendenz, dass die RL-Ansätze eine robuste und konsistente Verbesserung gegenüber den statischen Baselines darstellen.
+Besonders auffällig ist die deutliche Reduktion der mittleren Wartezeiten und der Anzahl stoppender Fahrzeuge. Modelle 1 und 4 erreichen dabei die insgesamt besten Resultate und bleiben sowohl in regulären als auch in stark belasteten Szenarien konsistent unterhalb der Fixed-Time-Baseline. Modell 2 und Modell 3 zeigen ebenfalls Verbesserungen, jedoch treten in Szenarien mit hoher Verkehrslast (random\_heavy, evening\_peak) teils deutlich erhöhte Werte und zugleich hohe Standardabweichungen auf. Diese Schwankungen weisen auf eine geringere Stabilität der Strategien hin.
 
-Die Baseline Fixed-Time erweist sich im direkten Vergleich als deutlich konkurrenzfähiger als die Actuated-Variante, die über alle Metriken hinweg das schwächste Ergebnis liefert. In der Gesamtbetrachtung lässt sich daher schlussfolgern, dass RL-Agenten in der Lage sind, klassische Steuerungsverfahren zu übertreffen, indem sie Wartezeiten reduzieren, den Verkehrsfluss stabilisieren und die Effizienz des Gesamtsystems verbessern, auch wenn in Lastspitzen-Szenarien teilweise noch Optimierungspotenzial besteht.
+Hinsichtlich der Durchschnittsgeschwindigkeit erzielen alle Modelle höhere Werte als die Fixed-Time-Baseline, wobei insbesondere Modell 2 und Modell 4 durch ihre gleichmäßige Performance hervorstechen. Modell 3 fällt in einzelnen Szenarien leicht zurück, bleibt aber insgesamt dennoch über der Referenz.
+
+Die Metriken zu Teleportationen und zurückgehaltenen Fahrzeugen bestätigen, dass das Netz nicht an seine absolute Kapazitätsgrenze gelangte. Einzelne Teleportationen bei Modell 1 und Modell 3 sind als Randereignisse zu werten und beeinflussen die Gesamteinstufung nicht maßgeblich.
+
+Insgesamt lässt sich festhalten, dass die Diff-Waiting-Time-Rewardfunktion robuste Modelle hervorbringt, die klassische Steuerungen klar übertreffen. Modelle 1 und 4 überzeugen durchgängig mit stabiler Performance, während Modell 2 und Modell 3 unter hoher Verkehrslast anfälliger für Leistungseinbrüche und stärkere Varianz sind.

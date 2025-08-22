@@ -2,6 +2,8 @@
 
 \usepackage{chemformula}
 
+
+
 % code
 \usepackage{algorithm}
 \usepackage{algpseudocode}
@@ -25,8 +27,14 @@
   colorlinks=true,
   citecolor=hellblau,   % Zitate
   urlcolor=darkblue,   % URLs
-  linkcolor=darkblue    % interne Links (TOC, Querverweise)
+  linkcolor=darkblue,    % interne Links (TOC, Querverweise)
+  linktoc=all,
 }
+
+
+\usepackage[acronym, toc]{glossaries}
+\makeglossaries
+\input{chapters/glossar.tex}
 
 % Literatur
 \usepackage{csquotes}
@@ -38,6 +46,7 @@
   doi=true,
   isbn=false
 ]{biblatex}
+
 \addbibresource{chapters/literatur.bib}
 
 % Typografie und Layout
@@ -100,6 +109,8 @@
 \title{Optimierung einer Verkehrssimulation mit KI-basierten Agenten in SUMO}
 \author{Sam Weiler}
 \date{\small \today}
+
+
 \begin{document}
 \begin{titlepage}
   \centering
@@ -198,18 +209,181 @@
 \input{chapters/evaluation/evaluation.tex}
 
 \section{Herausforderungen und Limitationen}
+
+Obwohl die Ergebnisse der Evaluation die Leistungsfähigkeit von Deep-RL-Ansätzen zur
+Verkehrsflussoptimierung verdeutlichen, bestehen verschiedene technische, methodische und
+konzeptionelle Einschränkungen. Im Folgenden werden die zentralen Herausforderungen
+systematisch dargestellt.
+
 \subsection{Technische und methodische Hürden}
+
+Ein wesentliches Problem ergab sich aus der verwendeten Simulationsumgebung SUMO.
+Da SUMO nicht \textit{thread-sicher} ist, konnte das Training nicht parallel auf mehreren
+Instanzen durchgeführt werden. Dies führte dazu, dass ausschließlich CPU-basiertes Training
+möglich war, was die Trainingszeiten erheblich verlängerte. Ein GPU-basiertes oder verteiltes
+Training hätte hier deutliche Effizienzgewinne ermöglicht.
+
+Darüber hinaus erforderte die Abstimmung der Hyperparameter (z.\,B. Lernrate, Discount-Faktor,
+Explorationsparameter) umfangreiche manuelle Experimente. Zwar konnten stabile Konfigurationen
+gefunden werden, doch bleibt der Prozess zeitaufwändig und fehleranfällig.
+Eine \textit{automatisierte Hyperparameter-Optimierung} (z.\,B. mittels
+Bayesian Optimization oder Population-Based Training) könnte diesen Aufwand
+in zukünftigen Arbeiten erheblich reduzieren.
+
 \subsection{Repräsentativität und Qualität der Daten}
+
+Die zugrundeliegenden Straßennetze basierten auf OpenStreetMap-Daten.
+Diese Daten sind zwar frei verfügbar und weltweit verfügbar, weisen jedoch
+erhebliche Schwächen auf. Dazu zählen fehlerhafte oder unvollständige Geometrien,
+fehlende Informationen zu Fahrstreifen, Tempolimits oder Ampelphasen sowie
+Inkonsistenzen im Datenmodell. Um die Netze nutzbar zu machen, war daher
+eine umfangreiche manuelle Nachbearbeitung notwendig, was den Arbeitsaufwand
+spürbar erhöhte.
+
+Zudem berücksichtigen die verwendeten Netze ausschließlich den motorisierten
+Individualverkehr. Wichtige Verkehrsteilnehmer wie Fußgänger, Radfahrende oder
+öffentlicher Nahverkehr (Bus, Bahn) konnten nicht integriert werden, da die
+entsprechenden Netzelemente in OSM oft unvollständig vorliegen und in SUMO
+nur eingeschränkt realistisch abgebildet werden können. Dies reduziert die
+Übertragbarkeit der Ergebnisse auf komplexe urbane Verkehrsszenarien.
+
+\subsection{Realitätsnähe der Simulation}
+
+SUMO bildet den Straßenverkehr stark vereinfacht ab. Fahrzeuge folgen
+deterministischen Mikroskopiemodellen und zeigen kein adaptives Verhalten,
+wie es in der realen Welt vorkommt. So können Fahrzeuge beispielsweise
+bei Hindernissen nicht eigenständig ausweichen oder zurücksetzen, was
+teilweise zu \textit{Deadlocks} führt. Auch dynamische Aspekte wie
+Baustellen, Haltestellen, kurzfristige Störungen oder Unfallereignisse
+sind nicht modelliert.
+
+Darüber hinaus unterscheiden sich die in SUMO verfügbaren Beobachtungsmetriken
+von realen Detektoren in Städten. Induktionsschleifen oder Kamerasysteme
+liefern in der Realität oftmals unvollständige oder verrauschte Daten,
+während die Simulation nahezu perfekte Werte bereitstellt. Die
+Übertragbarkeit der Modelle in reale Systeme ist daher eingeschränkt,
+solange keine Verfahren zur Modellierung von Messfehlern oder Unsicherheiten
+integriert werden.
+
 \subsection{Generalisierbarkeit der Ergebnisse}
 
+Die Modelle wurden auf einem spezifischen Netz (Karlsruhe) und unter
+definierten Szenarien (low\_flow, medium\_flow, high\_flow)
+trainiert. Zwar zeigen die Ergebnisse deutliche Verbesserungen gegenüber den
+Baselines, doch ist nicht gesichert, dass diese Modelle ohne Weiteres auf
+andere Städte, Straßennetze oder Verkehrsmuster übertragbar sind.
+
+Besonders das Szenario random\_heavy offenbarte Schwächen einzelner Modelle.
+Hier traten teilweise drastisch erhöhte Wartezeiten und Stopps auf, die mit
+hohen Standardabweichungen verbunden waren. Dies zeigt, dass die Modelle in
+komplexen und unregelmäßigen Lastsituationen weniger robust sind und
+Generalisation eine der zentralen Herausforderungen bleibt.
+
 \section{Fazit und Ausblick}
+\label{sec:fazit}
+
 \subsection{Zusammenfassung der wichtigsten Erkenntnisse}
+
+Die Arbeit hat gezeigt, dass Deep-Reinforcement-Learning-Ansätze ein erhebliches
+Potenzial zur Optimierung der Steuerung von Lichtsignalanlagen besitzen. Über alle
+betrachteten Reward-Funktionen hinweg konnten die Modelle die klassischen Baselines
+deutlich übertreffen. Insbesondere die Actuated-Baseline erwies sich in allen Szenarien
+als instabil und ineffizient, während die Fixed-Time-Baseline, wie aus ihrer weiten
+Verbreitung in realen Städten zu erwarten, robuste und solide Ergebnisse lieferte.
+Dennoch gelang es den RL-Modellen, selbst diese starke Referenz in den meisten
+Metriken zu übertreffen.
+
+Die Evaluation verdeutlichte, dass sich durch lernbasierte Steuerungen die mittlere
+Wartezeit reduzieren, die Anzahl stoppender Fahrzeuge verringern und die durch-
+schnittliche Reisegeschwindigkeit erhöhen lässt. Gleichzeitig blieb der Gesamtdurch-
+satz nahezu immer auf maximalem Niveau, sodass Effizienzsteigerungen nicht mit
+einem Verlust an abgefertigten Fahrzeugen einhergingen. Besonders deutlich wurden
+die Vorteile in regulären und gleichmäßigen Verkehrsszenarien, in denen die Modelle
+konsistent nahe am Optimum operierten.
+
+Gleichzeitig zeigten die Ergebnisse, dass die Robustheit stark von der gewählten
+Reward-Funktion abhängt. Während Queue- und CO\textsubscript{2}-basierte Modelle eine sehr
+hohe Stabilität und Reproduzierbarkeit aufwiesen, traten bei Diff-Waiting-Time- und
+Real-World-basierten Modellen unter Hochlastbedingungen signifikante Schwankungen
+auf. Die Analysen unterstrichen zudem, dass besonders in unregelmäßigen Szenarien
+\texttt{random\_heavy} die Generalisierungsfähigkeit eine wesentliche Herausforderung bleibt.
+
 \subsection{Mögliche Weiterentwicklungen}
+
+
+Aus den Ergebnissen ergeben sich mehrere konkrete Ansatzpunkte für weiterführende
+Arbeiten:
+\begin{itemize}
+  \item \textbf{Verbesserte Reward-Funktionen:} Eine Kombination mehrerer Zielgrößen
+        (z.\,B. Wartezeit, Emissionen, Durchsatz) in einem Multi-Objective- oder Curriculum-
+        Learning-Ansatz könnte helfen, die Stärken einzelner Funktionen zu vereinen
+        und die Robustheit zu erhöhen.
+  \item \textbf{Automatisierte Hyperparameter-Optimierung:} Der hohe manuelle Ab-
+        stimmungsaufwand könnte durch Frameworks wie \texttt{Optuna} oder \texttt{Ray Tune}
+        deutlich reduziert werden. Diese Werkzeuge erlauben eine strukturierte Suche im
+        Hyperparameter-Raum und steigern die Replizierbarkeit und Effizienz der Modellentwicklung.
+  \item \textbf{Integration weiterer Verkehrsteilnehmer:} Zukünftige Arbeiten sollten auch
+        Fußgänger, Radfahrende sowie den öffentlichen Nahverkehr berücksichtigen, um
+        eine ganzheitlichere Optimierung urbaner Mobilität zu ermöglichen.
+  \item \textbf{Realistischere Sensordaten:} Die Simulation sollte um Modelle erweitert
+        werden, die Messfehler und Unsicherheiten realer Detektoren abbilden. Dadurch
+        könnten die entwickelten Steuerungsstrategien praxisnäher validiert werden.
+  \item \textbf{Skalierbarkeit und Verteilte Systeme:} Ein wichtiger Schritt besteht in
+        der Übertragung der Ansätze auf größere Netze und den Einsatz verteilter
+        Multi-Agent-Systeme, die ganze Stadtteile koordinieren können.
+  \item \textbf{Kommunikation zwischen Agenten:} Ein weiterer Forschungspfad ist die
+        Erweiterung hin zu kooperativen Steuerungen, bei denen die einzelnen Agenten
+        Informationen untereinander austauschen. Dies könnte eine bessere globale
+        Koordination ermöglichen und die Systemstabilität in hochdynamischen Situationen
+        deutlich erhöhen.
+  \item \textbf{Verbundene und autonome Fahrzeuge:} Mit Blick in die Zukunft könnte die
+        Einbindung von Connected-Vehicle-Technologien und autonomen Fahrzeugen die
+        Steuerung auf eine neue Ebene heben. RL-Agenten könnten direkt mit Fahrzeugen
+        interagieren, Fahrbefehle optimieren und so einen noch effizienteren Verkehrsfluss
+        realisieren.
+\end{itemize}
+
 \subsection{Relevanz für reale Verkehrsplanung}
+
+Die Ergebnisse der Arbeit verdeutlichen, dass lernbasierte Steuerungsverfahren das
+Potenzial haben, klassische Verfahren in der Verkehrssteuerung nicht nur zu ergänzen,
+sondern in vielen Aspekten zu übertreffen. Besonders die Fixed-Time-Steuerung, trotz
+ihrer weiten Verbreitung und Robustheit, konnte in zentralen Kennzahlen durch die
+RL-Modelle überboten werden. Dies zeigt, dass der Einsatz von Deep Reinforcement
+Learning in der Verkehrsplanung eine vielversprechende Perspektive darstellt.
+
+Für die praktische Anwendung ist jedoch entscheidend, dass die Modelle eine
+hohe Robustheit und Generalisierungsfähigkeit erreichen. Nur wenn sich die Verfahren
+auch unter komplexen, dynamischen und teilweise unvorhersehbaren Bedingungen
+zuverlässig verhalten, ist ein Einsatz in urbanen Verkehrsnetzen realistisch. Die in
+dieser Arbeit aufgezeigten Schwächen in Szenarien mit hoher Last und unregelmäßigen
+Mustern verdeutlichen, dass hierfür noch Forschungs- und Entwicklungsbedarf besteht.
+
+Darüber hinaus eröffnet die Arbeit Perspektiven im Kontext zukünftiger
+\textbf{Smart-City-Infrastrukturen}. Mit dem zunehmenden Einsatz von \textit{Connected Vehicles}
+und autonomen Fahrzeugsystemen entsteht die Möglichkeit, RL-Agenten direkt mit
+Fahrzeugen und Sensornetzen interagieren zu lassen. Eine solche Integration würde
+es erlauben, nicht nur Ampelanlagen, sondern das gesamte Verkehrssystem koordiniert
+und adaptiv zu steuern. Besonders die Kommunikation zwischen Agenten und
+Fahrzeugen könnte einen entscheidenden Beitrag zur Vermeidung von Staus,
+zur Reduktion von Emissionen und zur Erhöhung der Verkehrssicherheit leisten.
+
+\textbf{Zusammenfassend} liefert die Arbeit einen klaren Hinweis darauf, dass Deep-RL-
+gestützte Verkehrssteuerungen langfristig einen wichtigen Beitrag zur Reduktion von
+Staus, Wartezeiten und Emissionen leisten können. Damit stellen sie einen relevanten
+Baustein für die Gestaltung zukünftiger, nachhaltiger und effizienter urbaner Mobilität dar.
+Zentral bleibt jedoch die Weiterentwicklung in drei Bereichen: \textit{Generalisierungsfähigkeit},
+\textit{Hyperparameter-Optimierung} und \textit{praxisnahe Sensordaten}. Erst deren Kombination,
+in Verbindung mit der Einbindung von kooperativen Agentensystemen und vernetzten
+Fahrzeugen, wird den Übergang von simulationsbasierten Ansätzen zu robusten
+Realweltanwendungen im Sinne einer intelligenten und vernetzten Mobilität ermöglichen.
 
 % Anhang
 \include{chapters/appendix.tex}
 
 \printbibliography
+
+\printglossaries
+
 
 \end{document}

@@ -1,0 +1,121 @@
+% glossar.tex
+
+% --- Allgemeine Begriffe ---
+\newglossaryentry{reinforcementlearning}{%
+    name={Reinforcement Learning (RL)},%
+    description={Ein Teilgebiet des maschinellen Lernens, bei dem ein Agent durch Interaktion mit einer Umgebung lernt, Entscheidungen zu treffen, um eine kumulative Belohnung zu maximieren.}%
+}
+
+\newglossaryentry{agent}{%
+    name={Agent},%
+    description={Eine Entscheidungsinstanz im Reinforcement Learning, die in der Umgebung handelt, Beobachtungen verarbeitet und eine Policy befolgt.}%
+}
+
+\newglossaryentry{policy}{%
+    name={Policy},%
+    description={Eine Strategie oder Abbildung, die festlegt, welche Aktion ein Agent in einem gegebenen Zustand ausführt.}%
+}
+
+\newglossaryentry{rewardfunction}{%
+    name={Reward-Funktion},%
+    description={Eine Funktion, die dem Agenten Rückmeldung über die Qualität einer Aktion gibt und das Lernen steuert. In dieser Arbeit wurden verschiedene Varianten untersucht (z.\,B. Diff-Waiting-Time, Queue, Real-World, Emissionen).}%
+}
+
+\newglossaryentry{episode}{%
+    name={Episode},%
+    description={Eine vollständige Simulationseinheit, bestehend aus einer Sequenz von Zeitschritten vom Start bis zur Terminierung.}%
+}
+
+\newglossaryentry{seed}{%
+    name={Seed},%
+    description={Startwert für Zufallszahlengeneratoren, der die Reproduzierbarkeit von Experimenten sicherstellt.}%
+}
+
+\newglossaryentry{hyperparameter}{%
+    name={Hyperparameter},%
+    description={Parameter, die das Lernverhalten eines Modells steuern, z.\,B. Lernrate, Discount-Faktor oder Explorationsparameter.}%
+}
+
+% --- Methoden und Algorithmen ---
+\newacronym{ppo}{PPO}{Proximal Policy Optimization}
+\newacronym{rl}{RL}{Reinforcement Learning}
+\newacronym{cpu}{CPU}{Central Processing Unit}
+\newacronym{gpu}{GPU}{Graphics Processing Unit}
+
+\newglossaryentry{populationbased}{%
+    name={Population-Based Training},%
+    description={Ein Verfahren zur automatisierten Anpassung von Hyperparametern, bei dem mehrere Modelle parallel trainiert und Parameter zwischen erfolgreichen Modellen ausgetauscht werden.}%
+}
+
+\newglossaryentry{bayesianopt}{%
+    name={Bayesian Optimization},%
+    description={Ein Verfahren zur Hyperparameter-Optimierung, das auf probabilistischen Modellen basiert und gezielt vielversprechende Konfigurationen auswählt.}%
+}
+
+% --- Simulation und Daten ---
+\newglossaryentry{SUMO}{%
+    name={SUMO},%
+    description={Simulation of Urban MObility, eine quelloffene mikroskopische Verkehrssimulationssoftware, die das Verhalten einzelner Fahrzeuge in Straßennetzen abbildet.}%
+}
+
+\newglossaryentry{OSM}{%
+    name={OpenStreetMap (OSM)},%
+    description={Ein kollaboratives Projekt, das Geodaten frei zur Verfügung stellt und als Grundlage für die Straßennetze in dieser Arbeit diente.}%
+}
+
+\newglossaryentry{Karlsruhe}{%
+    name={Karlsruhe},%
+    description={Die in dieser Arbeit verwendete Fallstudien-Stadt. Das Straßennetz basierte auf OpenStreetMap-Daten.}%
+}
+
+% --- Verkehrssteuerung ---
+\newglossaryentry{trafficlight}{%
+    name={Lichtsignalanlage},%
+    description={Eine Ampelanlage, die den Verkehr an Knotenpunkten regelt. In dieser Arbeit Zielsystem für die Optimierung.}%
+}
+
+\newglossaryentry{fixedtime}{%
+    name={Fixed-Time},%
+    description={Eine klassische Steuerungsstrategie, bei der feste Signalzeiten für Grün- und Rotphasen verwendet werden. Diente als Baseline in den Experimenten.}%
+}
+
+\newglossaryentry{actuated}{%
+    name={Actuated Control},%
+    description={Eine dynamische Steuerung von Lichtsignalanlagen basierend auf Sensordaten. Diente als zweite Baseline, erwies sich jedoch in den Experimenten als ineffizient.}%
+}
+
+\newglossaryentry{queue}{%
+    name={Queue},%
+    description={Stausituation im Verkehr, gemessen als Anzahl der stoppenden Fahrzeuge. Gleichzeitig eine Reward-Funktion in den Experimenten.}%
+}
+
+\newglossaryentry{waitingtime}{%
+    name={Wartezeit},%
+    description={Die Zeit, die Fahrzeuge im Netz stillstehen oder stark verlangsamt sind.}%
+}
+
+\newglossaryentry{teleportation}{%
+    name={Teleportation},%
+    description={Eine in SUMO vorkommende Notfallmaßnahme, bei der Fahrzeuge versetzt werden, wenn sie in Deadlocks oder unrealistischen Situationen feststecken.}%
+}
+
+\newglossaryentry{deadlock}{%
+    name={Deadlock},%
+    description={Eine Verkehrssituation, in der sich Fahrzeuge gegenseitig blockieren und kein Fortschritt mehr möglich ist.}%
+}
+
+% --- Zukunftsperspektiven ---
+\newglossaryentry{connectedvehicles}{%
+    name={Connected Vehicles},%
+    description={Fahrzeuge, die über drahtlose Kommunikation Daten mit Infrastruktur oder anderen Fahrzeugen austauschen können.}%
+}
+
+\newglossaryentry{autonomousvehicles}{%
+    name={Autonome Fahrzeuge},%
+    description={Fahrzeuge, die ohne menschliche Steuerung im Verkehr agieren und Entscheidungen selbstständig treffen.}%
+}
+
+\newglossaryentry{smartcity}{%
+    name={Smart City},%
+    description={Ein Konzept für Städte, die Informations- und Kommunikationstechnologien nutzen, um Effizienz, Nachhaltigkeit und Lebensqualität zu verbessern.}%
+}
