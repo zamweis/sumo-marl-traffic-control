@@ -8,22 +8,22 @@ Mit dem Aufkommen neuer Technologien und wachsender Mobilitätsdaten entstehen z
 
 \subsection{Simulation urbaner Mobilität mit SUMO}
 
-\textit{SUMO} ist ein quelloffener,  Verkehrs-Simulator, der ursprünglich vom \gls{dlr} entwickelt wurde. \cite{sumo-doc} SUMO erlaubt die detaillierte Modellierung individueller Fahrzeuge, Straßeninfrastruktur, Ampelschaltungen sowie Fahrverhalten. \cite{sumo-doc, Sumo-git, Sumo-Publikation}
+\textit{SUMO} ist ein quelloffener,  Verkehrs-Simulator, der ursprünglich vom \gls{dlr} entwickelt wurde. SUMO erlaubt die detaillierte Modellierung individueller Fahrzeuge, Straßeninfrastruktur, Ampelschaltungen sowie Fahrverhalten. \cite{sumo-doc, Sumo-git, Sumo-Publikation}
 
-Besonders relevant für diese Arbeit sind folgende Merkmale\cite{sumo-doc}:
+Besonders relevant für diese Arbeit sind folgende Merkmale:
 
 \begin{itemize}
     \item \textbf{Mikroskopische Modellierung:} Jedes Fahrzeug wird als individuelles Objekt simuliert. Parameter wie Geschwindigkeit, Abstand oder Spurwechselverhalten sind individuell konfigurierbar.
-    \item \textbf{Flexible Netzdefinition:} Verkehrsnetze lassen sich aus OpenStreetMap-Daten sowie aus \gls{shapefiles} oder \gls{visum}-Modellen mit dem Tool \gls{netconvert} erzeugen. \cite{netconvert} Netzdateien können auch mit \texttt{netedit} visuell editiert werden.
+    \item \textbf{Flexible Netzdefinition:} Verkehrsnetze lassen sich aus OpenStreetMap-Daten sowie aus \gls{shapefiles} oder \gls{visum}-Modellen mit dem Tool \gls{netconvert} erzeugen. Netzdateien können auch mit \texttt{netedit} visuell editiert werden. \cite{netconvert} 
     \item \textbf{Nachfragegenerierung:} Fahrpläne und Routen lassen sich mit Tools wie \gls{randomtrips} oder \gls{duarouter} erzeugen, basierend auf statistischen oder echten \gls{od}. \cite{randomTrips,duarouter}
     \item \textbf{Multimodalität:} SUMO unterstützt neben \gls{pkw} auch Busse, Fahrräder, Fußgänger sowie den öffentlichen Nahverkehr. Ampeln können für alle Verkehrsarten gleichzeitig modelliert werden.
-    \item \textbf{Emissionsmodellierung:} Mit Hilfe von integrierten \gls{hbefa}-Tabellen (Version 4)\cite{Sumo-HBEFA} kann SUMO CO\textsubscript{2}-, NO\textsubscript{x}- und Feinstaubemissionen simulieren und ausgeben.
+    \item \textbf{Emissionsmodellierung:} Mit Hilfe von integrierten \gls{hbefa}-Tabellen (Version 4) kann SUMO CO\textsubscript{2}-, NO\textsubscript{x}- und Feinstaubemissionen simulieren und ausgeben. \cite{Sumo-HBEFA}
     \item \textbf{Steuerbare Ampelanlagen:} Lichtsignalanlagen können sowohl mit festen Programmen als auch dynamisch über die \gls{traci}-Schnittstelle gesteuert werden.
     \item \textbf{Reproduzierbarkeit und Kontrolle:} SUMO ist vollständig deterministisch, was es ideal für kontrollierte Experimente und das Training von KI-Agenten macht.
     \item \textbf{Visualisierung und Debugging:} Die SUMO-\gls{gui} und das Tool \gls{netedit} ermöglichen eine grafische Darstellung von Netz, Fahrzeugen, Ampelphasen und Simulationsergebnissen.
 \end{itemize}
 
-Ein zentrales Element für externe Steuerungsexperimente ist das TraCI\cite{sumo-doc}.
+Ein zentrales Element für externe Steuerungsexperimente ist das TraCI.
 Dabei handelt es sich um eine \gls{tcp}-basierte Client-Server-Schnittstelle,
 über die laufende SUMO-Simulationen in Echtzeit beeinflusst werden können.
 TraCI erlaubt nicht nur das Abfragen von Zustandsgrößen wie Position, Geschwindigkeit
@@ -31,7 +31,7 @@ oder Warteschlangenlänge von Fahrzeugen, sondern auch das aktive Eingreifen,
 etwa durch Phasenwechsel an Lichtsignalanlagen oder die Modifikation von Routen.
 Dadurch wird SUMO zu einer interaktiven Umgebung, die sich ideal
 für Reinforcement-Learning-Anwendungen eignet, da Agenten ihre Aktionen direkt
-auf den Verkehrsfluss auswirken können und unmittelbares Feedback erhalten. \cite{TraCI}
+auf den Verkehrsfluss auswirken können und unmittelbares Feedback erhalten. \cite{TraCI, sumo-doc}
 \label{sec:TraCI}
 
 
@@ -52,7 +52,7 @@ Ein RL-Prozess wird typischerweise als \gls{mdp} beschrieben und besteht aus fol
 
 Der Agent interagiert wiederholt mit der Umgebung, beobachtet Zustände, wählt Aktionen, erhält Belohnungen und gelangt in neue Zustände. Durch diese Rückkopplung lernt er, langfristig optimale Entscheidungen zu treffen.
 
-In dieser Arbeit wird ausschließlich \textbf{\gls{ppo}} \cite{Proximal_Policy_Optimization} eingesetzt, ein policy-basierter RL-Algorithmus, der für seine Stabilität und Effizienz bei kontinuierlichen Interaktionen mit komplexen Umgebungen bekannt ist. Andere RL-Verfahren (z. B. \gls{qlearning} oder \gls{dqn}) wurden nicht berücksichtigt.
+In dieser Arbeit wird ausschließlich \gls{ppo} eingesetzt, ein policy-basierter RL-Algorithmus, der für seine Stabilität und Effizienz bei kontinuierlichen Interaktionen mit komplexen Umgebungen bekannt ist. \cite{Proximal_Policy_Optimization} Andere RL-Verfahren (z. B. \gls{qlearning} oder \gls{dqn}) wurden nicht berücksichtigt.
 
 \subsection{SUMO-RL: Architektur und Funktionalität}
 

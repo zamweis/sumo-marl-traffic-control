@@ -5,14 +5,14 @@ Nach Abschluss der Netzbereinigung, der strukturellen Validierung und der Identi
 
 \subsubsection{Gesamtsystem und Architektur}
 
-Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt, bei dem jede signalgesteuerte Kreuzung durch einen eigenständigen Agenten repräsentiert wird. Die Interaktion erfolgt über das TraCI-Protokoll \cite{TraCI} von SUMO \cite{sumo-doc}, das eine Echtzeitkommunikation zwischen Simulator und RL-Agenten ermöglicht. Die zentrale Steuerung und das Training der Agenten basiert auf der RL-Bibliothek \texttt{Stable-Baselines3} \cite{Stable-Baselines3}, konkret dem Algorithmus \texttt{Proximal Policy Optimization (PPO) \cite{PPO}}. \cite{sumo-rl_docs}
+Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt, bei dem jede signalgesteuerte Kreuzung durch einen eigenständigen Agenten repräsentiert wird. Die Interaktion erfolgt über das TraCI-Protokoll von SUMO, das eine Echtzeitkommunikation zwischen Simulator und RL-Agenten ermöglicht. Die zentrale Steuerung und das Training der Agenten basiert auf der RL-Bibliothek \texttt{Stable-Baselines3}, konkret dem Algorithmus \texttt{PPO}. \cite{sumo-rl_docs, TraCI, sumo-doc,Stable-Baselines3}
 
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[node distance=1cm]
 
         \node[box] (sim) {Verkehrssimulation\\\textbf{SUMO + TraCI}};
-        \node[box, below=of sim] (mae) {\gls{mae}\\\texttt{sumo-rl.parallel\_env} + \texttt{emissions\_with\_speed\_reward}};
+        \node[box, below=of sim] (mae) {\gls{mae}\\\texttt{sumo-rl.parallel\_env} + \texttt{reward\_fn}};
         \node[box, below=of mae] (wrap) {SuperSuit Wrappers\\\texttt{- pad\_obs / pad\_actions}\\\texttt{- pettingzoo\_to\_vec\_env}\\\texttt{- concat\_vec\_envs}};
         \node[box, below=of wrap] (vec) {\gls{vecnormalize} + \gls{vecmonitor}\\(Stable-Baselines3)};
         \node[box, below=of vec] (ppo) {PPO Agent (Stable-Baselines3)\\\texttt{- MLPPolicy}\\\texttt{- Schedules: LR (cosine warmup), Clip (cosine)}};
@@ -31,7 +31,7 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
     \label{fig:rl_architektur}
 \end{figure}
 
-Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} \cite{PettingZoo} und \gls{supersuit} \cite{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes \gls{api} für Multiagenten-Umgebungen bereit, analog zu \texttt{Gymnasium} \cite{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist.
+Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo}  und \gls{supersuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes \gls{api} für Multiagenten-Umgebungen bereit, analog zu \texttt{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist. \cite{PettingZoo, SuperSuit Gymnasium}
 
 \subsubsection{Agentenzuordnung im Multiagentensystem}
 Jede steuerbare Lichtsignalanlage (TLS) wird einem eindeutigen Agenten zugeordnet.
@@ -103,7 +103,7 @@ Das Training der Agenten erfolgte mittels \texttt{PPO}, wobei folgende Hyperpara
 \end{itemize}
 
 
-Beobachtungen und Rewards wurden über \texttt{VecNormalize} \cite{VecNormalize} normalisiert (\texttt{clip\_obs = 10.0}, \texttt{clip\_reward = 10.0}, \texttt{norm\_obs = True}, \texttt{norm\_reward = True}), die Umgebung zusätzlich mit \texttt{VecMonitor} \cite{VecMonitor} überwacht (\texttt{monitor.csv}). Pro Seed wurden $2\cdot10^6$ Trainingsschritte durchgeführt.
+Beobachtungen und Rewards wurden über \texttt{VecNormalize} normalisiert (\texttt{clip\_obs = 10.0}, \texttt{clip\_reward = 10.0}, \texttt{norm\_obs = True}, \texttt{norm\_reward = True}), die Umgebung zusätzlich mit \texttt{VecMonitor} überwacht (\texttt{monitor.csv}). Pro Seed wurden $2\cdot10^6$ Trainingsschritte durchgeführt. \cite{VecMonitor, VecNormalize} 
 
 
 Die Trainingsdauer pro Seed betrug im Mittel 2~Stunden für $2\cdot10^6$ Schritte
@@ -154,7 +154,7 @@ Dieses setzt direkt auf den Mechanismen von Stable-Baselines3 auf und umfasst:
 \end{itemize}
 
 \paragraph{Geloggte Metriken.}
-Alle relevanten Metriken werden zusätzlich im CSV-Format und über TensorBoard \cite{TensorBoard} erfasst.
+Alle relevanten Metriken werden zusätzlich im CSV-Format und über TensorBoard erfasst. \cite{TensorBoard} 
 Die wichtigsten überwachten Größen sind:
 
 \begin{itemize}

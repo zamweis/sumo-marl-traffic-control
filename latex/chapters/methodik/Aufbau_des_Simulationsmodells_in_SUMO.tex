@@ -2,19 +2,19 @@
 
 \subsubsection{Netzgenerierung}
 
-Zur Modellierung des realen Straßennetzes wurde ein Kartenausschnitt des Untersuchungsgebiets über die Exportfunktion von OpenStreetMap \cite{osm-export} heruntergeladen und anschließend mit JOSM \cite{josm} bereinigt. Der Ausschnitt umfasst die Reinhold-Frank-Straße sowie angrenzende Hauptverkehrsachsen im Bereich des Mühlburger Tors. Der bearbeitete Kartenausschnitt wurde mit dem SUMO-Werkzeug \texttt{netconvert} \cite{sumo-tools} in ein \gls{xml}-Netzwerkformat überführt. Dabei kamen Optionen zur Einsatz um das Netz stabiler zu machen(z.\,B. \texttt{--junctions.join}). \cite{sumo-doc}
+Zur Modellierung des realen Straßennetzes wurde ein Kartenausschnitt des Untersuchungsgebiets über die Exportfunktion von OpenStreetMap heruntergeladen und anschließend mit JOSM bereinigt. Der Ausschnitt umfasst die Reinhold-Frank-Straße sowie angrenzende Hauptverkehrsachsen im Bereich des Mühlburger Tors. Der bearbeitete Kartenausschnitt wurde mit dem SUMO-Werkzeug \texttt{netconvert}  in ein \gls{xml}-Netzwerkformat überführt. Dabei kamen Optionen zur Einsatz um das Netz stabiler zu machen(z.\,B. \texttt{--junctions.join}). \cite{sumo-doc, josm, ,sumo-tools, osm-export}
 
 \subsubsection{Erzeugung von Fahrzeugflüssen}
 
-Für die Simulation wurden zwei Ansätze genutzt. Zunächst entstanden mit dem SUMO-Skript \texttt{randomTrips.py} \cite{randomTrips} einfache Testflüsse, die zur Validierung des Netzmodells dienten. Anschließend wurden auf Basis realer Verkehrszähldaten (siehe Kapitel \ref{sec:zaehlstellen-karlsruhe}) Flussprofile definiert, welche die beobachteten DTV-Werte proportional auf die äußeren Zufahrtskanten verteilten. Hauptachsen wie B10 oder B36 erhielten dabei ein höheres Gewicht. Die daraus erzeugten Routendateien wurden mit \texttt{duarouter} \cite{duarouter} zu konfliktfreien Fahrten verarbeitet. Unterschiedliche Szenarien (niedrige Last, normale Last, hohe Last) erlaubten die Abbildung verschiedener Verkehrslagen.
+Für die Simulation wurden zwei Ansätze genutzt. Zunächst entstanden mit dem SUMO-Skript \texttt{randomTrips.py} einfache Testflüsse, die zur Validierung des Netzmodells dienten. Anschließend wurden auf Basis realer Verkehrszähldaten (siehe Kapitel \ref{sec:zaehlstellen-karlsruhe}) Flussprofile definiert, welche die beobachteten DTV-Werte proportional auf die äußeren Zufahrtskanten verteilten. Hauptachsen wie B10 oder B36 erhielten dabei ein höheres Gewicht. Die daraus erzeugten Routendateien wurden mit \texttt{duarouter} zu konfliktfreien Fahrten verarbeitet. Unterschiedliche Szenarien (niedrige Last, normale Last, hohe Last) erlaubten die Abbildung verschiedener Verkehrslagen.
 
 \subsubsection{Identifikation relevanter Zufahrtskanten}
 
-Die Auswahl geeigneter Zufahrtskanten basierte auf den äußeren Hauptverkehrsachsen (u.\,a. B10, B36, L605, Durlacher Allee). Hierzu wurde ein \hyperref[app:find_relevant_edges]{Python-Skript} eingesetzt, das Kanten mit einem \texttt{name}-Attribut automatisch durchsucht und auf relevante Straßennamen prüfte (z.\,B. \texttt{"B10"}, \texttt{"Reinhold-Frank-Straße"}). Die Ergebnisse wurden manuell überprüft und in \texttt{netedit} \cite{netedit} ergänzt. Die so extrahierten Kanten wurden je Verkehrsachse gruppiert und dienten als Grundlage für die segmentierte Trip-Erzeugung.
+Die Auswahl geeigneter Zufahrtskanten basierte auf den äußeren Hauptverkehrsachsen (u.\,a. B10, B36, L605, Durlacher Allee). Hierzu wurde ein \hyperref[app:find_relevant_edges]{Python-Skript} eingesetzt, das Kanten mit einem \texttt{name}-Attribut automatisch durchsucht und auf relevante Straßennamen prüfte (z.\,B. \texttt{"B10"}, \texttt{"Reinhold-Frank-Straße"}). Die Ergebnisse wurden manuell überprüft und in \texttt{netedit} ergänzt. Die so extrahierten Kanten wurden je Verkehrsachse gruppiert und dienten als Grundlage für die segmentierte Trip-Erzeugung.
 
 \subsubsection{Automatisierte Generierung von Trips}
 
-Die DTV-Werte wurden auf die Zufahrtsgruppen skaliert und auf eine Simulationsdauer von 5000\,s verteilt. Ein eigens entwickeltes Python-Skript erzeugte daraus Fahrzeugeinträge (\texttt{<trip>}), die über die ermittelten Zufahrtskanten ins Netz eingespeist wurden. Die Trips wurden im XML-Format gespeichert und mit \texttt{duarouter} in vollständige, konfliktfreie Routen (\texttt{<route>}) überführt. Dabei wurde die Gesamtanzahl stündlich extrapoliert und stark belastete Achsen (z.\,B. B10, L605) mit entsprechend höherem Anteil berücksichtigt. Die erzeugten Flüsse wurden durch Detektor-Ausgaben (u.\,a. \texttt{\gls{laneareadetector}}) \cite{sumo-doc} überprüft und bei Bedarf angepasst.
+Die DTV-Werte wurden auf die Zufahrtsgruppen skaliert und auf eine Simulationsdauer von 5000\,s verteilt. Ein eigens entwickeltes Python-Skript erzeugte daraus Fahrzeugeinträge (\texttt{<trip>}), die über die ermittelten Zufahrtskanten ins Netz eingespeist wurden. Die Trips wurden im XML-Format gespeichert und mit \texttt{duarouter} in vollständige, konfliktfreie Routen (\texttt{<route>}) überführt. Dabei wurde die Gesamtanzahl stündlich extrapoliert und stark belastete Achsen (z.\,B. B10, L605) mit entsprechend höherem Anteil berücksichtigt. Die erzeugten Flüsse wurden durch Detektor-Ausgaben (u.\,a. \texttt{\gls{laneareadetector}}) berprüft und bei Bedarf angepasst.
 
 \subsubsection{Validierung des Netzmodells}
 
@@ -42,7 +42,7 @@ Diese Szenarien ermöglichen eine Überprüfung der Netzdurchlässigkeit und der
 
 \subsubsection{Signalsteuerung und Simulationsparameter}
 
-Für das Reinforcement-Learning-Setup wurden die TLS so konfiguriert, dass sie in SUMO als „aktuiert“\footnote{„Aktuiert“ bedeutet in SUMO, dass die Signalanlagen nicht strikt einem festen Schaltplan folgen, sondern dynamisch mit Hilfe von Detektoren oder externen Eingaben reagieren können.Im Rahmen dieser Arbeit erfolgt die Steuerung ausschließlich über das \texttt{TraCI}-Interface.} \cite{sumo-doc} initialisiert und anschließend direkt durch das RL-Modul über \texttt{TraCI} gesteuert werden konnten \cite{sumo-rl_docs}.
+Für das Reinforcement-Learning-Setup wurden die TLS so konfiguriert, dass sie in SUMO als „aktuiert“\footnote{„Aktuiert“ bedeutet in SUMO, dass die Signalanlagen nicht strikt einem festen Schaltplan folgen, sondern dynamisch mit Hilfe von Detektoren oder externen Eingaben reagieren können.}  initialisiert und anschließend direkt durch das RL-Modul über \texttt{TraCI} gesteuert werden konnten. \cite{sumo-rl_docs, sumo-doc}
 
 
 Die Simulation wurde mit folgenden Parametern durchgeführt:

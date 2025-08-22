@@ -5,23 +5,23 @@
 
 Das Verkehrsnetz für die Simulation basiert auf öffentlich verfügbaren Geodaten der Plattform OpenStreetMap (OSM). OSM bietet eine frei zugängliche, kollaborativ gepflegte Datenbank, die detaillierte Informationen zu Straßenverläufen, Kreuzungen, Fahrspuren, Tempolimits und teilweise zu Ampelanlagen enthält. Diese Eigenschaften machen OSM zu einer geeigneten Grundlage für Verkehrssimulationen mit SUMO. \cite{osm, osm-git}
 
-Zur Erstellung des Netzes wurde ein Ausschnitt des Straßennetzes der Stadt Karlsruhe exportiert, der einen stark frequentierten urbanen Bereich mit mehreren signalgesteuerten Kreuzungen umfasst. Der betrachtete Bereich liegt zwischen 49{,}00738,\textdegree{}N und 49{,}01523,\textdegree{}N sowie 8{,}38589,\textdegree{}E und 8{,}40050,\textdegree{}E und deckt unter anderem die Reinhold-Frank-Straße, das Mühlburger Tor und angrenzende Hauptverkehrsachsen ab. Der Export erfolgte als \texttt{.osm}-Datei über den Geofabrik-Downloaddienst bzw. mit dem Tool \gls{josm}. \cite{osm-export, josm} Die anschließende Konvertierung in das SUMO-Format erfolgte mit dem Programm \texttt{netconvert} (Version 1.19.0), einem Teil der SUMO-Toolchain. \cite{sumo-tools} Hierbei wurden relevante Parameter wie Straßentypen, Fahrspuren, Prioritäten und erlaubte Abbiegevorgänge berücksichtigt. Als Typemap kam \texttt{osmNetconvert.typ.xml} \cite{netconvert} zum Einsatz, um realitätsnahe Geschwindigkeiten und Fahrspuren zuzuweisen.
+Zur Erstellung des Netzes wurde ein Ausschnitt des Straßennetzes der Stadt Karlsruhe exportiert, der einen stark frequentierten urbanen Bereich mit mehreren signalgesteuerten Kreuzungen umfasst. Der betrachtete Bereich liegt zwischen 49{,}00738,\textdegree{}N und 49{,}01523,\textdegree{}N sowie 8{,}38589,\textdegree{}E und 8{,}40050,\textdegree{}E und deckt unter anderem die Reinhold-Frank-Straße, das Mühlburger Tor und angrenzende Hauptverkehrsachsen ab. Der Export erfolgte als \texttt{.osm}-Datei über den Geofabrik-Downloaddienst bzw. mit dem Tool \gls{Josm}. \cite{osm-export, josm} Die anschließende Konvertierung in das SUMO-Format erfolgte mit dem Programm \texttt{netconvert} (Version 1.19.0), einem Teil der SUMO-Toolchain. \cite{sumo-tools} Hierbei wurden relevante Parameter wie Straßentypen, Fahrspuren, Prioritäten und erlaubte Abbiegevorgänge berücksichtigt. Als Typemap kam \texttt{osmNetconvert.typ.xml} zum Einsatz, um realitätsnahe Geschwindigkeiten und Fahrspuren zuzuweisen.
 
-Das resultierende Verkehrsnetz umfasst 1.379 definierte Knotenpunkte (\textit{junctions}), 1.919 Straßenkanten (\textit{edges}) sowie insgesamt 5.310 modellierte Fahrstreifen (\textit{lanes}). \cite{netedit} Darüber hinaus konnten 17 signalgesteuerte Kreuzungen mit Lichtsignalanlagen (\textit{traffic lights}) identifiziert (siehe Algorithmus~\ref{alg:find_valid_tls}) werden, die als Steuerungspunkte für das spätere Training der Reinforcement-Learning-Agenten dienen.
+Das resultierende Verkehrsnetz umfasst 1.379 definierte Knotenpunkte (\textit{junctions}), 1.919 Straßenkanten (\textit{edges}) sowie insgesamt 5.310 modellierte Fahrstreifen (\textit{lanes}). Darüber hinaus konnten 17 signalgesteuerte Kreuzungen mit Lichtsignalanlagen (\textit{traffic lights}) identifiziert (siehe Algorithmus~\ref{alg:find_valid_tls}) werden, die als Steuerungspunkte für das spätere Training der Reinforcement-Learning-Agenten dienen.
 
-Zusätzliche Informationen wie Ampeldefinitionen und Vorfahrtsregeln manuell über das Tool \texttt{netedit} \cite{netedit} ergänzt oder angepasst, um die Netzrealität weiter zu verfeinern. Dabei wurden insbesondere fehlerhafte Knotenbeziehungen bereinigt sowie isolierte Netzteile entfernt. Die finale \texttt{.net.xml}-Datei bildet die topologische und funktionale Grundlage für alle weiteren Simulationsschritte.
+Zusätzliche Informationen wie Ampeldefinitionen und Vorfahrtsregeln manuell über das Tool \texttt{netedit} ergänzt oder angepasst, um die Netzrealität weiter zu verfeinern. Dabei wurden insbesondere fehlerhafte Knotenbeziehungen bereinigt sowie isolierte Netzteile entfernt. Die finale \texttt{.net.xml}-Datei bildet die topologische und funktionale Grundlage für alle weiteren Simulationsschritte.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{images/karlsruhe_net.png}
-    \caption{Visualisierung des aus OSM generierten SUMO-Netzes (\gls{sumogui} \cite{Sumo-Gui}).}
+    \caption{Visualisierung des aus OSM generierten SUMO-Netzes (\gls{sumogui}).}
     \label{fig:sumo_network}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{images/karlsruhe_osm.png}
-    \caption{Screenshot des ursprünglichen OpenStreetMap-Ausschnitts (OpenStreetMap \cite{osm}).}
+    \caption{Screenshot des ursprünglichen OpenStreetMap-Ausschnitts (OpenStreetMap).}
     \label{fig:osm_screenshot}
 \end{figure}
 
@@ -101,7 +101,7 @@ Diese Messwerte stimmen gut mit den aus den äußeren Zufahrtsachsen abgeleitete
 Diese externen Zuflüsse bilden die Grundlage für realistische Eingangsströme in der Simulation. Sie versorgen das Untersuchungsgebiet direkt und ergeben ein plausibles Verkehrsaufkommen von etwa 20.000 bis 40.000 Fahrzeugen pro Tag, was mit den Messungen in der Reinhold-Frank-Straße übereinstimmt.
 
 Die Zähldaten erlauben es, die Fahrzeugströme in SUMO proportional zu den realen Verhältnissen abzubilden und unterstützen zugleich die spätere Kalibrierung und Validierung der Szenarien.
-\subsubsection{Kommerzielle APIs: TomTom, Google Maps}\cite{googlemaps, tomtom}
+\subsubsection{Kommerzielle APIs: TomTom, Google Maps}
 
 Ergänzend zu den öffentlichen Datenquellen bieten kommerzielle Anbieter wie TomTom und Google über Programmierschnittstellen (APIs) hochaufgelöste Echtzeit- und Historikdaten an. Diese umfassen unter anderem:
 
@@ -113,7 +113,7 @@ Ergänzend zu den öffentlichen Datenquellen bieten kommerzielle Anbieter wie To
 
 Der Zugriff auf diese APIs ist in der Regel kostenpflichtig oder durch Nutzungsbeschränkungen limitiert. Sie ermöglichen eine deutlich feinere zeitliche und räumliche Auflösung, was für die Modellierung und spätere Optimierung des Verkehrsflusses mittels KI von Vorteil sein könnte.
 
-Für die vorliegende Arbeit wurden diese kommerziellen Angebote nicht genutzt. Die Modellierung basiert ausschließlich auf offenen Datenquellen wie OSM sowie auf Google Maps für einzelne Standortrecherchen.
+Für die vorliegende Arbeit wurden diese kommerziellen Angebote nicht genutzt. Die Modellierung basiert ausschließlich auf offenen Datenquellen wie OSM sowie auf Google Maps für einzelne Standortrecherchen. \cite{googlemaps, tomtom}
 
 \subsection{Modellierung der Ampelschaltungen}
 
@@ -127,4 +127,4 @@ Eine eigene systematische Erfassung der Schaltzeiten wäre zwar prinzipiell mög
 
 \subsubsection{Vereinfachte Modellierung}
 
-Aus diesen Gründen wurde anfangs auf eine synthetische Modellierung zurückgegriffen. Mittels netgenerate \cite{netgenerate} wurde ein synthetisches Netz generiert und abenfalls testweise Modelle trainiert. Dies erwies sich als sehr simpel, wegen geringer Komplexität. SUMO bietet hierfür die Möglichkeit, sogenannte \texttt{tlLogic}-Blöcke manuell oder automatisch zu definieren, die verschiedene Phasenfolgen und Zeitparameter enthalten. In der vorliegenden Arbeit wurde auf Standardampelprogramme zurückgegriffen, wie sie in SUMO generisch verwendet werden, um testweise eine vereinfachte Lichtsignalsteuerung zu modellieren. Diese erlaubt die spätere Umsetzung des realen karlsruher Netzes. \cite{Sumo-tls}
+Aus diesen Gründen wurde anfangs auf eine synthetische Modellierung zurückgegriffen. Mittels netgenerate wurde ein synthetisches Netz generiert und abenfalls testweise Modelle trainiert. Dies erwies sich als sehr simpel, wegen geringer Komplexität. SUMO bietet hierfür die Möglichkeit, sogenannte \texttt{tlLogic}-Blöcke manuell oder automatisch zu definieren, die verschiedene Phasenfolgen und Zeitparameter enthalten. In der vorliegenden Arbeit wurde auf Standardampelprogramme zurückgegriffen, wie sie in SUMO generisch verwendet werden, um testweise eine vereinfachte Lichtsignalsteuerung zu modellieren. Diese erlaubt die spätere Umsetzung des realen karlsruher Netzes. \cite{Sumo-tls,netgenerate}

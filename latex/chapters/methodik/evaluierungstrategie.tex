@@ -5,6 +5,59 @@ Zur Bewertung der trainierten Modelle wird ein systematischer, skriptbasierter E
 Dabei wird stets dasselbe, bereinigte Verkehrsnetz (\texttt{map.net.xml}) verwendet, um die Vergleichbarkeit zu gewährleisten. Variiert werden Signalsteuerung, Routenbelegung und Seeds.
 Statische Baselines werden direkt im Evaluationslauf mitgeführt (fester Phasenplan und aktuiert).
 
+\subsubsection{Architektur}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=6mm]
+
+  % --- Kopf ---
+  \node[box-small] (cfg) {Config\\\scriptsize RUNS, SCENARIOS, N\_EPISODES, SEEDS};
+
+  \node[box-small, below=of cfg] (loops) {Schleifen\\\scriptsize for scenario \& for episode};
+
+  % --- Drei Pfade nebeneinander ---
+  \node[box-small, below=10mm of loops, xshift=-50mm] (fix_env) {Baseline \textit{fixed-time}\\\scriptsize make\_env\_baseline(True)};
+  \node[box-small, below=of fix_env] (fix_roll) {Rollout\\\scriptsize rollout\_baseline()};
+
+  \node[box-small, below=10mm of loops] (act_env) {Baseline \textit{actuated}\\\scriptsize make\_env\_baseline(False)};
+  \node[box-small, below=of act_env] (act_roll) {Rollout\\\scriptsize rollout\_baseline()};
+
+  \node[box-small, below=10mm of loops, xshift=50mm] (rl_env) {RL (pro Run)\\\scriptsize make\_env()};
+  \node[box-small, below=of rl_env] (rl_load) {Laden\\\scriptsize VecNormalize + PPO};
+  \node[box-small, below=of rl_load] (rl_roll) {Rollout\\\scriptsize deterministisch};
+
+  % --- Sammeln / Loggen ---
+  \node[box-small, below=22mm of act_roll] (metrics) {Metriken\\\scriptsize mean\_* \& total\_*};
+  \node[box-small, below=of metrics] (log) {Logging\\\scriptsize TensorBoard};
+  \node[box-small, below=of log] (save) {Export\\\scriptsize eval\_results.json};
+
+  % --- JSON2CSV ---
+  \node[box-small, below=of save] (csv) {json2csv\\\scriptsize raw.csv, agg.csv, pro Methode};
+
+  % --- Pfeile ---
+  \draw[arrow] (cfg) -- (loops);
+
+  % von loops aus nach links/mitte/rechts
+  \draw[arrow] (loops.west) -| (fix_env.north);
+  \draw[arrow] (loops.south) -- (act_env.north);
+  \draw[arrow] (loops.east) -| (rl_env.north);
+
+  \draw[arrow] (fix_env) -- (fix_roll);
+  \draw[arrow] (act_env) -- (act_roll);
+  \draw[arrow] (rl_env) -- (rl_load) -- (rl_roll);
+
+  \draw[arrow] (fix_roll) |- (metrics.west);
+  \draw[arrow] (act_roll) -- (metrics);
+  \draw[arrow] (rl_roll) |- (metrics.east);
+
+  \draw[arrow] (metrics) -- (log) -- (save) -- (csv);
+
+\end{tikzpicture}
+\caption{Evaluations-Architektur: Szenario/Episode → \{Fixed, Actuated, RL\} → Metriken → Logging → JSON → CSV}
+\label{fig:rl_eval_arch_with_csv}
+\end{figure}
+
+
 \subsubsection{Vergleichsszenarien}
 Die Evaluation der RL-Agenten und der Baselines erfolgt vollautomatisch über \texttt{evaluate.py}.
 Vier Szenarien decken typische Lastprofile ab:

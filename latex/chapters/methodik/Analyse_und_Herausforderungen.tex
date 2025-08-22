@@ -2,7 +2,7 @@
 \subsection{Analyse und Herausforderungen bei der OSM-Netznutzung}
 
 \subsubsection{Grundstruktur von Lichtsignalanlagen in SUMO}
-Bevor die Probleme beim OSM-Import analysiert werden, ist es hilfreich, den Aufbau und die Abhängigkeiten der relevanten XML-Elemente in SUMO \cite{sumo-doc} zu verstehen, insbesondere im Zusammenhang mit der Steuerung von Lichtsignalanlagen.
+Bevor die Probleme beim OSM-Import analysiert werden, ist es hilfreich, den Aufbau und die Abhängigkeiten der relevanten XML-Elemente in SUMO zu verstehen, insbesondere im Zusammenhang mit der Steuerung von Lichtsignalanlagen. \cite{sumo-doc}
 \vspace{0.5cm}
 \begin{figure}[H]
   \centering
@@ -131,7 +131,7 @@ Obwohl diese Optionen wichtige Vorarbeiten leisteten, war ihre Wirkung für das 
 
 \subsubsection{Manuelle Eingriffe und strukturelle Rekonstruktionen}
 
-Neben automatisierten Bereinigungen waren auch gezielte manuelle Anpassungen notwendig. Insbesondere wurden mithilfe von \texttt{netedit} \cite{netedit} einzelne Kreuzungen vollständig neu aufgebaut, um \textbf{Deadlocks zu vermeiden}, die zwar in der realen Verkehrsführung nicht auftreten, jedoch in SUMO durch implizite Abbiegelogiken und Vorrangregeln entstehen können.
+Neben automatisierten Bereinigungen waren auch gezielte manuelle Anpassungen notwendig. Insbesondere wurden mithilfe von \texttt{netedit} einzelne Kreuzungen vollständig neu aufgebaut, um \textbf{Deadlocks zu vermeiden}, die zwar in der realen Verkehrsführung nicht auftreten, jedoch in SUMO durch implizite Abbiegelogiken und Vorrangregeln entstehen können.
 
 Diese Rekonstruktionen erfolgten unter Beibehaltung der realweltlichen Topologie, jedoch mit einer technisch sauberen Definition aller Fahrbeziehungen und Signalisierungen. Damit konnte sichergestellt werden, dass auch komplexere Kreuzungen reproduzierbar, konfliktfrei und steuerbar bleiben.
 

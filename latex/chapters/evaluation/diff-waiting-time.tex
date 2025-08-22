@@ -78,7 +78,7 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
+                height=5cm,
                 enlarge x limits=0.15,
                 ylabel={Mittlere Wartezeit [s]},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
@@ -112,13 +112,13 @@ Die erste Gruppe von RL-Modellen wurde mit einem Reward trainiert, der die Diffe
     \label{fig:diff-waiting-time-wartezeit2}
 \end{figure}
 
-Die mittlere Wartezeit für die Diff-Waiting-Time-Rewardfunktion zeigt erneut deutliche Unterschiede zwischen den Baselines und den trainierten Modellen.
+Die mittlere Wartezeit für die Diff-Waiting-Time-Rewardfunktion verdeutlicht erneut die starken Unterschiede zwischen Baselines und trainierten Modellen.
 
-Die Fixed-Time-Baseline erreicht im morning\_peak 3.74 s, im evening\_peak 4.20 s, im random\_heavy 4.40 s und im uniform-Szenario 3.90 s. Diese Werte bilden eine stabile Referenz. Die Actuated-Baseline fällt dagegen erneut durch extrem hohe Wartezeiten auf: 964 s, 965 s, 1030 s und 935 s in den vier Szenarien.
+Die Fixed-Time-Baseline bewegt sich in allen Szenarien stabil im Bereich von rund vier Sekunden und bietet damit eine verlässliche Referenz. Die Actuated-Baseline fällt dagegen durch extrem hohe Werte im Bereich von rund 900 bis über 1000 Sekunden auf, mehrere Größenordnungen schlechter.
 
-Unter den trainierten Modellen zeigen sich differenzierte Muster. Modell 1 erreicht sehr geringe Werte mit 0.20 s, 4.27 s, 8.90 s und 0.21 s. Modell 2 weist im morning\_peak mit 7.9 s sowie im random\_heavy mit 82 s deutlich höhere Wartezeiten auf, während die Werte im evening\_peak (2.1 s) und im uniform (1.5 s) niedrig bleiben. Modell 3 zeigt ebenfalls inkonsistente Ergebnisse: 2.5 s im morning\_peak, aber 95 s im evening\_peak und 77 s im random\_heavy, während das uniform-Szenario mit 0.4 s vergleichsweise gut abschneidet. Modell 4 erzielt insgesamt die besten Resultate mit 0.11 s, 0.18 s, 33 s und 0.10 s, wenngleich auch hier im random\_heavy ein Anstieg erkennbar ist.
+Die trainierten Modelle schneiden deutlich besser ab, unterscheiden sich jedoch in ihrer Stabilität. Modell 1 erreicht durchweg sehr niedrige Wartezeiten, meist unter fünf Sekunden, nur im stark belasteten Szenario liegen die Werte im einstelligen Sekundenbereich. Modell 2 und Modell 3 zeigen dagegen Ausreißer: Während sie in manchen Szenarien ähnlich gute Resultate erzielen wie Modell 1, steigen die Wartezeiten in anderen Fällen auf mehrere Dutzend bis knapp hundert Sekunden an. Modell 4 liefert insgesamt die besten und konstantesten Ergebnisse, mit Werten um eine Sekunde und lediglich einem moderaten Anstieg im schwierigsten Szenario.
 
-Die erhöhten Mittelwerte in einzelnen Szenarien, insbesondere bei Modell 2 und Modell 3, gehen jeweils mit einer hohen Standardabweichung einher. Dies weist auf eine deutliche Instabilität zwischen den Runs hin und deutet darauf, dass die Modelle zwar vereinzelt effiziente Strategien entwickeln konnten, diese jedoch nicht konsistent reproduziert werden.
+Auffällig ist, dass gerade die Modelle mit Ausreißern auch eine höhere Streuung zwischen den Runs aufweisen. Das deutet darauf hin, dass sie zwar teils sehr effiziente Strategien lernen, diese aber nicht durchgehend stabil reproduzieren können.
 
 \subsubsection{Anzahl stoppender Fahrzeuge}
 In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
@@ -197,7 +197,7 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
                 ybar,
                 bar width=0.25cm,
                 width=12cm,
-                height=8cm,
+                height=5cm,
                 enlarge x limits=0.15,
                 ylabel={Anzahl stoppender Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
@@ -231,15 +231,13 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:diff-waiting-time-stopped2}
 \end{figure}
 
-Die Ergebnisse zur Anzahl stoppender Fahrzeuge zeigen deutliche Unterschiede zwischen den Baselines und den trainierten Modellen.
+Die Ergebnisse zur Anzahl stoppender Fahrzeuge zeigen erneut klare Unterschiede zwischen den Verfahren.
 
-Die Fixed-Time-Baseline erreicht im morning\_peak durchschnittlich 12 Fahrzeuge, im evening\_peak 14 Fahrzeuge, im random\_heavy 27 Fahrzeuge und im uniform-Szenario 10 Fahrzeuge. Diese Werte bilden eine stabile und vergleichsweise effiziente Referenz.
+Die Fixed-Time-Baseline bewegt sich in allen Szenarien auf einem niedrigen zweistelligen Niveau und liefert damit eine stabile und vergleichsweise effiziente Referenz. Demgegenüber produziert die Actuated-Baseline mehrere hundert Stopps pro Episode, im Extremfall fast 900, und bestätigt damit ihre geringe Leistungsfähigkeit auch in dieser Metrik.
 
-Die Actuated-Baseline zeigt dagegen eine massiv erhöhte Zahl an Stopps. So ergeben sich im morning\_peak 539 Fahrzeuge, im evening\_peak 566 Fahrzeuge, im random\_heavy 883 Fahrzeuge und im uniform 442 Fahrzeuge. Damit bestätigt sich auch in dieser Metrik die unzureichende Leistungsfähigkeit der Actuated-Steuerung.
+Die trainierten Modelle erreichen durchweg sehr geringe Werte, meist nur ein bis wenige Fahrzeuge. Besonders Modell 4 sticht hervor, da es in allen Szenarien unterhalb der Fixed-Time-Baseline bleibt. Modell 1 und Modell 2 liegen ebenfalls auf einem sehr niedrigen Niveau, zeigen jedoch im stark belasteten random\_heavy-Szenario einen spürbaren Anstieg. Modell 3 fällt zudem im evening\_peak auf, wo die Zahl der Stopps merklich höher liegt als bei den übrigen Modellen.
 
-Die trainierten Modelle liefern deutlich geringere Werte. Modell 1 erreicht 1.8, 4.1, 6.6 und 1.5 Fahrzeuge in den vier Szenarien. Modell 2 erzielt mit 2.12, 2.1, 17 und 1.2 Fahrzeugen ebenfalls niedrige Werte, allerdings mit einem deutlichen Anstieg im random\_heavy-Szenario. Modell 3 weist Werte von 2.64, 10, 16 und 1.6 Fahrzeugen auf, wobei insbesondere im evening\_peak und im random\_heavy eine Verschlechterung gegenüber den übrigen Szenarien erkennbar ist. Modell 4 erzielt mit 1.4, 1.7, 9.9 und 1.06 Fahrzeugen die insgesamt besten Resultate und bleibt in allen Szenarien unterhalb der Fixed-Time-Baseline.
-
-Die erhöhten Werte bei Modell 2 und Modell 3 im random\_heavy-Szenario gehen mit einer hohen Standardabweichung einher, was auf starke Schwankungen zwischen den Runs hindeutet. Dies verdeutlicht, dass die Modelle zwar in der Lage sind, den Verkehrsfluss erheblich zu verbessern, ihre Robustheit unter unregelmäßigen Verkehrslasten jedoch eingeschränkt bleibt.
+Die erhöhten Werte bei Modell 2 und Modell 3 gehen mit einer größeren Streuung zwischen den Runs einher. Dies deutet darauf hin, dass die Ansätze den Verkehrsfluss zwar insgesamt deutlich verbessern können, ihre Robustheit unter besonders unregelmäßigen Verkehrslasten jedoch eingeschränkt ist.
 
 \subsubsection{Anzahl ankommender Fahrzeuge}
 \label{sec:diff-waiting-time-ankommend}
@@ -397,15 +395,13 @@ Hinsichtlich der Anzahl ankommender Fahrzeuge unterscheiden sich die RL-Modelle 
     \label{fig:diff-waiting-time-running}
 \end{figure}
 
-Die Auswertung des Durchschnitts fahrender Fahrzeuge (weniger ist besser) zeigt deutliche Unterschiede zwischen den Baselines und den trainierten Modellen.
+Die Auswertung der durchschnittlichen Zahl fahrender Fahrzeuge (ein geringerer Wert ist besser) zeigt erneut deutliche Unterschiede zwischen den Verfahren.
 
-Die Fixed-Time-Baseline erreicht im morning\_peak durchschnittlich 63 Fahrzeuge, im evening\_peak 69 Fahrzeuge, im random\_heavy 121 Fahrzeuge und im uniform-Szenario 52 Fahrzeuge. Diese Werte bilden eine stabile Referenz.
+Die Fixed-Time-Baseline bewegt sich in allen Szenarien auf einem stabilen Niveau zwischen rund 50 und 120 Fahrzeugen und bildet damit eine verlässliche Referenz. Die Actuated-Baseline liegt dagegen mit mehreren Hundert Fahrzeugen, im Extremfall fast 900, deutlich darüber und bestätigt so ihre geringe Leistungsfähigkeit.
 
-Die Actuated-Baseline weist deutlich höhere Werte auf, mit 553 Fahrzeugen im morning\_peak, 481 Fahrzeugen im evening\_peak, 900 Fahrzeugen im random\_heavy und 455 Fahrzeugen im uniform-Szenario. Damit bestätigt sich das schwache Abschneiden dieser Steuerung auch in dieser Metrik.
+Die trainierten Modelle erreichen Werte, die eng an der Fixed-Time-Baseline liegen oder diese sogar leicht unterbieten. Typischerweise bewegen sie sich im Bereich von etwa 40 bis 60 Fahrzeugen, nur im stark belasteten random\_heavy-Szenario steigen die Zahlen auf etwa 100. Besonders Modell 4 zeigt hier die niedrigsten und konsistentesten Ergebnisse, während Modell 2 und Modell 3 in diesem Szenario etwas höhere Werte aufweisen.
 
-Die trainierten Modelle erreichen insgesamt Werte, die sehr nahe an der Fixed-Time-Baseline liegen. Modell 1 erzielt 53, 58, 98 und 44 Fahrzeuge. Modell 2 liegt bei 53, 55, 108 und 43 Fahrzeugen. Modell 3 weist 54, 64, 108 und 44 Fahrzeuge auf, während Modell 4 mit 52, 55, 101 und 43 Fahrzeugen die niedrigsten Werte liefert.
-
-Insgesamt zeigen die Modelle konsistent bessere oder vergleichbare Ergebnisse zur Fixed-Time-Baseline. Auffällig ist, dass im random\_heavy-Szenario die Werte von Modell 2 und Modell 3 leicht über der Referenz liegen, was mit einer erhöhten Standardabweichung einhergeht und auf Instabilität in komplexen Verkehrslagen hinweist.
+Insgesamt liefern die Modelle damit konsistent bessere oder vergleichbare Resultate zur Fixed-Time-Baseline. Lediglich im schwierigsten Szenario deutet die höhere Streuung einzelner Modelle auf eine gewisse Instabilität hin.
 
 \subsubsection{Durchschnittsgeschwindigkeiten}
 \label{sec:diff-waiting-time-geschwindigkeiten}
@@ -482,16 +478,13 @@ Insgesamt zeigen die Modelle konsistent bessere oder vergleichbare Ergebnisse zu
     \caption{Durchschnittsgeschwindigkeiten}
     \label{fig:diff-waiting-time-speed}
 \end{figure}
+Die Analyse der Durchschnittsgeschwindigkeiten macht die Unterschiede zwischen den Verfahren deutlich.
 
-Die Analyse der Durchschnittsgeschwindigkeiten verdeutlicht klare Unterschiede zwischen den Baselines und den trainierten Modellen.
+Die Fixed-Time-Baseline bewegt sich in allen Szenarien auf einem konsistenten Niveau um etwa 5½ bis 6 m/s und liefert damit solide, wenn auch nicht optimale Werte. Die Actuated-Baseline fällt dagegen klar ab: mit Geschwindigkeiten von nur etwa einem halben Meter pro Sekunde bleibt sie um eine ganze Größenordnung darunter und bestätigt ihre geringe Eignung.
 
-Die Fixed-Time-Baseline erreicht im morning\_peak durchschnittlich 5.9 m/s, im evening\_peak 5.7 m/s, im random\_heavy 5.4 m/s sowie im uniform-Szenario 5.9 m/s. Damit liefert sie konsistente, aber nicht optimale Werte.
+Die trainierten Modelle erzielen durchweg deutlich höhere Werte. Typischerweise erreichen sie Geschwindigkeiten von rund 7 m/s und liegen damit klar oberhalb der Fixed-Time-Baseline. Besonders die Modelle 2 und 4 zeichnen sich durch eine sehr stabile Performance über alle Szenarien hinweg aus. Modell 3 liegt zwar ebenfalls über der Referenz, zeigt jedoch im evening\_peak und im random\_heavy leicht reduzierte Ergebnisse, die zudem mit größerer Streuung verbunden sind.
 
-Die Actuated-Baseline weist durchgehend extrem niedrige Geschwindigkeiten auf: 0.6, 0.5, 0.5 und 0.7 m/s in den vier Szenarien. Diese Werte liegen um eine Größenordnung unterhalb der Fixed-Time-Baseline und bestätigen die unzureichende Leistungsfähigkeit dieser Steuerung.
-
-Die trainierten Modelle übertreffen die Fixed-Time-Baseline deutlich. Modell 1 erreicht 7.0, 6.8, 6.7 und 7.1 m/s. Modell 2 erzielt sehr stabile Werte mit 7.1, 7.1, 6.2 und 7.2 m/s. Modell 3 liegt mit 6.9, 6.2, 6.1 und 7.1 m/s insgesamt ebenfalls über der Fixed-Time-Baseline, zeigt jedoch im evening\_peak und random\_heavy leicht reduzierte Ergebnisse. Modell 4 liefert mit 7.1, 7.1, 6.5 und 7.2 m/s die besten Resultate, insbesondere durch die hohe Stabilität über alle Szenarien hinweg.
-
-Auffällig ist, dass die Modelle 2 und 4 durchgehend eine nahezu konstante Verbesserung gegenüber der Fixed-Time-Baseline erzielen, während Modell 3 in den Szenarien evening\_peak und random\_heavy leichten Performanceverlust zeigt. In diesen Fällen geht die Verschlechterung mit einer erhöhten Standardabweichung einher, was auf eine weniger stabile Performanz hindeutet.
+Insgesamt belegen die Resultate, dass die trainierten Modelle den Verkehrsfluss spürbar verbessern. Während einzelne Szenarien leichte Schwächen offenbaren, überzeugen vor allem die konsistenten Leistungen von Modell 2 und Modell 4.
 
 \subsubsection{Anzahl teleportierender Fahrzeuge}
 \label{sec:diff-waiting-time-teleport}

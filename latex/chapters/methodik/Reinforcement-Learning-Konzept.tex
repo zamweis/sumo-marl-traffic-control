@@ -2,10 +2,10 @@
 \label{sec:rl-konzept}
 
 \subsubsection{Formulierung des RL-Problems}
-Das Problem der Verkehrssteuerung wird als sequentielles Entscheidungsproblem \cite{sutton-barto} modelliert und mit Hilfe von Reinforcement Learning (RL) gelöst.
+Das Problem der Verkehrssteuerung wird als sequentielles Entscheidungsproblem modelliert und mit Hilfe von Reinforcement Learning (RL) gelöst. 
 Ein Agent interagiert dabei mit der SUMO-Simulationsumgebung, welche den Verkehrsfluss in diskreten Zeitschritten abbildet.
 Der Agent beobachtet den aktuellen Zustand \(s_t\), wählt eine Aktion \(a_t\), erhält eine Belohnung \(r_t\) und beeinflusst dadurch den Folgezustand \(s_{t+1}\).
-Ziel ist es, eine Policy \(\pi(a|s)\) zu erlernen, die langfristig die erwartete kumulierte Belohnung maximiert.
+Ziel ist es, eine Policy \(\pi(a|s)\) zu erlernen, die langfristig die erwartete kumulierte Belohnung maximiert. \cite{sutton-barto}
 
 Im Trainingsskript sind die verschiedenen Belohnungsfunktionen jeweils als eigene Python-Funktion implementiert und werden über den Parameter \texttt{reward\_fn} in der SUMO-Umgebung ausgewählt.
 Dadurch können unterschiedliche Optimierungsziele systematisch untersucht werden.
@@ -15,7 +15,7 @@ Dies bildet die Rückkopplungsschleife, die für den Trainingsprozess im Reinfor
 
 \subsubsection{Auswahl des RL-Algorithmus}
 Für das Training wurde der Algorithmus PPO eingesetzt.
-PPO ist ein \textit{on-policy} \gls{policygradient}-Verfahren, das durch eine Clip-Funktion für Policy-Updates stabile Lernkurven und gute Sample-Effizienz ermöglicht~\cite{PPO}.
+PPO ist ein \textit{on-policy} \gls{policygradient}-Verfahren, das durch eine Clip-Funktion für Policy-Updates stabile Lernkurven und gute Sample-Effizienz ermöglicht. \cite{PPO}
 Der Algorithmus hat sich in zahlreichen Studien zur Verkehrsoptimierung mit SUMO als robust und leistungsfähig erwiesen, insbesondere im Multiagenten-Setting~\cite{PPO,zheng2022}.
 
 \paragraph{Begründung der Algorithmuswahl}
