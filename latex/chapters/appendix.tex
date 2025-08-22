@@ -1059,7 +1059,7 @@ Dieses Tool analysiert alle TLS im SUMO-Netz und prüft, ob die Länge des \text
 import xml.etree.ElementTree as ET
 
 # === Konfiguration ===
-net_file = "karlsruhe.net.xml"
+net_file = "map.net.xml"
 
 # === Einlesen ===
 tree = ET.parse(net_file)
@@ -1104,7 +1104,7 @@ Prüft, ob alle \texttt{request}-Indizes innerhalb der zulässigen Grenzen liege
 \begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
 import xml.etree.ElementTree as ET
 
-net_file = "karlsruhe.net.xml"
+net_file = "map.net.xml"
 tree = ET.parse(net_file)
 root = tree.getroot()
 
@@ -1139,8 +1139,8 @@ Dieses Skript bereinigt überzählige \texttt{<request>}-Einträge und passt \te
 \begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
 import xml.etree.ElementTree as ET
 
-net_file = "karlsruhe.net.xml"
-output_file = "karlsruhe_fixed_tls.net.xml"
+net_file = "map.net.xml"
+output_file = "map_fixed_tls.net.xml"
 
 tree = ET.parse(net_file)
 root = tree.getroot()
@@ -1230,7 +1230,7 @@ controlled_links = {
     # ggf. mehr hinzufügen
 }
 
-tree = ET.parse("karlsruhe.net.xml")
+tree = ET.parse("map.net.xml")
 root = tree.getroot()
 changed = False
 
@@ -1262,7 +1262,7 @@ Hilft bei der Kontrolle einheitlicher Phasenlängen über das gesamte Netz hinwe
 \begin{minted}[fontsize=\small, linenos, frame=lines, breaklines, tabsize=4]{python}
 from xml.etree import ElementTree as ET
 
-tree = ET.parse("karlsruhe.net.xml")
+tree = ET.parse("map.net.xml")
 root = tree.getroot()
 
 for logic in root.findall("tlLogic"):
@@ -1284,8 +1284,8 @@ import os
 def test_tls(tls_id):
     try:
         env = SumoEnvironment(
-            net_file="karlsruhe.net.xml",
-            route_file="karlsruhe.rou.xml",
+            net_file="map.net.xml",
+            route_file="map.rou.xml",
             use_gui=False,
             single_agent=True
         )
@@ -1300,8 +1300,8 @@ def test_tls(tls_id):
 # Alle TLS holen
 try:
     env = SumoEnvironment(
-        net_file="karlsruhe.net.xml",
-        route_file="karlsruhe.rou.xml",
+        net_file="map.net.xml",
+        route_file="map.rou.xml",
         use_gui=False,
         single_agent=True
     )
