@@ -1,0 +1,49 @@
+{
+  // LaTeX-Kompilierungseinstellungen
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk",
+      "command": "latexmk",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-pdf",
+        "-shell-escape",
+        "-outdir=out",
+        // This is the CRITICAL fix for the minted error with MiKTeX
+        "-e",
+        "$ENV{TEXMF_OUTPUT_DIRECTORY}='out'",
+        "%DOC%"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk",
+      "tools": [
+        "latexmk"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "latexmk",
+  "latex-workshop.latex.autoBuild.run": "onFileChange",
+  "latex-workshop.latex.clean.enabled": true,
+  "latex-workshop.latex.outDir": "out",
+  // PDF-Ansicht
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.synctex.afterBuild.enabled": true,
+  "latex-workshop.view.pdf.sync": true,
+  // Autoformatierung mit latexindent
+  "[latex]": {
+    "editor.defaultFormatter": "James-Yu.latex-workshop",
+    "editor.formatOnSave": false
+  },
+  "latex-workshop.formatting.latexindent.args": [
+    "-r",
+    "%DOCFILE%",
+    "-o",
+    "%DOCFILE%"
+  ],
+  "latex-workshop.latexindent.modifyLineBreaks": true
+}
