@@ -12,9 +12,9 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
     \begin{tikzpicture}[node distance=1cm]
 
         \node[box] (sim) {Verkehrssimulation\\\textbf{SUMO + TraCI}};
-        \node[box, below=of sim] (mae) {Multi-Agent Environment (MAE)\\\texttt{sumo-rl.parallel\_env} + \texttt{emissions\_with\_speed\_reward}};
+        \node[box, below=of sim] (mae) {\gls{mae}\\\texttt{sumo-rl.parallel\_env} + \texttt{emissions\_with\_speed\_reward}};
         \node[box, below=of mae] (wrap) {SuperSuit Wrappers\\\texttt{- pad\_obs / pad\_actions}\\\texttt{- pettingzoo\_to\_vec\_env}\\\texttt{- concat\_vec\_envs}};
-        \node[box, below=of wrap] (vec) {VecNormalize + VecMonitor\\(Stable-Baselines3)};
+        \node[box, below=of wrap] (vec) {\gls{vecnormalize} + \gls{vecmonitor}\\(Stable-Baselines3)};
         \node[box, below=of vec] (ppo) {PPO Agent (Stable-Baselines3)\\\texttt{- MLPPolicy}\\\texttt{- Schedules: LR (cosine warmup), Clip (cosine)}};
         \node[box, below=of ppo] (cb) {Callbacks\\\texttt{- TimeBasedCheckpoint}\\\texttt{- EpisodeMetricsLogger}\\\texttt{- BestModelSaver}};
         \node[box, below=of cb] (log) {Modell- \& Log-Speicherung\\\texttt{(pro Seed in runs/)}};
@@ -31,7 +31,7 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
     \label{fig:rl_architektur}
 \end{figure}
 
-Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} \cite{PettingZoo} und \texttt{SuperSuit} \cite{SuperSuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes API für Multiagenten-Umgebungen bereit, analog zu \texttt{Gymnasium} \cite{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist.
+Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo} \cite{PettingZoo} und \texttt{SuperSuit} \cite{\gls{SuperSuit}} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes \gls{api} für Multiagenten-Umgebungen bereit, analog zu \texttt{Gymnasium} \cite{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist.
 
 \subsubsection{Agentenzuordnung im Multiagentensystem}
 Jede steuerbare Lichtsignalanlage (TLS) wird einem eindeutigen Agenten zugeordnet.
@@ -73,10 +73,10 @@ Dabei wurden die folgenden Aspekte berücksichtigt:
     \item \textbf{Normalisierung:} Rewards und Beobachtungen werden mit \texttt{VecNormalize} z-standardisiert, um das Training zu stabilisieren.
 \end{itemize}
 
-Zusätzlich sind mehrere Callback-Mechanismen implementiert:
+Zusätzlich sind mehrere \gls{callback}-Mechanismen implementiert:
 \begin{itemize}
-    \item \textbf{Checkpoints:} Zeitbasiertes Speichern der Modelle (stündlich).
-    \item \textbf{Logging:} Aggregierte Episodenmetriken (Wartezeiten, Queues, Fluss) werden in TensorBoard und CSV-Dateien geschrieben.
+    \item \textbf{\gls{checkpoint}:} Zeitbasiertes Speichern der Modelle (stündlich).
+    \item \textbf{\gls{logging}:} Aggregierte Episodenmetriken (Wartezeiten, Queues, Fluss) werden in TensorBoard und CSV-Dateien geschrieben.
     \item \textbf{Bestes Modell:} Automatisches Sichern des jeweils besten Modells nach mittlerem Episoden-Reward.
 \end{itemize}
 
@@ -84,7 +84,7 @@ Das Training erfolgt mit PPO (\texttt{stable-baselines3}) und nutzt eine Cosine-
 sowie eine zweischichtige MLP-Policy (\texttt{[128,128]}). Jede Run wird im Ordner \texttt{runs/} mit Zeitstempel protokolliert.
 
 
-Die Umgebung ist vollständig kompatibel mit \texttt{Gymnasium}, \texttt{PettingZoo} sowie den Wrapper-Bibliotheken \texttt{SuperSuit} und \texttt{VecEnv}, wodurch ein standardisiertes Interfacing mit RL-Algorithmen ermöglicht wird.
+Die Umgebung ist vollständig kompatibel mit \texttt{Gymnasium}, \texttt{PettingZoo} sowie den Wrapper-Bibliotheken \texttt{SuperSuit} und \texttt{\gls{vecenv}}, wodurch ein standardisiertes Interfacing mit RL-Algorithmen ermöglicht wird.
 
 \subsubsection{Trainingsalgorithmus und Hyperparameter}
 

@@ -9,18 +9,18 @@ Ziel ist es, eine Policy \(\pi(a|s)\) zu erlernen, die langfristig die erwartete
 
 Im Trainingsskript sind die verschiedenen Belohnungsfunktionen jeweils als eigene Python-Funktion implementiert und werden über den Parameter \texttt{reward\_fn} in der SUMO-Umgebung ausgewählt.
 Dadurch können unterschiedliche Optimierungsziele systematisch untersucht werden.
-Die Anbindung zwischen RL-Agent und Simulation erfolgt über das \textbf{Traffic Control Interface (TraCI)}, das eine Laufzeitsteuerung von SUMO ermöglicht (siehe Kaptitel ~\ref{sec:TraCI}).
+Die Anbindung zwischen RL-Agent und Simulation erfolgt über das TraCI, das eine Laufzeitsteuerung von SUMO ermöglicht (siehe Kaptitel ~\ref{sec:TraCI}).
 Über TraCI werden sowohl Zustandsgrößen wie Rückstaulängen oder aktuelle Ampelphasen abgefragt als auch die Entscheidungen des Agenten direkt in die Simulation zurückgeschrieben.
 Dies bildet die Rückkopplungsschleife, die für den Trainingsprozess im Reinforcement Learning erforderlich ist.
 
 \subsubsection{Auswahl des RL-Algorithmus}
-Für das Training wurde der Algorithmus \textit{Proximal Policy Optimization} (PPO) eingesetzt.
-PPO ist ein \textit{on-policy} Policy-Gradient-Verfahren, das durch eine Clip-Funktion für Policy-Updates stabile Lernkurven und gute Sample-Effizienz ermöglicht~\cite{PPO}.
+Für das Training wurde der Algorithmus PPO eingesetzt.
+PPO ist ein \textit{on-policy} \gls{policygradient}-Verfahren, das durch eine Clip-Funktion für Policy-Updates stabile Lernkurven und gute Sample-Effizienz ermöglicht~\cite{PPO}.
 Der Algorithmus hat sich in zahlreichen Studien zur Verkehrsoptimierung mit SUMO als robust und leistungsfähig erwiesen, insbesondere im Multiagenten-Setting~\cite{PPO,zheng2022}.
 
 \paragraph{Begründung der Algorithmuswahl}
-Alternative Verfahren wie \textit{Deep Q-Networks (DQN)} oder \textit{Advantage Actor-Critic (A2C)} wurden verworfen, da sie bei kontinuierlichen Zustandsräumen und in Multiagentenszenarien oft instabile Lernverläufe zeigen.
-\textit{Soft Actor-Critic (SAC)} gilt zwar als state-of-the-art für kontinuierliche Steuerungsprobleme, erfordert aber große Replay-Puffer und hohe Rechenressourcen.
+Alternative Verfahren wie \textit{DQN} oder \textit{\gls{a2c}} wurden verworfen, da sie bei kontinuierlichen Zustandsräumen und in Multiagentenszenarien oft instabile Lernverläufe zeigen.
+\textit{\gls{sac}} gilt zwar als state-of-the-art für kontinuierliche Steuerungsprobleme, erfordert aber große Replay-Puffer und hohe Rechenressourcen.
 PPO stellt somit einen sinnvollen Kompromiss zwischen Stabilität, Implementationsaufwand und empirischer Leistungsfähigkeit dar und integriert sich nahtlos in die bestehende \texttt{sumo-rl}-Umgebung.
 
 \subsubsection{Zustände}
@@ -98,6 +98,6 @@ Für PPO wurden neben festen Werten auch dynamische \emph{Schedules} eingesetzt,
 Implementiert wurden u.\,a. Cosine-Warmup mit anschließendem Absenken, lineare Absenkung und adaptive Entropie-Steuerung.
 
 \paragraph{Motivation der gewählten Schedules}
-Diese Schedules vermeiden typische Probleme wie frühes Overfitting oder stagnierende Exploration.
+Diese Schedules vermeiden typische Probleme wie frühes \gls{overfitting} oder stagnierende Exploration.
 Das Cosine-Warmup erlaubt eine initiale Erkundung bei hoher Lernrate, während der anschließende Cosine-Decay den Lernprozess stabilisiert.
 Die adaptive Entropiesteuerung sorgt dafür, dass zu Beginn stark exploriert wird und im weiteren Verlauf zunehmend exploitation-basiert gelernt wird, ein Vorgehen, das sich in verwandten Arbeiten bewährt hat~\cite{Adaptive_Exploration}.

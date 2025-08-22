@@ -32,8 +32,11 @@
 }
 
 
-\usepackage[acronym, toc]{glossaries}
+\usepackage[acronym]{glossaries-extra}
 \makeglossaries
+
+\setabbreviationstyle[acronym]{long-short}
+
 \input{chapters/glossar.tex}
 
 % Literatur
@@ -113,77 +116,77 @@
 
 \begin{document}
 \begin{titlepage}
-  \centering
+	\centering
 
-  % Hochschule und Fakultät
-  {\large Hochschule Karlsruhe – Technik und Wirtschaft \\[0.3cm]}
-  {\normalsize Fakultät für Informatik und Wirtschaftsinformatik}
+	% Hochschule und Fakultät
+	{\large Hochschule Karlsruhe – Technik und Wirtschaft \\[0.3cm]}
+	{\normalsize Fakultät für Informatik und Wirtschaftsinformatik}
 
-  \vspace{2cm}
+	\vspace{2cm}
 
-  % Titel
-  {\LARGE\bfseries Multi-Agent Reinforcement Learning \\[0.2cm]
-    für adaptive Ampelsteuerung in SUMO \par}
+	% Titel
+	{\LARGE\bfseries Multi-Agent Reinforcement Learning \\[0.2cm]
+		für adaptive Ampelsteuerung in SUMO \par}
 
-  \vspace{1.8cm}
+	\vspace{1.8cm}
 
-  % Art der Arbeit
-  {\large Bachelorarbeit \\[0.2cm]}
-  {\normalsize im Studiengang Informatik}
+	% Art der Arbeit
+	{\large Bachelorarbeit \\[0.2cm]}
+	{\normalsize im Studiengang Informatik}
 
-  \vspace{1.25cm}
+	\vspace{1.25cm}
 
-  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
-    % Straßen
-    \fill[gray!20] (-4,-0.6) rectangle (4,0.6);
-    \fill[gray!20] (-0.6,-4) rectangle (0.6,4);
+	\begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+		% Straßen
+		\fill[gray!20] (-4,-0.6) rectangle (4,0.6);
+		\fill[gray!20] (-0.6,-4) rectangle (0.6,4);
 
-    % Fahrbahnmarkierungen (leicht verschoben, damit Striche in der Mitte aufeinander treffen)
-    \draw[white, line width=1pt, dash pattern=on 6pt off 6pt]
-    (-4.09,0) -- (4,0); % horizontal etwas nach links verschoben
+		% Fahrbahnmarkierungen (leicht verschoben, damit Striche in der Mitte aufeinander treffen)
+		\draw[white, line width=1pt, dash pattern=on 6pt off 6pt]
+		(-4.09,0) -- (4,0); % horizontal etwas nach links verschoben
 
-    \draw[white, line width=1pt, dash pattern=on 6pt off 6pt]
-    (0,-4.1) -- (0,4); % vertikal etwas nach unten verschoben
+		\draw[white, line width=1pt, dash pattern=on 6pt off 6pt]
+		(0,-4.1) -- (0,4); % vertikal etwas nach unten verschoben
 
-    % Ampeln
-    \foreach \pos/\col in {(-0.9,0.9)/red, (0.9,-0.9)/red,
-        (0.9,0.9)/green, (-0.9,-0.9)/green} {
-        \fill[\col] \pos circle (0.15);
-      }
+		% Ampeln
+		\foreach \pos/\col in {(-0.9,0.9)/red, (0.9,-0.9)/red,
+				(0.9,0.9)/green, (-0.9,-0.9)/green} {
+				\fill[\col] \pos circle (0.15);
+			}
 
-    % Autos
-    \filldraw[blue!60!black,rounded corners=1pt] (-2,-0.1) rectangle (-1.5,-0.5);
-    \draw[-{Latex[length=2mm]},blue!60!black,thick] (-1.75,-0.3) -- ++(0.6,0);
+		% Autos
+		\filldraw[blue!60!black,rounded corners=1pt] (-2,-0.1) rectangle (-1.5,-0.5);
+		\draw[-{Latex[length=2mm]},blue!60!black,thick] (-1.75,-0.3) -- ++(0.6,0);
 
-    \filldraw[orange!80!black,rounded corners=1pt] (-0.1,2) rectangle (-0.5,1.5);
+		\filldraw[orange!80!black,rounded corners=1pt] (-0.1,2) rectangle (-0.5,1.5);
 
-    \filldraw[green!60!black,rounded corners=1pt] (1.5,0.5) rectangle (2,0.1);
-    \draw[-{Latex[length=2mm]},green!60!black,thick] (1.75,0.3) -- ++(-0.6,0);
-  \end{tikzpicture}
+		\filldraw[green!60!black,rounded corners=1pt] (1.5,0.5) rectangle (2,0.1);
+		\draw[-{Latex[length=2mm]},green!60!black,thick] (1.75,0.3) -- ++(-0.6,0);
+	\end{tikzpicture}
 
 
-  \vfill
+	\vfill
 
-  \vspace{1.25cm}
+	\vspace{1.25cm}
 
-  % Autorendetails
-  \begin{tabular}{rl}
-    Vorgelegt von:  & Sam Weiler \\
-    Matrikelnummer: & 73640      \\
-    Studiengang:    & Informatik \\
-  \end{tabular}
+	% Autorendetails
+	\begin{tabular}{rl}
+		Vorgelegt von:  & Sam Weiler \\
+		Matrikelnummer: & 73640      \\
+		Studiengang:    & Informatik \\
+	\end{tabular}
 
-  \vspace{1cm}
+	\vspace{1cm}
 
-  % Prüfer/Betreuer
-  \begin{tabular}{rl}
-    Betreuer: & Prof. Dr. rer. nat. Patrick Baier \\
-  \end{tabular}
+	% Prüfer/Betreuer
+	\begin{tabular}{rl}
+		Betreuer: & Prof. Dr. rer. nat. Patrick Baier \\
+	\end{tabular}
 
-  \vspace{1cm}
+	\vspace{1cm}
 
-  % Datum
-  {\normalsize Karlsruhe, den \today}
+	% Datum
+	{\normalsize Karlsruhe, den \today}
 
 \end{titlepage}
 
@@ -314,33 +317,33 @@ auf. Die Analysen unterstrichen zudem, dass besonders in unregelmäßigen Szenar
 Aus den Ergebnissen ergeben sich mehrere konkrete Ansatzpunkte für weiterführende
 Arbeiten:
 \begin{itemize}
-  \item \textbf{Verbesserte Reward-Funktionen:} Eine Kombination mehrerer Zielgrößen
-        (z.\,B. Wartezeit, Emissionen, Durchsatz) in einem Multi-Objective- oder Curriculum-
-        Learning-Ansatz könnte helfen, die Stärken einzelner Funktionen zu vereinen
-        und die Robustheit zu erhöhen.
-  \item \textbf{Automatisierte Hyperparameter-Optimierung:} Der hohe manuelle Ab-
-        stimmungsaufwand könnte durch Frameworks wie \texttt{Optuna} oder \texttt{Ray Tune}
-        deutlich reduziert werden. Diese Werkzeuge erlauben eine strukturierte Suche im
-        Hyperparameter-Raum und steigern die Replizierbarkeit und Effizienz der Modellentwicklung.
-  \item \textbf{Integration weiterer Verkehrsteilnehmer:} Zukünftige Arbeiten sollten auch
-        Fußgänger, Radfahrende sowie den öffentlichen Nahverkehr berücksichtigen, um
-        eine ganzheitlichere Optimierung urbaner Mobilität zu ermöglichen.
-  \item \textbf{Realistischere Sensordaten:} Die Simulation sollte um Modelle erweitert
-        werden, die Messfehler und Unsicherheiten realer Detektoren abbilden. Dadurch
-        könnten die entwickelten Steuerungsstrategien praxisnäher validiert werden.
-  \item \textbf{Skalierbarkeit und Verteilte Systeme:} Ein wichtiger Schritt besteht in
-        der Übertragung der Ansätze auf größere Netze und den Einsatz verteilter
-        Multi-Agent-Systeme, die ganze Stadtteile koordinieren können.
-  \item \textbf{Kommunikation zwischen Agenten:} Ein weiterer Forschungspfad ist die
-        Erweiterung hin zu kooperativen Steuerungen, bei denen die einzelnen Agenten
-        Informationen untereinander austauschen. Dies könnte eine bessere globale
-        Koordination ermöglichen und die Systemstabilität in hochdynamischen Situationen
-        deutlich erhöhen.
-  \item \textbf{Verbundene und autonome Fahrzeuge:} Mit Blick in die Zukunft könnte die
-        Einbindung von Connected-Vehicle-Technologien und autonomen Fahrzeugen die
-        Steuerung auf eine neue Ebene heben. RL-Agenten könnten direkt mit Fahrzeugen
-        interagieren, Fahrbefehle optimieren und so einen noch effizienteren Verkehrsfluss
-        realisieren.
+	\item \textbf{Verbesserte Reward-Funktionen:} Eine Kombination mehrerer Zielgrößen
+	      (z.\,B. Wartezeit, Emissionen, Durchsatz) in einem Multi-Objective- oder Curriculum-
+	      Learning-Ansatz könnte helfen, die Stärken einzelner Funktionen zu vereinen
+	      und die Robustheit zu erhöhen.
+	\item \textbf{Automatisierte Hyperparameter-Optimierung:} Der hohe manuelle Ab-
+	      stimmungsaufwand könnte durch Frameworks wie \texttt{Optuna} oder \texttt{Ray Tune}
+	      deutlich reduziert werden. Diese Werkzeuge erlauben eine strukturierte Suche im
+	      Hyperparameter-Raum und steigern die Replizierbarkeit und Effizienz der Modellentwicklung.
+	\item \textbf{Integration weiterer Verkehrsteilnehmer:} Zukünftige Arbeiten sollten auch
+	      Fußgänger, Radfahrende sowie den öffentlichen Nahverkehr berücksichtigen, um
+	      eine ganzheitlichere Optimierung urbaner Mobilität zu ermöglichen.
+	\item \textbf{Realistischere Sensordaten:} Die Simulation sollte um Modelle erweitert
+	      werden, die Messfehler und Unsicherheiten realer Detektoren abbilden. Dadurch
+	      könnten die entwickelten Steuerungsstrategien praxisnäher validiert werden.
+	\item \textbf{Skalierbarkeit und Verteilte Systeme:} Ein wichtiger Schritt besteht in
+	      der Übertragung der Ansätze auf größere Netze und den Einsatz verteilter
+	      Multi-Agent-Systeme, die ganze Stadtteile koordinieren können.
+	\item \textbf{Kommunikation zwischen Agenten:} Ein weiterer Forschungspfad ist die
+	      Erweiterung hin zu kooperativen Steuerungen, bei denen die einzelnen Agenten
+	      Informationen untereinander austauschen. Dies könnte eine bessere globale
+	      Koordination ermöglichen und die Systemstabilität in hochdynamischen Situationen
+	      deutlich erhöhen.
+	\item \textbf{Verbundene und autonome Fahrzeuge:} Mit Blick in die Zukunft könnte die
+	      Einbindung von Connected-Vehicle-Technologien und autonomen Fahrzeugen die
+	      Steuerung auf eine neue Ebene heben. RL-Agenten könnten direkt mit Fahrzeugen
+	      interagieren, Fahrbefehle optimieren und so einen noch effizienteren Verkehrsfluss
+	      realisieren.
 \end{itemize}
 
 \subsection{Relevanz für reale Verkehrsplanung}

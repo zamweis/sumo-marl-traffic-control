@@ -4,28 +4,27 @@
 
 Die urbane Verkehrssteuerung umfasst alle Maßnahmen zur Regelung, Lenkung und Optimierung von Verkehrsflüssen innerhalb städtischer Räume. Ziel ist es, den Verkehrsfluss effizient zu gestalten, Staus zu vermeiden, die Sicherheit aller Verkehrsteilnehmer zu erhöhen sowie Emissionen und Lärm zu reduzieren. Klassische Steuerungsmechanismen basieren häufig auf festen Zeitplänen oder einfachen verkehrsabhängigen Regeln, z.\,B. durch Induktionsschleifen oder Detektoren gesteuerte Ampelphasen. \cite{Traffic-Flow-Theory}
 
-Mit dem Aufkommen neuer Technologien und wachsender Mobilitätsdaten entstehen zunehmend datenbasierte und dynamische Steuerungsansätze. Dazu gehören adaptive Lichtsignalsteuerungen, vernetzte Fahrzeuge (V2X-Kommunikation) und erste Pilotprojekte mit KI-gesteuerten Verkehrsmanagementsystemen. \cite{Kooperative-Lichtsignalsteuerung, SURTRAC} Dennoch sind viele Systeme in der Praxis noch unflexibel oder schwer skalierbar. \cite{KI-Ampel, dynamischen-Verkehrsumlegung}
+Mit dem Aufkommen neuer Technologien und wachsender Mobilitätsdaten entstehen zunehmend datenbasierte und dynamische Steuerungsansätze. Dazu gehören adaptive Lichtsignalsteuerungen, vernetzte Fahrzeuge (\gls{v2x}-Kommunikation) und erste Pilotprojekte mit KI-gesteuerten Verkehrsmanagementsystemen. \cite{Kooperative-Lichtsignalsteuerung, SURTRAC} Dennoch sind viele Systeme in der Praxis noch unflexibel oder schwer skalierbar. \cite{KI-Ampel, dynamischen-Verkehrsumlegung}
 
 \subsection{Simulation urbaner Mobilität mit SUMO}
 
-\textit{Simulation of Urban MObility} (SUMO) ist ein quelloffener,  Verkehrs-Simulator, der ursprünglich vom Deutschen Zentrum für Luft- und Raumfahrt (DLR) entwickelt wurde. \cite{sumo-doc} SUMO erlaubt die detaillierte Modellierung individueller Fahrzeuge, Straßeninfrastruktur, Ampelschaltungen sowie Fahrverhalten. \cite{sumo-doc, Sumo-git, Sumo-Publikation}
+\textit{Simulation of Urban Mobility} ist ein quelloffener,  Verkehrs-Simulator, der ursprünglich vom \gls{dlr} entwickelt wurde. \cite{sumo-doc} SUMO erlaubt die detaillierte Modellierung individueller Fahrzeuge, Straßeninfrastruktur, Ampelschaltungen sowie Fahrverhalten. \cite{sumo-doc, Sumo-git, Sumo-Publikation}
 
 Besonders relevant für diese Arbeit sind folgende Merkmale\cite{sumo-doc}:
 
 \begin{itemize}
     \item \textbf{Mikroskopische Modellierung:} Jedes Fahrzeug wird als individuelles Objekt simuliert. Parameter wie Geschwindigkeit, Abstand oder Spurwechselverhalten sind individuell konfigurierbar.
-    \item \textbf{Flexible Netzdefinition:} Verkehrsnetze lassen sich aus OpenStreetMap-Daten sowie aus Shapefiles oder VISUM-Modellen mit dem Tool \texttt{netconvert} erzeugen. \cite{netconvert} Netzdateien können auch mit \texttt{netedit} visuell editiert werden.
-    \item \textbf{Nachfragegenerierung:} Fahrpläne und Routen lassen sich mit Tools wie \texttt{activitygen}, \texttt{randomTrips}, \texttt{od2trips} oder \texttt{duarouter} erzeugen, basierend auf statistischen oder echten OD-Matrizen. \cite{randomTrips,duarouter}
-    \item \textbf{Multimodalität:} SUMO unterstützt neben Pkw auch Busse, Fahrräder, Fußgänger sowie den öffentlichen Nahverkehr. Ampeln können für alle Verkehrsarten gleichzeitig modelliert werden.
-    \item \textbf{Emissionsmodellierung:} Mit Hilfe von integrierten HBEFA-Tabellen (Version 4)\cite{Sumo-HBEFA} kann SUMO CO\textsubscript{2}-, NO\textsubscript{x}- und Feinstaubemissionen simulieren und ausgeben.
-    \item \textbf{Steuerbare Ampelanlagen:} Lichtsignalanlagen können sowohl mit festen Programmen als auch dynamisch über die TraCI-Schnittstelle gesteuert werden.
+    \item \textbf{Flexible Netzdefinition:} Verkehrsnetze lassen sich aus OpenStreetMap-Daten sowie aus \gls{shapefiles} oder \gls{visum}-Modellen mit dem Tool \gls{netconvert} erzeugen. \cite{netconvert} Netzdateien können auch mit \texttt{netedit} visuell editiert werden.
+    \item \textbf{Nachfragegenerierung:} Fahrpläne und Routen lassen sich mit Tools wie \gls{randomtrips} oder \gls{duarouter} erzeugen, basierend auf statistischen oder echten \gls{od}. \cite{randomTrips,duarouter}
+    \item \textbf{Multimodalität:} SUMO unterstützt neben \gls{pkw} auch Busse, Fahrräder, Fußgänger sowie den öffentlichen Nahverkehr. Ampeln können für alle Verkehrsarten gleichzeitig modelliert werden.
+    \item \textbf{Emissionsmodellierung:} Mit Hilfe von integrierten \gls{hbefa}-Tabellen (Version 4)\cite{Sumo-HBEFA} kann SUMO CO\textsubscript{2}-, NO\textsubscript{x}- und Feinstaubemissionen simulieren und ausgeben.
+    \item \textbf{Steuerbare Ampelanlagen:} Lichtsignalanlagen können sowohl mit festen Programmen als auch dynamisch über die \gls{traci}-Schnittstelle gesteuert werden.
     \item \textbf{Reproduzierbarkeit und Kontrolle:} SUMO ist vollständig deterministisch, was es ideal für kontrollierte Experimente und das Training von KI-Agenten macht.
-    \item \textbf{Visualisierung und Debugging:} Die SUMO-GUI und das Tool \texttt{sumo-gui} ermöglichen eine grafische Darstellung von Netz, Fahrzeugen, Ampelphasen und Simulationsergebnissen.
+    \item \textbf{Visualisierung und Debugging:} Die SUMO-\gls{gui} und das Tool \gls{netedit} ermöglichen eine grafische Darstellung von Netz, Fahrzeugen, Ampelphasen und Simulationsergebnissen.
 \end{itemize}
 
-Ein zentrales Element für externe Steuerungsexperimente ist das
-\textbf{Traffic Control Interface (TraCI)\cite{sumo-doc}}.
-Dabei handelt es sich um eine TCP-basierte Client-Server-Schnittstelle,
+Ein zentrales Element für externe Steuerungsexperimente ist das TraCI\cite{sumo-doc}.
+Dabei handelt es sich um eine \gls{tcp}-basierte Client-Server-Schnittstelle,
 über die laufende SUMO-Simulationen in Echtzeit beeinflusst werden können.
 TraCI erlaubt nicht nur das Abfragen von Zustandsgrößen wie Position, Geschwindigkeit
 oder Warteschlangenlänge von Fahrzeugen, sondern auch das aktive Eingreifen,
@@ -40,9 +39,9 @@ Die SUMO-Toolchain bietet damit alle notwendigen Komponenten für die Entwicklun
 
 \subsection{Verstärkendes Lernen (Reinforcement Learning)}
 
-Reinforcement Learning (RL) ist ein Teilgebiet des maschinellen Lernens, bei dem ein Agent durch Interaktion mit einer Umgebung lernt, optimale Handlungen auszuführen. Ziel ist es, die kumulative Belohnung über Zeit zu maximieren \cite{sutton-barto}.
+Reinforcement Learning ist ein Teilgebiet des maschinellen Lernens, bei dem ein Agent durch Interaktion mit einer Umgebung lernt, optimale Handlungen auszuführen. Ziel ist es, die kumulative Belohnung über Zeit zu maximieren \cite{sutton-barto}.
 
-Ein RL-Prozess wird typischerweise als Markov Decision Process (MDP) beschrieben und besteht aus folgenden Komponenten:
+Ein RL-Prozess wird typischerweise als \gls{mdp} beschrieben und besteht aus folgenden Komponenten:
 
 \begin{itemize}
     \item \textbf{Zustand $s$ (state):} Repräsentation der aktuellen Situation der Umgebung.
@@ -53,24 +52,24 @@ Ein RL-Prozess wird typischerweise als Markov Decision Process (MDP) beschrieben
 
 Der Agent interagiert wiederholt mit der Umgebung, beobachtet Zustände, wählt Aktionen, erhält Belohnungen und gelangt in neue Zustände. Durch diese Rückkopplung lernt er, langfristig optimale Entscheidungen zu treffen.
 
-In dieser Arbeit wird ausschließlich \textbf{Proximal Policy Optimization (PPO)} \cite{Proximal_Policy_Optimization} eingesetzt – ein policy-basierter RL-Algorithmus, der für seine Stabilität und Effizienz bei kontinuierlichen Interaktionen mit komplexen Umgebungen bekannt ist. Andere RL-Verfahren (z. B. Q-Learning oder DQN) wurden nicht berücksichtigt.
+In dieser Arbeit wird ausschließlich \textbf{\gls{ppo}} \cite{Proximal_Policy_Optimization} eingesetzt, ein policy-basierter RL-Algorithmus, der für seine Stabilität und Effizienz bei kontinuierlichen Interaktionen mit komplexen Umgebungen bekannt ist. Andere RL-Verfahren (z. B. \gls{qlearning} oder \gls{dqn}) wurden nicht berücksichtigt.
 
 \subsection{SUMO-RL: Architektur und Funktionalität}
 
-\texttt{sumo-rl} ist ein Python-Framework, das die Verkehrssimulation mit SUMO und Reinforcement Learning kombiniert. Es bietet eine stabile Schnittstelle zu Gymnasium und PettingZoo, wodurch RL-Agenten problemlos in SUMO-Simulationen integriert werden können. Die zentrale Implementierung bildet die Klasse \texttt{SumoEnvironment}, die sowohl Single-Agent- als auch Multi-Agent-Setups unterstützt. Über Parameter wie \texttt{use\_gui}, \texttt{num\_seconds}, \texttt{min\_green}, \texttt{yellow\_time}, \texttt{delta\_time} usw. lässt sich das Verhalten der Umgebung sehr flexibel steuern. \cite{sumo-rl_docs}
+\texttt{sumo-rl} ist ein Python-Framework, das die Verkehrssimulation mit SUMO und Reinforcement Learning kombiniert. Es bietet eine stabile Schnittstelle zu \gls{gymnasium} und \gls{pettingzoo}, wodurch RL-Agenten problemlos in SUMO-Simulationen integriert werden können. Die zentrale Implementierung bildet die Klasse \texttt{SumoEnvironment}, die sowohl Single-Agent- als auch Multi-Agent-Setups unterstützt. Über Parameter wie \texttt{use\_gui}, \texttt{num\_seconds}, \texttt{min\_green}, \texttt{yellow\_time}, \texttt{delta\_time} usw. lässt sich das Verhalten der Umgebung sehr flexibel steuern. \cite{sumo-rl_docs}
 
 \subsubsection{Observation- und Aktionsraum}
 
 \paragraph{Beobachtung (Observation)}
-Die Standard-Beobachtung für jeden Ampelagenten ist ein Vektor: \cite{sumo-rl_docs}
+Der \gls{observationspace} für jeden Ampelagenten ist standardmäßig als Vektor definiert: \cite{sumo-rl_docs}
 
 \[
     \text{obs} = [\text{phase\_one\_hot},\; \text{min\_green},\; \text{lane}_1\_\text{density},\dots,\text{lane}_n\_\text{density},\; \text{lane}_1\_\text{queue},\dots,\text{lane}_n\_\text{queue}]
 \]
 
-Diese Komponenten bedeuten im Detail:
+Die einzelnen Komponenten des \gls{observationspace} bedeuten im Detail:
 \begin{itemize}
-    \item \textbf{phase\_one\_hot}: One-Hot-Kodierung der aktuell aktiven Grünphase.
+    \item \textbf{phase\_one\_hot}: \gls{onehot} der aktuell aktiven Grünphase.
     \item \textbf{min\_green}: Binärwert, der anzeigt, ob die Mindestdauer (\texttt{min\_green}) der aktuellen Phase bereits erreicht wurde.
     \item \textbf{lane\_i\_density}: Verhältnis der Fahrzeuge auf Spur \(i\) zur maximal möglichen Kapazität der Spur.
     \item \textbf{lane\_i\_queue}: Anteil an Fahrzeugen mit Geschwindigkeit $<\,0{,}1$\,m/s auf Spur \(i\) im Verhältnis zur Kapazität.
@@ -78,16 +77,17 @@ Diese Komponenten bedeuten im Detail:
 
 Falls eine eigene Beobachtungsfunktion gewünscht ist, kann man eine Klasse von \texttt{ObservationFunction} ableiten und beim Initialisieren der Umgebung übergeben.
 
+
 \paragraph{Aktionsraum (Action Space)}
-Der Aktionsraum ist diskret. Agents dürfen alle \texttt{delta\_time} Sekunden eine neue Grünphase wählen. Jeder Aktionswert repräsentiert dabei eine bestimmte, zulässige Grünkonfiguration für die Kreuzung. Ein Phasenwechsel wird stets durch eine automatisch hinzugefügte Gelbphase (\texttt{yellow\_time} Sekunden) eingeleitet.
+Der \gls{actionspace} ist diskret. Agents dürfen alle \texttt{delta\_time} Sekunden eine neue Grünphase wählen. Jeder Aktionswert repräsentiert dabei eine bestimmte, zulässige Grünkonfiguration für die Kreuzung. Ein Phasenwechsel wird stets durch eine automatisch hinzugefügte Gelbphase (\texttt{yellow\_time} Sekunden) eingeleitet.
 
 \subsubsection{Weitere Eigenschaften}
 
 \begin{itemize}
     \item \textbf{TraCI-Integration}: Echtzeit-Kommunikation mit SUMO, u. a. zum Abruf von Zustandsdaten und Auslösen von Phasenwechseln.
-    \item \textbf{Multi-Agent-Fähigkeit}: Unterstützt Einzel- und Mehragentenumgebungen; bei Verwendung von \texttt{parallel\_env} über PettingZoo werden alle Agenten synchron gesteuert.
-    \item \textbf{Systemmetriken (Infos)}: Die Umgebung kann global relevante Kennzahlen wie Wartezeit, Gesamtemissionen, Backlog etc. über das \texttt{infos}-Objekt bereitstellen – steuerbar über Parameter wie \texttt{add\_system\_info} oder \texttt{add\_per\_agent\_info}.
-    \item \textbf{Kompatibilität mit RL-Bibliotheken}: Nativ kompatibel mit Stable-Baselines3, PyTorch, TensorFlow, RLlib etc., was eine einfache Einbettung in bestehende RL-Pipelines erlaubt.
+    \item \textbf{Multi-Agent-Fähigkeit}: Unterstützt Einzel- und Mehragentenumgebungen; bei Verwendung von \texttt{\gls{parallelenv}} über PettingZoo werden alle Agenten synchron gesteuert.
+    \item \textbf{Systemmetriken (Infos)}: Die Umgebung kann global relevante Kennzahlen wie Wartezeit, Gesamtemissionen, \gls{backlog} etc. über das \texttt{infos}-Objekt bereitstellen – steuerbar über Parameter wie \texttt{add\_system\_info} oder \texttt{add\_per\_agent\_info}.
+    \item \textbf{Kompatibilität mit RL-Bibliotheken}: Nativ kompatibel mit \gls{sb3}, PyTorch, TensorFlow, \gls{rllib} etc., was eine einfache Einbettung in bestehende RL-Pipelines erlaubt.
     \item \textbf{Konfigurationsmöglichkeiten}: Belohnungsfunktionen (\texttt{reward\_fn}), Beobachtungsfunktion (\texttt{observation\_class}) und diverse Simulationsparameter können flexibel angepasst werden.
 \end{itemize}\cite{sumo-rl_docs}
 
@@ -106,7 +106,7 @@ In den letzten Jahren wurden zahlreiche wissenschaftliche Arbeiten veröffentlic
 
     \item \textbf{Almeida et al. (2022):} Kombination von Multiagenten-Reinforcement Learning mit k-Nearest-Neighbors-Technik zur koordinierten Steuerung von Ampeln in Netzwerken mit dichtem Verkehrsaufkommen. \cite{almeida2022}
 
-    \item \textbf{Zheng et al. (2022):} Vorschlag eines Curriculum-Learning-Ansatzes, der schrittweise von lokalen zu globalen Steuerstrategien führt,mit dem Ziel, RL-Agenten robuster und lernfähiger zu machen. \cite{zheng2022}
+    \item \textbf{Zheng et al. (2022):} Vorschlag eines \gls{curriculumlearning}-Ansatzes, der schrittweise von lokalen zu globalen Steuerstrategien führt,mit dem Ziel, RL-Agenten robuster und lernfähiger zu machen. \cite{zheng2022}
 
     \item \textbf{Weitere erwähnenswerte Arbeiten:} Benchmarking verschiedener RL-Algorithmen für Ampelsteuerung (Ault \& Sharon, 2021), ein Framework zur Belohnungsgestaltung („EcoLight“, Agand et al., 2021) sowie ontologiegestützte Lernmodelle, die eine robuste Anwendung von Steuerungsstrategien in unbekannten Situationen ermöglichen (Ghanadbashi et al., 2022). \cite{ault2021,agand2021,ghanadbashi2023}
 \end{itemize}

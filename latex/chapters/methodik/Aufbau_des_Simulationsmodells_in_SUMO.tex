@@ -2,7 +2,7 @@
 
 \subsubsection{Netzgenerierung}
 
-Zur Modellierung des realen Straßennetzes wurde ein Kartenausschnitt des Untersuchungsgebiets über die Exportfunktion von OpenStreetMap \cite{osm-export} heruntergeladen und anschließend mit JOSM \cite{josm} bereinigt. Der Ausschnitt umfasst die Reinhold-Frank-Straße sowie angrenzende Hauptverkehrsachsen im Bereich des Mühlburger Tors. Der bearbeitete Kartenausschnitt wurde mit dem SUMO-Werkzeug \texttt{netconvert} \cite{sumo-tools} in ein XML-Netzwerkformat überführt. Dabei kamen Optionen zur Einsatz um das Netz stabiler zu machen(z.\,B. \texttt{--junctions.join}). \cite{sumo-doc}
+Zur Modellierung des realen Straßennetzes wurde ein Kartenausschnitt des Untersuchungsgebiets über die Exportfunktion von OpenStreetMap \cite{osm-export} heruntergeladen und anschließend mit JOSM \cite{josm} bereinigt. Der Ausschnitt umfasst die Reinhold-Frank-Straße sowie angrenzende Hauptverkehrsachsen im Bereich des Mühlburger Tors. Der bearbeitete Kartenausschnitt wurde mit dem SUMO-Werkzeug \texttt{netconvert} \cite{sumo-tools} in ein \gls{xml}-Netzwerkformat überführt. Dabei kamen Optionen zur Einsatz um das Netz stabiler zu machen(z.\,B. \texttt{--junctions.join}). \cite{sumo-doc}
 
 \subsubsection{Erzeugung von Fahrzeugflüssen}
 
@@ -14,7 +14,7 @@ Die Auswahl geeigneter Zufahrtskanten basierte auf den äußeren Hauptverkehrsac
 
 \subsubsection{Automatisierte Generierung von Trips}
 
-Die DTV-Werte wurden auf die Zufahrtsgruppen skaliert und auf eine Simulationsdauer von 5000\,s verteilt. Ein eigens entwickeltes Python-Skript erzeugte daraus Fahrzeugeinträge (\texttt{<trip>}), die über die ermittelten Zufahrtskanten ins Netz eingespeist wurden. Die Trips wurden im XML-Format gespeichert und mit \texttt{duarouter} in vollständige, konfliktfreie Routen (\texttt{<route>}) überführt. Dabei wurde die Gesamtanzahl stündlich extrapoliert und stark belastete Achsen (z.\,B. B10, L605) mit entsprechend höherem Anteil berücksichtigt. Die erzeugten Flüsse wurden durch Detektor-Ausgaben (u.\,a. \texttt{laneAreaDetector}) \cite{sumo-doc} überprüft und bei Bedarf angepasst.
+Die DTV-Werte wurden auf die Zufahrtsgruppen skaliert und auf eine Simulationsdauer von 5000\,s verteilt. Ein eigens entwickeltes Python-Skript erzeugte daraus Fahrzeugeinträge (\texttt{<trip>}), die über die ermittelten Zufahrtskanten ins Netz eingespeist wurden. Die Trips wurden im XML-Format gespeichert und mit \texttt{duarouter} in vollständige, konfliktfreie Routen (\texttt{<route>}) überführt. Dabei wurde die Gesamtanzahl stündlich extrapoliert und stark belastete Achsen (z.\,B. B10, L605) mit entsprechend höherem Anteil berücksichtigt. Die erzeugten Flüsse wurden durch Detektor-Ausgaben (u.\,a. \texttt{\gls{laneareadetector}}) \cite{sumo-doc} überprüft und bei Bedarf angepasst.
 
 \subsubsection{Validierung des Netzmodells}
 
@@ -23,7 +23,7 @@ Vor dem Einsatz des Modells erfolgte eine mehrstufige Validierung:
 \begin{itemize}
   \item \textbf{Netzprüfung:} Einsatz von \texttt{netconvert --check-lane-geometry} und \texttt{netcheck} zur Überprüfung der topologischen Konsistenz. \cite{netconvert}
   \item \textbf{Visuelle Kontrolle:} Inspektion kritischer Knoten in der SUMO-GUI und in \texttt{netedit}, um Fehler wie unverbundene Spuren oder falsche Richtungen zu erkennen. \cite{netedit}
-  \item \textbf{TLS-Prüfung:} Alle 17 Lichtsignalanlagen wurden in \texttt{netedit} geöffnet. Phasenpläne, gesteuerte Verbindungen und Zustandslängen (\texttt{state}) wurden geprüft und bei Bedarf korrigiert.
+  \item \textbf{\gls{tls}-Prüfung:} Alle 17 Lichtsignalanlagen wurden in \texttt{netedit} geöffnet. Phasenpläne, gesteuerte Verbindungen und Zustandslängen (\texttt{state}) wurden geprüft und bei Bedarf korrigiert.
 \end{itemize}
 
 Die manuelle Nachbearbeitung war zeitaufwändig, da fehlerhafte TLS nicht automatisch erkannt werden. In mehreren Fällen mussten Phasenpläne neu erstellt oder angepasst werden.

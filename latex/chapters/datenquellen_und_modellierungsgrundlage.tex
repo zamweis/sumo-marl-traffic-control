@@ -5,7 +5,7 @@
 
 Das Verkehrsnetz für die Simulation basiert auf öffentlich verfügbaren Geodaten der Plattform OpenStreetMap (OSM). OSM bietet eine frei zugängliche, kollaborativ gepflegte Datenbank, die detaillierte Informationen zu Straßenverläufen, Kreuzungen, Fahrspuren, Tempolimits und teilweise zu Ampelanlagen enthält. Diese Eigenschaften machen OSM zu einer geeigneten Grundlage für Verkehrssimulationen mit SUMO. \cite{osm, osm-git}
 
-Zur Erstellung des Netzes wurde ein Ausschnitt des Straßennetzes der Stadt Karlsruhe exportiert, der einen stark frequentierten urbanen Bereich mit mehreren signalgesteuerten Kreuzungen umfasst. Der betrachtete Bereich liegt zwischen 49{,}00738,\textdegree{}N und 49{,}01523,\textdegree{}N sowie 8{,}38589,\textdegree{}E und 8{,}40050,\textdegree{}E und deckt unter anderem die Reinhold-Frank-Straße, das Mühlburger Tor und angrenzende Hauptverkehrsachsen ab. Der Export erfolgte als \texttt{.osm}-Datei über den Geofabrik-Downloaddienst bzw. mit dem Tool JOSM. \cite{osm-export, josm} Die anschließende Konvertierung in das SUMO-Format erfolgte mit dem Programm \texttt{netconvert} (Version 1.19.0), einem Teil der SUMO-Toolchain. \cite{sumo-tools} Hierbei wurden relevante Parameter wie Straßentypen, Fahrspuren, Prioritäten und erlaubte Abbiegevorgänge berücksichtigt. Als Typemap kam \texttt{osmNetconvert.typ.xml} \cite{netconvert} zum Einsatz, um realitätsnahe Geschwindigkeiten und Fahrspuren zuzuweisen.
+Zur Erstellung des Netzes wurde ein Ausschnitt des Straßennetzes der Stadt Karlsruhe exportiert, der einen stark frequentierten urbanen Bereich mit mehreren signalgesteuerten Kreuzungen umfasst. Der betrachtete Bereich liegt zwischen 49{,}00738,\textdegree{}N und 49{,}01523,\textdegree{}N sowie 8{,}38589,\textdegree{}E und 8{,}40050,\textdegree{}E und deckt unter anderem die Reinhold-Frank-Straße, das Mühlburger Tor und angrenzende Hauptverkehrsachsen ab. Der Export erfolgte als \texttt{.osm}-Datei über den Geofabrik-Downloaddienst bzw. mit dem Tool \gls{josm}. \cite{osm-export, josm} Die anschließende Konvertierung in das SUMO-Format erfolgte mit dem Programm \texttt{netconvert} (Version 1.19.0), einem Teil der SUMO-Toolchain. \cite{sumo-tools} Hierbei wurden relevante Parameter wie Straßentypen, Fahrspuren, Prioritäten und erlaubte Abbiegevorgänge berücksichtigt. Als Typemap kam \texttt{osmNetconvert.typ.xml} \cite{netconvert} zum Einsatz, um realitätsnahe Geschwindigkeiten und Fahrspuren zuzuweisen.
 
 Das resultierende Verkehrsnetz umfasst 1.379 definierte Knotenpunkte (\textit{junctions}), 1.919 Straßenkanten (\textit{edges}) sowie insgesamt 5.310 modellierte Fahrstreifen (\textit{lanes}). \cite{netedit} Darüber hinaus konnten 17 signalgesteuerte Kreuzungen mit Lichtsignalanlagen (\textit{traffic lights}) identifiziert (siehe Algorithmus~\ref{alg:find_valid_tls}) werden, die als Steuerungspunkte für das spätere Training der Reinforcement-Learning-Agenten dienen.
 
@@ -14,7 +14,7 @@ Zusätzliche Informationen wie Ampeldefinitionen und Vorfahrtsregeln manuell üb
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{images/karlsruhe_net.png}
-    \caption{Visualisierung des aus OSM generierten SUMO-Netzes (sumo-gui \cite{Sumo-Gui}).}
+    \caption{Visualisierung des aus OSM generierten SUMO-Netzes (\gls{sumogui} \cite{Sumo-Gui}).}
     \label{fig:sumo_network}
 \end{figure}
 
@@ -49,14 +49,14 @@ Diese öffentlichen Quellen bilden eine solide Grundlage für die realitätsnahe
 
 \subsubsection{Stationäre Zählstellen in Karlsruhe und Umgebung}
 \label{sec:zaehlstellen-karlsruhe}
-Eine besonders wertvolle Datenquelle zur realitätsnahen Modellierung des Verkehrsaufkommens stellen die stationären Zählstellen des Landes Baden-Württemberg dar. Diese liefern standardisierte Tagesverkehrswerte (DTV\footnote{DTV steht für \textit{Durchschnittlicher Tagesverkehr} und bezeichnet die mittlere Anzahl an Fahrzeugen, die einen bestimmten Straßenabschnitt pro Tag passiere, typischerweise gemittelt über einen längeren Zeitraum.}), getrennt nach Fahrzeugklassen.
+Eine besonders wertvolle Datenquelle zur realitätsnahen Modellierung des Verkehrsaufkommens stellen die stationären Zählstellen des Landes Baden-Württemberg dar. Diese liefern standardisierte Tagesverkehrswerte, getrennt nach Fahrzeugklassen.
 
 Im direkten Untersuchungsgebiet, der Reinhold-Frank-Straße in Karlsruhe, befindet sich eine automatische Dauerzählstelle. Die dort erfassten Werte für den Zeitraum vom 1.1. bis 20.6.2025 lauten: \cite{Verkehrszählungen_Baden-Württemberg}
 
 \begin{itemize}
-    \item \textbf{Kraftfahrzeuge (KFZ):} 21.300 Fahrzeuge/Tag
-    \item \textbf{Personenkraftwagen (PKW):} 20.500 Fahrzeuge/Tag
-    \item \textbf{Schwere Nutzfahrzeuge (sNfz):} 120 Fahrzeuge/Tag
+    \item \textbf{\gls{kfz}:} 21.300 Fahrzeuge/Tag
+    \item \textbf{PKW:} 20.500 Fahrzeuge/Tag
+    \item \textbf{\gls{snfz}:} 120 Fahrzeuge/Tag
 \end{itemize}
 
 Diese Messwerte stimmen gut mit den aus den äußeren Zufahrtsachsen abgeleiteten Schätzungen überein. Um das Verkehrsaufkommen plausibel zu quantifizieren, wurden zusätzlich acht zentrale Zählstellen aus dem Jahr 2023 entlang wichtiger Ein- und Ausfallstraßen berücksichtigt. Sie bilden die Grundlage für die Annahmen über den täglichen Verkehr, der potenziell durch das untersuchte innerstädtische Netz fließt:

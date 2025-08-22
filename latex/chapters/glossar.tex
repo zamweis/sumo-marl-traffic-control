@@ -36,15 +36,19 @@
     description={Parameter, die das Lernverhalten eines Modells steuern, z.\,B. Lernrate, Discount-Faktor oder Explorationsparameter.}%
 }
 
-% --- Methoden und Algorithmen ---
-\newacronym{ppo}{PPO}{Proximal Policy Optimization}
-\newacronym{rl}{RL}{Reinforcement Learning}
-\newacronym{cpu}{CPU}{Central Processing Unit}
-\newacronym{gpu}{GPU}{Graphics Processing Unit}
-
 \newglossaryentry{populationbased}{%
     name={Population-Based Training},%
     description={Ein Verfahren zur automatisierten Anpassung von Hyperparametern, bei dem mehrere Modelle parallel trainiert und Parameter zwischen erfolgreichen Modellen ausgetauscht werden.}%
+}
+
+\newglossaryentry{induktionsschleifen}{%
+    name={Induktionsschleifen},%
+    description={Sensoren im Straßenbelag, die Fahrzeuge durch magnetische Feldänderungen detektieren. Häufig in verkehrsabhängigen Steuerungen genutzt.}%
+}
+
+\newglossaryentry{kamera}{%
+    name={Kameras},%
+    description={Verkehrssensorik, die Kamerabilder auswertet, um Fahrzeuge, Fußgänger oder Radfahrer zu detektieren.}%
 }
 
 \newglossaryentry{bayesianopt}{%
@@ -52,13 +56,7 @@
     description={Ein Verfahren zur Hyperparameter-Optimierung, das auf probabilistischen Modellen basiert und gezielt vielversprechende Konfigurationen auswählt.}%
 }
 
-% --- Simulation und Daten ---
-\newglossaryentry{SUMO}{%
-    name={SUMO},%
-    description={Simulation of Urban MObility, eine quelloffene mikroskopische Verkehrssimulationssoftware, die das Verhalten einzelner Fahrzeuge in Straßennetzen abbildet.}%
-}
-
-\newglossaryentry{OSM}{%
+\newglossaryentry{osm}{%
     name={OpenStreetMap (OSM)},%
     description={Ein kollaboratives Projekt, das Geodaten frei zur Verfügung stellt und als Grundlage für die Straßennetze in dieser Arbeit diente.}%
 }
@@ -70,7 +68,7 @@
 
 % --- Verkehrssteuerung ---
 \newglossaryentry{trafficlight}{%
-    name={Lichtsignalanlage},%
+    name={Lichtsignalanlagen},%
     description={Eine Ampelanlage, die den Verkehr an Knotenpunkten regelt. In dieser Arbeit Zielsystem für die Optimierung.}%
 }
 
@@ -118,4 +116,247 @@
 \newglossaryentry{smartcity}{%
     name={Smart City},%
     description={Ein Konzept für Städte, die Informations- und Kommunikationstechnologien nutzen, um Effizienz, Nachhaltigkeit und Lebensqualität zu verbessern.}%
+}
+
+% --- Weitere Begriffe aus Einleitung & Methodik ---
+
+
+\newglossaryentry{sumo-rl}{%
+    name={SUMO-rl},%
+    description={Ein Python-Framework, das SUMO mit Reinforcement-Learning-Bibliotheken verbindet (z.\,B. Stable-Baselines3, PyTorch) und Single- sowie Multi-Agent-Szenarien unterstützt.}%
+}
+
+\newglossaryentry{pettingzoo}{%
+    name={PettingZoo},%
+    description={Eine Python-Bibliothek für Multi-Agent-Reinforcement-Learning, die standardisierte Schnittstellen für Agentenumgebungen bietet und auch in sumo-rl genutzt wird.}%
+}
+
+\newglossaryentry{gymnasium}{%
+    name={Gymnasium},%
+    description={Eine Weiterentwicklung von OpenAI Gym, die standardisierte Schnittstellen für Reinforcement-Learning-Umgebungen bereitstellt.}%
+}
+
+\newglossaryentry{mdp}{%
+    name={Markov Decision Process (MDP)},%
+    description={Formale Beschreibung von Reinforcement-Learning-Problemen, bestehend aus Zuständen, Aktionen, Übergängen und Belohnungen.}%
+}
+
+\newglossaryentry{policygradient}{%
+    name={Policy-Gradient},%
+    description={Eine Klasse von Reinforcement-Learning-Algorithmen, die die Policy direkt optimieren, indem sie Gradienten der erwarteten Belohnung berechnen.}%
+}
+
+\newglossaryentry{overfitting}{%
+    name={Überanpassung (Overfitting)},%
+    description={Ein Phänomen beim maschinellen Lernen, bei dem ein Modell zu stark an die Trainingsdaten angepasst wird und dadurch auf neuen Daten schlecht generalisiert.}%
+}
+
+% --- Simulation & Netzaufbau ---
+
+\newglossaryentry{netconvert}{%
+    name={netconvert},%
+    description={Ein SUMO-Tool zur Konvertierung von Straßendaten (z.\,B. aus OpenStreetMap) in SUMO-kompatible Netzwerke.}%
+}
+
+\newglossaryentry{netedit}{%
+    name={netedit},%
+    description={Ein grafisches Editor-Tool von SUMO, mit dem Straßennetze, Kreuzungen und Ampelsteuerungen manuell bearbeitet und validiert werden können.}%
+}
+
+\newglossaryentry{randomtrips}{%
+    name={randomTrips},%
+    description={Ein SUMO-Skript zur zufälligen Generierung von Fahrzeugfahrten im Simulationsnetz, nützlich für Testläufe und Validierung.}%
+}
+
+\newglossaryentry{duarouter}{%
+    name={duarouter},%
+    description={Ein SUMO-Tool zur Erzeugung konfliktfreier Fahrzeugrouten basierend auf Nachfrage- und Netzdefinitionen.}%
+}
+
+% --- Verkehrs- und Evaluationsmetriken ---
+
+\newglossaryentry{waitingqueue}{%
+    name={Warteschlange},%
+    description={Eine Gruppe von Fahrzeugen, die an einer Ampel oder durch Verkehrsüberlastung gestoppt sind. In der Arbeit eine zentrale Messgröße für Staus.}%
+}
+
+\newglossaryentry{emissions}{%
+    name={Emissionen},%
+    description={Von Fahrzeugen ausgestoßene Schadstoffe wie CO2, NOx oder Feinstaub. In SUMO über HBEFA-Tabellen modelliert und als Optimierungsziel genutzt.}%
+}
+
+\newglossaryentry{reproducibility}{%
+    name={Reproduzierbarkeit},%
+    description={Die Fähigkeit, Simulationen und Ergebnisse mit denselben Parametern und Seeds identisch wiederholen zu können.}%
+}
+
+\newglossaryentry{checkpoint}{%
+    name={Checkpoint},%
+    description={Ein gespeicherter Zwischenstand im Training eines RL-Agenten, der für Fortsetzung, Vergleich oder Auswertung genutzt werden kann.}%
+}
+
+\newglossaryentry{logging}{%
+    name={Logging},%
+    description={Das systematische Aufzeichnen von Simulations- und Trainingsdaten, um Verlauf, Fehler und Leistungsmetriken nachzuvollziehen.}%
+}
+
+% --- Datengrundlage ---
+
+
+\newglossaryentry{mobidatabw}{%
+    name={MobiData BW},%
+    description={Eine Datenplattform des Landes Baden-Württemberg, die offene Mobilitäts- und Verkehrsdaten bereitstellt.}%
+}
+
+
+\newglossaryentry{tensorflow}{%
+    name={TensorFlow},%
+    description={Eine Open-Source-Plattform für maschinelles Lernen, die von Google entwickelt wurde. TensorFlow bietet Werkzeuge für Deep Learning, neuronale Netze und Reinforcement Learning und wird häufig für Forschung und produktive Anwendungen eingesetzt.}%
+}
+
+\newglossaryentry{pytorch}{%
+    name={PyTorch},%
+    description={Eine Open-Source-Deep-Learning-Bibliothek, die von Meta (ehemals Facebook) entwickelt wurde. PyTorch ist besonders durch seine dynamische Rechen-Graph-Struktur und die einfache Integration in Python-Code beliebt und wird häufig für Reinforcement Learning verwendet.}%
+}
+\newglossaryentry{thread}{%
+    name={Thread},%
+    description={Ein leichtgewichtiger Ausführungsstrang innerhalb eines Prozesses. Mehrere Threads können parallel ablaufen und gemeinsam Ressourcen nutzen, wodurch parallele Berechnungen oder nebenläufige Abläufe in Programmen ermöglicht werden.}%
+}
+
+
+\newacronym{bast}{BASt}{Bundesanstalt für Straßenwesen}
+\newacronym{LUBW}{LUBW}{Landesanstalt für Umwelt Baden-Württemberg}
+\newacronym{ppo}{PPO}{Proximal Policy Optimization}
+\newacronym{rl}{RL}{Reinforcement Learning}
+\newacronym{cpu}{CPU}{Central Processing Unit}
+\newacronym{gpu}{GPU}{Graphics Processing Unit}
+\newacronym{dtv}{DTV}{Durchschnittlicher Tagesverkehr}
+\newacronym{tls}{TLS}{Traffic Light System}
+\newacronym{gui}{GUI}{Graphical User Interface}
+\newacronym{xml}{XML}{Extensible Markup Language}
+\newacronym{api}{API}{Application Programming Interface}
+\newacronym{osmxml}{OSM-XML}{OpenStreetMap-XML-Datei}
+\newacronym{hbefa}{HBEFA}{Handbook Emission Factors for Road Transport}
+\newacronym{sv}{SV}{Schwerverkehr}
+\newacronym{kfz}{KFZ}{Kraftfahrzeug}
+\newacronym{pkw}{PKW}{Personenkraftwagen}
+\newacronym{snfz}{sNfz}{Schwere Nutzfahrzeuge}
+\newacronym{v2x}{V2X}{Vehicle-to-Everything Kommunikation}
+\newacronym{a2c}{A2C}{Advantage Actor-Critic}
+\newacronym{dqn}{DQN}{Deep Q-Network}
+\newacronym{sac}{SAC}{Soft Actor-Critic}
+\newacronym{ki}{KI}{künstlische Intelligenz}
+\newacronym{tcp}{TCP}{Transmission Control Protocol}
+\newacronym{sumo}{SUMO}{Simulation of Urban Mobility}
+\newacronym{dlr}{dlr}{Deutsches Zentrum für Luft- und Raumfahrt}
+\newacronym{traci}{TraCI}{Traffic Control Interface}
+\newacronym{sb3}{SB3}{Stable-Baseline3}
+\newacronym{rllib}{RLlib}{Reinforcement Learning Library, ein skalierbares RL-Framework basierend auf Ray}
+\newacronym{josm}{JOSM}{Java OpenStreetMap Editor, ein Editor zur Bearbeitung von OpenStreetMap-Daten}
+\newacronym{od}{OD-Matrix}{Origin--Destination-Matrix}%
+
+
+\newglossaryentry{supersuit}{%
+    name={SuperSuit},%
+    description={Sammlung von Wrappern zur Anpassung von PettingZoo-Umgebungen an RL-Frameworks (z.\,B.\ Padding von Beobachtungen/Aktionen, Vektorisierung, Umwandlung in SB3-kompatible VecEnvs).}%
+}
+
+\newglossaryentry{vecnormalize}{%
+    name={VecNormalize},%
+    description={Wrapper aus Stable-Baselines3 zur Normalisierung von Beobachtungen und Rewards; verbessert Stabilität und Vergleichbarkeit zwischen Kreuzungen.}%
+}
+
+\newglossaryentry{vecmonitor}{%
+    name={VecMonitor},%
+    description={Wrapper aus Stable-Baselines3 für das Aufzeichnen von Episodenstatistiken (z.\,B.\ Rewards, Längen) zur späteren Auswertung.}%
+}
+
+\newglossaryentry{callback}{%
+    name={Callback},%
+    description={Erweiterungsmechanismus im Training (z.\,B.\ periodische Checkpoints, Metrik-Logging, Bestmodell-Speicherung), der zu bestimmten Zeitpunkten während des Lernprozesses ausgeführt wird.}%
+}
+
+\newglossaryentry{onehot}{%
+    name={One-Hot-Kodierung},%
+    description={Kodierung diskreter Kategorien als Binärvektoren mit genau einer Eins; verwendet zur Repräsentation der aktiven Ampelphase.}%
+}
+
+\newglossaryentry{observationspace}{%
+    name={Observationsraum},%
+    description={Menge der Merkmale/Zustände, die ein Agent wahrnimmt (z.\,B.\ Phasenstatus, Warteschlangenlänge, Dichte, Geschwindigkeiten).}%
+}
+
+\newglossaryentry{actionspace}{%
+    name={Aktionsraum},%
+    description={Menge der zulässigen Aktionen eines Agenten; bei Ampelsteuerung typischerweise Phasenwahl bzw.\ Fortsetzen/Wechseln einer Phase im festen Intervall.}%
+}
+
+\newglossaryentry{mae}{%
+    name={Multi-Agent Environment (MAE)},%
+    description={Umgebung, in der mehrere Agenten (z.\,B.\ je Lichtsignalanlage einer) gleichzeitig handeln; Interaktion und Training erfolgen parallel.}%
+}
+
+% Optional, falls du die SUMO-GUI separat nennen möchtest:
+\newglossaryentry{sumogui}{%
+    name={SUMO GUI (sumo-gui)},%
+    description={Grafische Oberfläche von SUMO zur Visualisierung von Netz, Fahrzeugen, Ampelphasen und Simulationsergebnissen.}%
+}
+
+% Optional, sensorisch:
+\newglossaryentry{laneareadetector}{%
+    name={laneAreaDetector},%
+    description={SUMO-Sensor zur Erfassung spurbezogener Größen (z.\,B.\ Dichte, Anzahl wartender Fahrzeuge), genutzt für Zustandsmerkmale im RL.}%
+}
+
+\newglossaryentry{visum}{%
+    name={VISUM},%
+    description={Eine kommerzielle Verkehrsplanungssoftware von PTV, deren Modelle für Netzimporte in SUMO genutzt werden können.}%
+}
+
+
+\newglossaryentry{optuna}{%
+    name={Optuna},%
+    description={Ein Framework zur Hyperparameter-Optimierung, das effiziente Suchstrategien wie Tree-structured Parzen Estimator (TPE) nutzt.}%
+}
+
+\newglossaryentry{raytune}{%
+    name={Ray Tune},%
+    description={Eine Python-Bibliothek für verteilte Hyperparameter-Optimierung und Experimentmanagement.}%
+}
+
+\newglossaryentry{curriculumlearning}{%
+    name={Curriculum Learning},%
+    description={Eine Trainingsstrategie im maschinellen Lernen, bei der Aufgaben in zunehmender Schwierigkeit präsentiert werden, um Stabilität und Effizienz zu erhöhen.}%
+}
+
+\newglossaryentry{multiobjective}{%
+    name={Multi-Objective Learning},%
+    description={Ein Ansatz, bei dem mehrere Zielgrößen gleichzeitig optimiert werden, wie Wartezeit und Emissionen.}%
+}
+
+\newglossaryentry{vecenv}{%
+    name={VecEnv},%
+    description={Schnittstelle in Stable-Baselines3 zur parallelen Ausführung mehrerer Umgebungen, um das Training effizienter zu machen.}%
+}
+
+\newglossaryentry{backlog}{%
+    name={Backlog},%
+    description={Anzahl der Fahrzeuge, die nicht mehr ins Netz einfahren konnten, weil es überlastet war. Dient als Metrik in der Evaluation.}%
+}
+
+\newglossaryentry{shapefiles}{%
+    name={Shapefiles},%
+    description={Ein von ESRI entwickeltes Geodatenformat (bestehend aus mehreren Dateien wie .shp, .shx, .dbf), das in Geoinformationssystemen (GIS) zur Speicherung und zum Austausch von Vektor-Geodaten wie Straßennetzen verwendet wird.}%
+}
+
+\newglossaryentry{parallelenv}{%
+    name={parallel\_env},%
+    description={Ein Wrapper aus der PettingZoo-Bibliothek, der Multi-Agent-Umgebungen in einer parallelen Schnittstelle bereitstellt und damit kompatibel mit Reinforcement-Learning-Frameworks wie Stable-Baselines3 ist.}%
+}
+
+
+\newglossaryentry{qlearning}{%
+    name={Q-Learning},%
+    description={Ein wertbasierter Reinforcement-Learning-Algorithmus, der eine sogenannte Q-Funktion erlernt. 
+    Diese ordnet jedem Zustand-Aktions-Paar einen erwarteten kumulativen Reward zu und ermöglicht dem Agenten, durch Auswahl der Aktion mit dem höchsten Q-Wert eine optimale Strategie zu entwickeln.}%
 }
