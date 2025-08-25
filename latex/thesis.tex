@@ -64,6 +64,9 @@
 % Aufzählungen
 \usepackage{enumitem}
 
+\usepackage{chngcntr}
+\counterwithin{figure}{section}
+
 \usepackage[a4paper, top=4cm, bottom=4cm, left=4cm, right=4cm]{geometry}
 
 % Mathematische Ausdrücke
@@ -110,7 +113,7 @@
     fill=blue!5
   },
   arrow/.style={
-    -{Latex[length=3mm]},
+    -{Latex[length=2mm]},
     thick
   }
 }
@@ -118,32 +121,33 @@
 % Image folder
 \graphicspath{{images/}}
 
-\title{Optimierung einer Verkehrssimulation mit KI-basierten Agenten in SUMO}
+\title{Multi-Agent Reinforcement Learning für adaptive Ampelsteuerung in SUMO}
 \author{Sam Weiler}
-\date{\small \today}
 
 
 \begin{document}
 \begin{titlepage}
+
+	\begin{tikzpicture}[remember picture,overlay]
+		% oben links
+		\node[anchor=north west, inner sep=15pt] 
+			at (current page.north west) {\includegraphics[width=5cm]{HKA_IWI_Wortmarke_RGB.jpg}};
+		% oben rechts
+		\node[anchor=north east, inner sep=15pt] 
+			at (current page.north east) {\includegraphics[width=3cm]{hka.PNG}};
+	\end{tikzpicture}
+
 	\centering
 
-	% Hochschule und Fakultät
-	{\large Hochschule Karlsruhe – Technik und Wirtschaft \\[0.3cm]}
-	{\normalsize Fakultät für Informatik und Wirtschaftsinformatik}
-
-	\vspace{2cm}
+	% Art der Arbeit
+	{\LARGE\bfseries Bachelor-Thesis \\[1cm]}
 
 	% Titel
-	{\LARGE\bfseries Multi-Agent Reinforcement Learning \\[0.2cm]
-		für adaptive Ampelsteuerung in SUMO \par}
+	{\LARGE Multi-Agent Reinforcement Learning \\[0.5cm]
+		für adaptive Ampelsteuerung in SUMO}
 
-	\vspace{1.8cm}
 
-	% Art der Arbeit
-	{\large Bachelorarbeit \\[0.2cm]}
-	{\normalsize im Studiengang Informatik}
-
-	\vspace{1.25cm}
+	\vspace{1cm}
 
 	\begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
 		% Straßen
@@ -174,32 +178,58 @@
 	\end{tikzpicture}
 
 
-	\vfill
-
-	\vspace{1.25cm}
+	\vspace{1cm}
 
 	% Autorendetails
 	\begin{tabular}{rl}
-		Vorgelegt von:  & Sam Weiler \\
-		Studiengang:    & Informatik \\
+		Name:  & Sam Weiler \\
+		Arbeitsplatz: & eigenständig \\[1cm]
+
+		Referent: & Baier, Patrick, Prof. Dr \\
+		Korreferent: & Körner, Heiko, Prof. Dr \\
+		Abgabetermin: & 28.08.2025 \\
 	\end{tabular}
 
-	\vspace{1cm}
+	\vfill
 
-	% Prüfer/Betreuer
-	\begin{tabular}{rl}
-		Erstprüfer:  & Prof. Dr. rer. nat. Patrick Baier \\
-		Zweitprüfer: & Prof. Dr. Heiko Körner \\
-	\end{tabular}
+	\begin{flushleft}
+		Karlsruhe, 29.04.2025 \\[0.5cm]
+		Der Vorsitzende des Prüfungsausschusses \\
+		\includegraphics[width=5cm]{unteschrift.PNG} \\
+		Prof. Dr. Heiko Körner
+	\end{flushleft}
 
-	\vspace{1cm}
-
-	% Datum
-	{\normalsize Karlsruhe, den \today}
 
 \end{titlepage}
 
+\newpage
+\thispagestyle{empty} % keine Kopf-/Fußzeile
 
+\section*{Eigenständigkeitserklärung}
+
+Hiermit erkläre ich, dass ich die vorliegende Bachelorarbeit mit dem Titel 
+
+\textit{„Multi-Agent Reinforcement Learning für adaptive Ampelsteuerung in SUMO“}
+
+selbständig verfasst und keine anderen als die angegebenen Quellen und Hilfsmittel benutzt habe.  
+Alle Stellen, die wörtlich oder sinngemäß aus Veröffentlichungen entnommen sind, habe ich als solche kenntlich gemacht.  
+
+\vspace{3cm}
+
+Karlsruhe, den \today \hfill
+\begin{tikzpicture}[baseline=(sig.base)]
+  % Signatur-Bild
+  \node[inner sep=0pt] (sig) {\includegraphics[height=1.5cm]{signature.PNG}};
+  % Linie exakt drüber zeichnen
+  \draw[line width=0.4pt] 
+    ([xshift=-3cm,yshift=0.4cm]sig.north) -- ([xshift=3cm,yshift=0.4cm]sig.north);
+\end{tikzpicture}
+\\
+\hfill (Unterschrift)
+
+\newpage
+
+\setcounter{tocdepth}{2}
 \tableofcontents
 \newpage
 
@@ -296,29 +326,7 @@ Generalisation eine der zentralen Herausforderungen bleibt.
 
 \subsection{Zusammenfassung der wichtigsten Erkenntnisse}
 
-Die Arbeit hat gezeigt, dass Deep-Reinforcement-Learning-Ansätze ein erhebliches
-Potenzial zur Optimierung der Steuerung von Lichtsignalanlagen besitzen. Über alle
-betrachteten Reward-Funktionen hinweg konnten die Modelle die klassischen Baselines
-deutlich übertreffen. Insbesondere die Actuated-Baseline erwies sich in allen Szenarien
-als instabil und ineffizient, während die Fixed-Time-Baseline, wie aus ihrer weiten
-Verbreitung in realen Städten zu erwarten, robuste und solide Ergebnisse lieferte.
-Dennoch gelang es den RL-Modellen, selbst diese starke Referenz in den meisten
-Metriken zu übertreffen.
-
-Die Evaluation verdeutlichte, dass sich durch lernbasierte Steuerungen die mittlere
-Wartezeit reduzieren, die Anzahl stoppender Fahrzeuge verringern und die durch-
-schnittliche Reisegeschwindigkeit erhöhen lässt. Gleichzeitig blieb der Gesamtdurch-
-satz nahezu immer auf maximalem Niveau, sodass Effizienzsteigerungen nicht mit
-einem Verlust an abgefertigten Fahrzeugen einhergingen. Besonders deutlich wurden
-die Vorteile in regulären und gleichmäßigen Verkehrsszenarien, in denen die Modelle
-konsistent nahe am Optimum operierten.
-
-Gleichzeitig zeigten die Ergebnisse, dass die Robustheit stark von der gewählten
-Reward-Funktion abhängt. Während Queue- und CO\textsubscript{2}-basierte Modelle eine sehr
-hohe Stabilität und Reproduzierbarkeit aufwiesen, traten bei Diff-Waiting-Time- und
-Real-World-basierten Modellen unter Hochlastbedingungen signifikante Schwankungen
-auf. Die Analysen unterstrichen zudem, dass besonders in unregelmäßigen Szenarien
-\texttt{random\_heavy} die Generalisierungsfähigkeit eine wesentliche Herausforderung bleibt.
+Die Arbeit hat gezeigt, dass Deep-RL-Ansätze klassische Verfahren deutlich übertreffen können. Sie reduzieren Wartezeiten, Stopps und steigern die Durchschnittsgeschwindigkeit, ohne den Gesamtdurchsatz zu mindern. Besonders in regulären Szenarien operierten die Modelle zuverlässig nahe am Optimum. Unter unregelmäßigen Bedingungen traten jedoch Varianzen auf, was die Generalisierungsfähigkeit als zentrale Herausforderung hervorhebt.
 
 \subsection{Mögliche Weiterentwicklungen}
 

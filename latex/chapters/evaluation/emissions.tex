@@ -1,5 +1,6 @@
+\newpage
 \subsection{Reward: CO\textsubscript{2}-Emissionen}
-Die vierte Gruppe zielt auf eine Minimierung der CO\textsubscript{2}-Emissionen, während gleichzeitig versucht wird die Stabilität aufrecht zu erhalten.
+Diese Gruppe zielt auf eine Minimierung der CO\textsubscript{2}-Emissionen, während gleichzeitig versucht wird die Stabilität des Netzwerkes aufrecht zu erhalten.
 Für diese Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Emission als zentrale Metrik betrachtet.
 
 
@@ -81,8 +82,6 @@ Für diese Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-
 Die Analyse der CO\textsubscript{2}-Emissionen verdeutlicht die Vorteile der RL-Modelle gegenüber den Baselines. Während die Baselines in allen Szenarien relativ konstante Werte zwischen 1.490 und 1.560 mg/s aufweisen, liegen die Modelle fast durchweg darunter. Besonders in den Szenarien uniform, morning\_peak und evening\_peak erreichen die Modelle signifikant niedrigere Emissionen.
 
 Konkret bewegen sich die Baselines im Bereich von 1.496 mg/s (Fixed-Time, uniform) bis 1.532 mg/s (Fixed-Time, random\_heavy). Die Modelle erzielen dagegen Werte von 1.405 mg/s (Modell 2, uniform) bis 1.501 mg/s (Modell 1, random\_heavy). Auffällig ist, dass in random\_heavy alle Modelle zwar höhere Emissionen verzeichnen, diese jedoch weiterhin im Bereich oder leicht unterhalb der Baselines liegen.
-
-Im Mittel schneiden Modell 2 und Modell 4 besonders positiv ab und zeigen in fast allen Szenarien die niedrigsten Emissionen. Damit belegt die Auswertung, dass die Emissions-basierten RL-Agenten in der Lage sind, die Gesamtemissionen signifikant zu reduzieren, ohne die Stabilität des Systems wesentlich zu beeinträchtigen.
 
 \subsubsection{Mittlere Wartezeiten}
 \label{sec:emissions-wartezeit}
@@ -192,14 +191,13 @@ Im Mittel schneiden Modell 2 und Modell 4 besonders positiv ab und zeigen in fas
     \label{fig:emissions-wartezeit2}
 \end{figure}
 
-Die Analyse der mittleren Wartezeit unterstreicht den deutlichen Vorteil der RL-Modelle gegenüber den Baselines - mit Ausnahme bestimmter Hochlastszenarien. Die Fixed-Time-Baseline liegt in allen Szenarien bei soliden, aber nicht optimalen Werten zwischen 3,7 und 4,4 Sekunden, während die Actuated-Baseline erneut massiv schlechter abschneidet (zwischen 935 und 1 029 Sekunden).
+Die Analyse der mittleren Wartezeit unterstreicht den deutlichen Vorteil der RL-Modelle gegenüber den Baselines, mit Ausnahme bestimmter Hochlastszenarien. Die Fixed-Time-Baseline liegt in allen Szenarien bei soliden, aber nicht optimalen Werten zwischen 3,7 und 4,4 Sekunden, während die Actuated-Baseline erneut massiv schlechter abschneidet (zwischen 935 und 1 029 Sekunden).
 
 Die RL-Modelle zeigen in evening\_peak und uniform hervorragende Ergebnisse: Modell 4 erreicht hier mit 0,4 Sekunden extrem niedrige Werte, während auch Modell 1 mit 1,8 Sekunden (evening\_peak) bzw. 12,7 Sekunden (uniform) deutlich besser als die Baselines performt. Modell 2 und Modell 3 fallen dagegen negativ auf: Beide Modelle weisen in morning\_peak und vor allem in random\_heavy drastisch erhöhte Wartezeiten auf. Mit bis zu 26 745 Sekunden bei Modell 3 im Hochlastszenario überschreiten sie die Baselines deutlich und zeigen starke Instabilität.
 
 Insgesamt lässt sich feststellen, dass die Emissions-basierten Modelle in Szenarien mit normaler Last die Wartezeiten signifikant reduzieren können, in Hochlastsituationen jedoch teilweise versagen und dadurch ihre Vorteile verlieren.
 
 \subsubsection{Anzahl stoppender Fahrzeuge}
-In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}
@@ -309,7 +307,7 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:emissions-stopped2}
 \end{figure}
 
-Bei der Metrik der stoppenden Fahrzeuge wird erneut ein klarer Unterschied zwischen Baselines und RL-Modellen sichtbar. Die Fixed-Time-Baseline erreicht mit Werten zwischen 10 und 27 stoppenden Fahrzeugen pro Szenario ein moderates Niveau, während die Actuated-Baseline mit extrem hohen Werten (z. B. 879 im random\_heavy) durchgehend die schlechteste Performance zeigt.
+Bei der Metrik der stoppenden Fahrzeuge wird erneut ein klarer Unterschied zwischen Baselines und RL-Modellen sichtbar. Die Fixed-Time-Baseline erreicht mit Werten zwischen 10 und 27 stoppenden Fahrzeugen pro Szenario ein moderates Niveau, während die Actuated-Baseline mit extrem hohen Werten (z. B. 879 im random\_heavy) durchgehend die schlechteste Leistung zeigt.
 
 Die RL-Modelle hingegen weisen in den meisten Szenarien nur sehr wenige Stopps auf. Besonders Modell 1 und Modell 4 schneiden konsistent am besten ab und liegen teilweise bei nahezu null Stopps (z. B. 1,0-1,2 Fahrzeuge in uniform bzw. evening\_peak). Modell 2 und Modell 3 zeigen dagegen in random\_heavy eine deutliche Schwäche: Mit 45 bzw. 70 stoppenden Fahrzeugen liegen ihre Werte hier deutlich über den übrigen RL-Modellen und sogar über Fixed-Time.
 
@@ -474,7 +472,7 @@ Insgesamt bestätigt die Metrik, dass die Emissions-basierten Modelle eine hohe 
     \label{fig:emissions-running}
 \end{figure}
 
-Die Analyse der durchschnittlich fahrenden Fahrzeuge bestätigt das bereits aus den anderen Metriken erkennbare Muster. Die Actuated-Baseline zeigt erneut die schlechteste Performance und liegt mit deutlich überhöhten Werten weit außerhalb des erwartbaren Bereichs. Die Fixed-Time-Baseline dient als stabiler Referenzpunkt, wird jedoch in den meisten Szenarien klar von den RL-Modellen unterboten.
+Die Analyse der durchschnittlich fahrenden Fahrzeuge bestätigt das bereits aus den anderen Metriken erkennbare Muster. Die Actuated-Baseline zeigt erneut die schlechteste Leistung und liegt mit deutlich überhöhten Werten weit außerhalb des erwartbaren Bereichs. Die Fixed-Time-Baseline dient als stabiler Referenzpunkt, wird jedoch in den meisten Szenarien klar von den RL-Modellen unterboten.
 
 Die Emissions-basierten Modelle reduzieren in evening\_peak, uniform und teilweise auch morning\_peak die Anzahl gleichzeitig fahrender Fahrzeuge um etwa 20-50 Prozent im Vergleich zu Fixed-Time. Dies deutet auf eine effizientere Steuerung hin, bei der sich weniger Fahrzeuge gleichzeitig im Netz befinden und der Verkehrsfluss stabiler wird. Auffällig ist jedoch, dass Modell 2 und Modell 3 in random\_heavy sowie leicht auch in morning\_peak schwächere Werte aufweisen, was die zuvor beobachteten Probleme unter hoher Last widerspiegelt.
 
@@ -653,7 +651,7 @@ In den Evaluationsläufen der Emissions-basierten Modelle traten keinerlei Telep
                 width=12cm,
                 height=5cm,
                 enlarge x limits=0.15,
-                ylabel={Anzahl zurückgehaltener Zahrzeuge},
+                ylabel={Anzahl zurückgehaltener Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
@@ -713,10 +711,10 @@ In den Evaluationsläufen der Emissions-basierten Modelle traten keinerlei Telep
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Anzahl zurückgehaltener Zahrzeuge}
+    \caption{Anzahl zurückgehaltener Fahrzeuge}
     \label{fig:emissions-backlogged}
 \end{figure}
-
+\newpage
 Bei der Metrik der zurückgehaltenen Fahrzeuge bestätigen die Emissions-basierten Modelle ihre Robustheit: In keinem der Szenarien kam es zu nennenswerten Rückstaueffekten. Alle Modelle erreichen hier konsistent einen Wert von null. Einzige Ausnahme ist die Actuated-Baseline, die regelmäßig Fahrzeuge zurückhält und damit ihre unzureichende Leistungsfähigkeit im Umgang mit hoher Netzlast erneut unterstreicht.
 
 \subsubsection{Einstufung}

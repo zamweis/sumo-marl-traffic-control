@@ -1,6 +1,6 @@
 
 \subsection{Reward: Queue}
-Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
+Diese Gruppe zielt auf die Minimierung der Warteschlangenlänge.
 
 \subsubsection{Mittlere Wartezeiten}
 \label{sec:queue-wartezeit}
@@ -112,10 +112,9 @@ Die zweite Gruppe zielt auf die Minimierung der Warteschlangenlänge.
     \label{fig:queue-wartezeit2}
 \end{figure}
 
-Die Betrachtung der mittleren Wartezeit zeigt, dass die mit der Queue-Rewardfunktion trainierten Modelle in den meisten Szenarien sehr gute Ergebnisse erzielen. Insbesondere in morning\_peak, evening\_peak und uniform übertreffen die Modelle die Baselines deutlich. Eine Ausnahme bildet Modell 2, das im Szenario morning\_peak eine auffällig schwache Performance aufweist. Zudem ist im Szenario random\_heavy die Fixed-Time-Baseline den RL-Modellen überlegen, während alle Modelle in diesem Hochlastfall insgesamt schwache Ergebnisse erzielen.
+Die Betrachtung der mittleren Wartezeit zeigt, dass die mit der Queue-Rewardfunktion trainierten Modelle in den meisten Szenarien sehr gute Ergebnisse erzielen. Insbesondere in morning\_peak, evening\_peak und uniform übertreffen die Modelle die Baselines deutlich. Eine Ausnahme bildet Modell 2, das im Szenario morning\_peak eine auffällig schwache Leistung aufweist. Zudem ist im Szenario random\_heavy die Fixed-Time-Baseline den RL-Modellen überlegen, während alle Modelle in diesem Hochlastfall insgesamt schwache Ergebnisse erzielen.
 
 \subsubsection{Anzahl stoppender Fahrzeuge}
-In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}
@@ -225,7 +224,7 @@ In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s 
     \label{fig:queue-stopped2}
 \end{figure}
 
-Auch bei der Anzahl stoppender Fahrzeuge schneiden die RL-Modelle durchweg deutlich besser ab als die Baselines. Die Werte liegen auf einem sehr niedrigen Niveau, teilweise fast bei null, was eine hohe Effizienz im Verkehrsfluss widerspiegelt. Erneut bildet Modell 2 im Szenario random\_heavy eine Ausnahme, wo es im Vergleich zu den übrigen Modellen deutlich schlechter abschneidet. Die Actuated-Baseline bestätigt auch hier ihre schwache Gesamtperformance.
+Auch bei der Anzahl stoppender Fahrzeuge schneiden die RL-Modelle durchweg deutlich besser ab als die Baselines. Die Werte liegen auf einem sehr niedrigen Niveau, teilweise fast bei null, was eine hohe Effizienz im Verkehrsfluss widerspiegelt. Erneut bildet Modell 2 im Szenario random\_heavy eine Ausnahme, wo es im Vergleich zu den übrigen Modellen deutlich schlechter abschneidet. Die Actuated-Baseline bestätigt auch hier ihre schwache Gesamtleistung.
 
 \subsubsection{Anzahl ankommender Fahrzeuge}
 \label{sec:queue-ankommend}
@@ -303,7 +302,7 @@ Auch bei der Anzahl stoppender Fahrzeuge schneiden die RL-Modelle durchweg deutl
     \label{fig:queue-arrived}
 \end{figure}
 
-Hinsichtlich der Anzahl ankommender Fahrzeuge erreichen alle Modelle in nahezu allen Szenarien die maximale Durchsatzleistung. Lediglich Modell 2 weist im Szenario random\_heavy leichte Defizite auf, was die zuvor beobachtete schwache Performance bestätigt. Abgesehen davon zeigen die RL-Modelle eine robuste und konsistente Leistungsfähigkeit.
+Hinsichtlich der Anzahl ankommender Fahrzeuge erreichen alle Modelle in nahezu allen Szenarien die maximale Durchsatzleistung. Lediglich Modell 2 weist im Szenario random\_heavy leichte Defizite auf, was die zuvor beobachtete schwache Leistung bestätigt. Abgesehen davon zeigen die RL-Modelle eine robuste und konsistente Leistungsfähigkeit.
 
 \subsubsection{Durchschnitt fahrender Fahrzeuge}
 \label{sec:queue-fahrende}
@@ -381,7 +380,7 @@ Hinsichtlich der Anzahl ankommender Fahrzeuge erreichen alle Modelle in nahezu a
     \label{fig:queue-running}
 \end{figure}
 
-Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge zeigt sich ein differenziertes Bild: Die Actuated-Baseline weist überhöhte Werte auf, was ihre schwache Steuerungsleistung unterstreicht. Modell 2 fällt im Szenario random\_heavy ebenfalls negativ auf und bestätigt so seine insgesamt schlechtere Performance. In allen anderen Szenarien schneiden die RL-Modelle besser ab als Fixed-Time, wobei die Unterschiede im Mittel bei etwa 10 Prozent liegen.
+Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge zeigt sich ein differenziertes Bild: Die Actuated-Baseline weist überhöhte Werte auf, was ihre schwache Steuerungsleistung unterstreicht. Modell 2 fällt im Szenario random\_heavy ebenfalls negativ auf und bestätigt so seine insgesamt schlechtere Leistung. In allen anderen Szenarien schneiden die RL-Modelle besser ab als Fixed-Time, wobei die Unterschiede im Mittel bei etwa 10 Prozent liegen.
 
 \subsubsection{Durchschnittsgeschwindigkeiten}
 \label{sec:queue-geschwindigkeiten}
@@ -459,7 +458,7 @@ Bei der Betrachtung der durchschnittlich fahrenden Fahrzeuge zeigt sich ein diff
     \label{fig:queue-speed}
 \end{figure}
 
-Ein besonders deutlicher Vorteil der RL-Modelle zeigt sich bei der durchschnittlichen Geschwindigkeit. Während Fixed-Time im Bereich von 5,5 bis 6 m/s liegt, erreichen die Modelle im Mittel Geschwindigkeiten von etwa 7 m/s über alle Szenarien hinweg. Dies deutet auf einen flüssigeren Verkehrsfluss und eine effiziente Reduzierung von Stopps und Wartezeiten hin. Die Actuated-Baseline schneidet auch hier am schlechtesten ab.
+Ein besonders deutlicher Vorteil der RL-Modelle zeigt sich bei der durchschnittlichen Geschwindigkeit. Während Fixed-Time im Bereich von 5,5 bis 6 m/s liegt, erreichen die Modelle im Mittel Geschwindigkeiten von etwa 7 m/s über alle Szenarien hinweg. Dies deutet auf einen flüssigeren Verkehrsfluss und eine effiziente Reduzierung von Stopps und Wartezeiten hin. Die Instabilität von Model 2 im Szenario wird mit einer großer Standardabweichung unterstrichen. Die Actuated-Baseline schneidet auch hier am schlechtesten ab.
 
 \subsubsection{Anzahl teleportierender Fahrzeuge}
 \label{sec:queue-teleport}
@@ -550,7 +549,7 @@ Bei den Queue-basierten Modellen traten in keiner der Episoden Teleportationen a
                 width=12cm,
                 height=5cm,
                 enlarge x limits=0.15,
-                ylabel={Anzahl zurückgehaltener Zahrzeuge},
+                ylabel={Anzahl zurückgehaltener Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
@@ -610,7 +609,7 @@ Bei den Queue-basierten Modellen traten in keiner der Episoden Teleportationen a
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Anzahl zurückgehaltener Zahrzeuge}
+    \caption{Anzahl zurückgehaltener Fahrzeuge}
     \label{fig:queue-backlogged}
 \end{figure}
 
@@ -618,8 +617,8 @@ Die Metrik der zurückgehaltenen Fahrzeuge zeigt ebenfalls ein sehr positives Bi
 
 \subsubsection{Einstufung}
 \label{sec:queue-einstufung}
-Die Evaluation der mit der Queue-Rewardfunktion trainierten Modelle zeigt insgesamt eine deutliche Überlegenheit gegenüber den Baselines, insbesondere gegenüber der Actuated-Steuerung. In den meisten Szenarien konnten die Modelle die mittlere Wartezeit erheblich senken, die Anzahl stoppender Fahrzeuge nahezu eliminieren und die durchschnittliche Reisegeschwindigkeit signifikant steigern. Zudem wurde in allen Szenarien eine maximale Anzahl ankommender Fahrzeuge erreicht, was auf eine hohe Durchsatzleistung hindeutet. Auch hinsichtlich zurückgehaltener Fahrzeuge und Teleportationen zeigen die Modelle eine robuste Performance, da in nahezu allen Fällen keine nennenswerten Rückstaueffekte oder Teleportationen auftraten.
+Die Evaluation der mit der Queue-Rewardfunktion trainierten Modelle zeigt insgesamt eine deutliche Überlegenheit gegenüber den Baselines, insbesondere gegenüber der Actuated-Steuerung. In den meisten Szenarien konnten die Modelle die mittlere Wartezeit erheblich senken, die Anzahl stoppender Fahrzeuge nahezu eliminieren und die durchschnittliche Reisegeschwindigkeit signifikant steigern. Zudem wurde in allen Szenarien eine maximale Anzahl ankommender Fahrzeuge erreicht, was auf eine hohe Durchsatzleistung hindeutet. Auch hinsichtlich zurückgehaltener Fahrzeuge und Teleportationen zeigen die Modelle eine robuste Leistung, da in nahezu allen Fällen keine nennenswerten Rückstaueffekte oder Teleportationen auftraten.
 
-Gleichzeitig offenbart die Analyse Schwächen in spezifischen Szenarien: Vor allem Modell 2 zeigt im Szenario random\_heavy (und in geringerem Maße auch in morning\_peak) eine deutlich schlechtere Performance, die sich in höheren Wartezeiten, mehr Stopps sowie leicht reduzierten Ankunftszahlen widerspiegelt. Dennoch bleibt das Gesamtbild klar positiv, da die übrigen Modelle konsistent gute Ergebnisse liefern und die Fixed-Time-Baseline in den meisten Szenarien übertreffen.
+Gleichzeitig offenbart die Analyse Schwächen in spezifischen Szenarien: Vor allem Modell 2 zeigt im Szenario random\_heavy, sowie in geringerem Maße auch in morning\_peak, eine deutlich schlechtere Leistung, die sich in höheren Wartezeiten, mehr Stopps sowie leicht reduzierten Ankunftszahlen widerspiegelt. Dennoch bleibt das Gesamtbild klar positiv, da die übrigen Modelle konsistent gute Ergebnisse liefern und die Fixed-Time-Baseline in den meisten Szenarien übertreffen.
 
 Insgesamt belegt die Auswertung, dass Queue-basierte Rewards einen robusten Ansatz für die Verkehrsflussoptimierung darstellen, der Wartezeiten und Rückstau effektiv reduziert und dabei eine hohe Systemstabilität gewährleistet.

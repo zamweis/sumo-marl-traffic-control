@@ -2,11 +2,11 @@
 \label{sec:validation}
 
 In diesem Kapitel werden die Ergebnisse der Evaluationsläufe präsentiert.
-Alle Modelle (vier Trainingsseeds pro Reward-Variante) sowie die beiden Baselines (Fixed-Time, Actuated)
-wurden in allen vier Szenarien (\texttt{morning\_peak}, \texttt{evening\_peak}, \texttt{uniform}, \texttt{random\_heavy})
+Alle Modelle, bestehend aus 4 Trainingsseeds pro Reward-Variante, sowie die beiden Baselines, Fixed-Time und Actuated. Diese
+wurden in allen vier Szenarien \texttt{morning\_peak}, \texttt{evening\_peak}, \texttt{uniform} und \texttt{random\_heavy}
 jeweils über zehn Episoden evaluiert.
 
-\texttt{Bemerkung:} Die Resultate sind Mittelwerte pro Kombination aus \emph{Methode} und \emph{Szenario}. Die Baseline Actuated hat in allen Evaluierungen realtiv schlecht abgeschlossen und wurde größten teils separat in Diagrammen dargestellt um sicherzustellen, dass die deutlich besser performende Baseline TimeFixed, visuell deutlich mit den Modellen vergleichbar bleibt. Bei allen Episoden sind gleich viele Fahrzeuge in das Netz gespeist worden.
+\texttt{Anmerkung:} Die Resultate setzten sich aus Mittelwerten pro Kombination aus \emph{Methode} und \emph{Szenario} zusammen. Die Baseline Actuated hat in allen Evaluierungen verhältnismäßig schlecht abgeschlossen und wurde größten teils separat in Diagrammen dargestellt um sicherzustellen, dass die deutlich besser performende Baseline TimeFixed visuell deutlich mit den Modellen vergleichbar bleibt. In SUMO werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegen als gestoppt eingestuft. \cite{sumo-doc}
 
 \input{chapters/evaluation/diff-waiting-time.tex}
 \input{chapters/evaluation/queue.tex}
@@ -68,41 +68,8 @@ Verkehrssituationen weiter verbessern muss.
 
 \subsection{Gesamtevaluierung und Schlussfolgerung}
 
-Die durchgeführte Evaluation verdeutlicht, dass alle untersuchten Reinforcement-Learning-Ansätze
-die klassischen Baselines (Fixed-Time und Actuated) in nahezu allen Metriken deutlich übertreffen.
-Insbesondere die Actuated-Baseline bestätigt sich über sämtliche Szenarien hinweg als instabil und
-ineffizient. Die Fixed-Time-Baseline hingegen zeigt, wie bereits aus der realen Welt zu erwarten, sehr gute und robuste Resultate, da diese Steuerungsstrategie seit Jahrzehnten in vielen Städten
-standardmäßig eingesetzt wird. Sie stellt damit eine starke Referenz dar, die von den RL-Modellen
-erst übertroffen werden musste.
+Die Evaluation hat gezeigt, dass alle untersuchten Reinforcement-Learning-Ansätze die klassischen Baselines (Fixed-Time und Actuated) in nahezu allen Metriken deutlich übertreffen. Während die Actuated-Baseline durchgängig instabil war, bestätigte sich die Fixed-Time-Strategie als solide Referenz, die jedoch ebenfalls von den RL-Modellen übertroffen werden konnte.
 
-Über alle Rewardfunktionen hinweg konnten die Modelle signifikante Verbesserungen in Bezug auf
-\textit{mittlere Wartezeit}, \textit{Anzahl stoppender Fahrzeuge} und \textit{Durchschnittsgeschwindigkeit}
-erzielen. Ebenso wurde in fast allen Szenarien die maximale Anzahl ankommender Fahrzeuge erreicht,
-sodass die Effizienzsteigerungen nicht mit einem reduzierten Gesamtdurchsatz einhergingen.
+Über alle Reward-Funktionen hinweg führten die Modelle zu einer deutlichen Reduktion der mittleren Wartezeit, der Anzahl stoppender Fahrzeuge und zu höheren Durchschnittsgeschwindigkeiten, ohne Einbußen im Gesamtdurchsatz. Besonders stabil zeigten sich dabei Queue- und CO\textsubscript{2}-basierte Modelle. Diff-Waiting-Time- und Real-World-Ansätze waren zwar oft effizient, reagierten jedoch unter Hochlastbedingungen sensibler auf Zufallseinflüsse.
 
-Gleichzeitig zeigen die Ergebnisse, dass die Wahl der Rewardfunktion maßgeblichen Einfluss auf die
-Robustheit und Stabilität der Modelle hat:
-\begin{itemize}
-    \item Mit der \textbf{Diff-Waiting-Time}-Funktion wurden Modelle generiert, die klassische Verfahren
-          in den meisten Szenarien klar übertreffen. Allerdings weisen einzelne Varianten unter hoher Last
-          (random\_heavy, evening\_peak) starke Varianz und Leistungseinbrüche auf.
-    \item Die \textbf{Queue}-Funktion führte zu besonders konsistenten Resultaten, bei denen Wartezeiten
-          und Rückstaus nahezu vollständig reduziert werden konnten. Die Stabilität über verschiedene Seeds hinweg
-          war hier am höchsten.
-    \item Die \textbf{Real-World}-Funktion ermöglichte praxisnahe Modelle, die in regulären Szenarien
-          sehr effizient arbeiteten. Unter unregelmäßigen und schwer prognostizierbaren Lastbedingungen
-          zeigte sich jedoch eine eingeschränkte Generalisierungsfähigkeit.
-    \item Mit der \textbf{CO\textsubscript{2}-Emissions}-Funktion konnten neben Effizienzgewinnen auch
-          ökologische Verbesserungen erzielt werden. Diese Modelle kombinierten niedrige Emissionen mit hoher
-          Verkehrseffizienz und erwiesen sich insgesamt als besonders stabile Variante, mit Ausnahme einzelner
-          Schwächen in Hochlastszenarien.
-\end{itemize}
-
-Zusammenfassend lässt sich feststellen, dass Deep-RL-gestützte Steuerungsstrategien ein hohes Potenzial
-zur Optimierung urbaner Verkehrsflüsse besitzen. Während sich je nach Rewardfunktion unterschiedliche
-Stärken und Schwächen zeigen, übertreffen alle untersuchten Ansätze die etablierten Baselines teils
-deutlich. Zugleich wird ersichtlich, dass die Fixed-Time-Steuerung, trotz ihres Alters und ihrer
-vereinfachten Logik, nach wie vor ein leistungsstarker und praxisrelevanter Vergleichsmaßstab ist.
-Die Ergebnisse unterstreichen jedoch zugleich die Notwendigkeit, die Generalisierungsfähigkeit
-unter variierenden und komplexen Lastbedingungen weiter zu verbessern, um den Übergang von
-simulationsbasierten Experimenten hin zu robusten Realweltanwendungen zu ermöglichen.
+Insgesamt wird deutlich: Deep-RL kann klassische Steuerungsverfahren nicht nur erreichen, sondern in vielen Szenarien übertreffen. Gleichzeitig bleibt die Robustheit unter unregelmäßigen Bedingungen (z. B. random\_heavy) eine zentrale Herausforderung.

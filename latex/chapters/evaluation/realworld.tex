@@ -1,6 +1,6 @@
 
 \subsection{Reward: Reale Welt}
-Die dritte Gruppe ziel auf ein kombiniertes Minimieren der Wartezeiten, Anzahl an Phasenwechsel und Staus.
+Diese Gruppe ziel auf ein kombiniertes Minimieren der Wartezeiten, Anzahl an Phasenwechsel und Staus.
 
 \subsubsection{Mittlere Wartezeiten}
 \label{sec:realworld-wartezeit}
@@ -118,10 +118,9 @@ Die Fixed-Time-Baseline bewegt sich in allen Szenarien auf einem stabilen Niveau
 
 Die trainierten Modelle erzielen insgesamt deutlich niedrigere Wartezeiten, zeigen jedoch unterschiedliche Stabilität. Modell 1 und Modell 2 erreichen in den meisten Szenarien sehr geringe Werte im Sub-Sekundenbereich und liegen damit weit unterhalb der Fixed-Time-Baseline; nur im evening\_peak und im random\_heavy steigen die Wartezeiten auf einige Dutzend Sekunden. Modell 3 und Modell 4 weisen hingegen in denselben Szenarien deutlich höhere Mittelwerte von mehreren Dutzend bis über hundert Sekunden auf, während sie in den übrigen Fällen ebenfalls sehr niedrige Werte erreichen.
 
-Auffällig ist die hohe Varianz gerade bei Modell 3 und Modell 4 in den schwierigeren Szenarien. Dort schwanken die Ergebnisse stark zwischen einzelnen Runs, was darauf hinweist, dass die Modelle teils sehr effiziente, teils aber auch deutlich weniger stabile Steuerungsstrategien hervorbringen.
+Auffällig ist die hohe Varianz gerade bei Modell 3 und Modell 4 in den schwierigeren Szenarien. Dort schwanken die Ergebnisse stark zwischen einzelnen Episoden, was darauf hinweist, dass die Modelle teils sehr effiziente, teils aber auch deutlich weniger stabile Steuerungsstrategien hervorbringen.
 
 \subsubsection{Anzahl stoppender Fahrzeuge}
-In sumo werden Fahrzeuge die sich mit einer Geschwindigkeit kleiner als 0.1 m/s bewegt.
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}
@@ -236,7 +235,7 @@ Die Fixed-Time-Baseline bewegt sich in allen Szenarien auf einem niedrigen zweis
 
 Die trainierten Modelle zeigen eine deutliche Reduktion: meist liegt die Zahl der Stopps nur bei ein bis wenigen Fahrzeugen. Besonders im morning\_peak und im uniform-Szenario erreichen alle Modelle extrem niedrige Werte. Auffällig ist jedoch, dass Modell 2 bis 4 im random\_heavy-Szenario deutlich höhere Werte aufweisen, die teils mehrere Dutzend Fahrzeuge umfassen. Modell 1 bleibt dagegen auch hier auf einem vergleichsweise niedrigen Niveau.
 
-Die stark erhöhten Werte im random\_heavy gehen mit einer hohen Streuung zwischen den Runs einher. Dies deutet darauf hin, dass die Modelle zwar häufig sehr effiziente Steuerungsstrategien finden, diese jedoch in einzelnen Durchläufen nicht stabil reproduziert werden.
+Die stark erhöhten Werte im random\_heavy gehen mit einer hohen Streuung zwischen den Episoden einher. Dies deutet darauf hin, dass die Modelle zwar häufig sehr effiziente Steuerungsstrategien finden, diese jedoch in einzelnen Durchläufen nicht stabil reproduziert werden.
 
 \subsubsection{Anzahl ankommender Fahrzeuge}
 \label{sec:realworld-ankommend}
@@ -316,7 +315,7 @@ Die stark erhöhten Werte im random\_heavy gehen mit einer hohen Streuung zwisch
 
 Die Auswertung der Anzahl ankommender Fahrzeuge zeigt über alle Szenarien hinweg sehr ähnliche Ergebnisse für die Fixed-Time-Baseline und die trainierten Modelle. Sowohl die Baseline als auch die Modelle erreichen in den meisten Szenarien nahezu das Maximum, was darauf hindeutet, dass der Verkehrsfluss grundsätzlich zuverlässig abgewickelt wird.
 
-Auffällig ist lediglich, dass in random\_heavy einzelne Modelle eine leicht geringere Performance aufweisen als die Fixed-Time-Baseline. Dieser Rückgang bleibt jedoch moderat, und die Anzahl ankommender Fahrzeuge liegt weiterhin auf einem hohen Niveau. In den übrigen Szenarien (morning\_peak, evening\_peak, uniform) stimmen die Resultate nahezu exakt mit der Fixed-Time-Baseline überein.
+Auffällig ist lediglich, dass in random\_heavy einzelne Modelle eine leicht geringere Leistung aufweisen als die Fixed-Time-Baseline. Dieser Rückgang bleibt jedoch moderat, und die Anzahl ankommender Fahrzeuge liegt weiterhin auf einem hohen Niveau. In den übrigen Szenarien (morning\_peak, evening\_peak, uniform) stimmen die Resultate nahezu exakt mit der Fixed-Time-Baseline überein.
 
 Die Actuated-Baseline bestätigt erneut ihre Schwäche und fällt in allen Szenarien deutlich ab. Das deutliche Defizit dieser Steuerungsstrategie kontrastiert stark mit den stabil hohen Werten der Fixed-Time-Baseline und der Modelle.
 
@@ -400,7 +399,7 @@ Die Analyse der durchschnittlichen Anzahl an Fahrzeugen im Netz zeigt klare Unte
 
 Die Fixed-Time-Baseline liegt je nach Szenario zwischen rund 50 und 70 Fahrzeugen, im stark belasteten random\_heavy-Fall bei etwa 120. Damit erreicht sie ein insgesamt konsistentes Niveau.
 
-Die Actuated-Baseline schneidet deutlich schlechter ab: mit mehreren hundert Fahrzeugen im Netz, im Extremfall fast 900, liegt sie um ein Vielfaches über der Fixed-Time-Variante und bestätigt ihre geringe Eignung.
+Die Actuated-Baseline schneidet deutlich schlechter ab: mit mehreren hundert Fahrzeugen im Netz liegt sie um ein Vielfaches über der Fixed-Time-Variante und bestätigt ihre geringe Eignung.
 
 Die trainierten Modelle erzielen Werte, die weitgehend auf dem Niveau der Fixed-Time-Baseline liegen. Typischerweise bewegen sie sich bei etwa 40 bis 60 Fahrzeugen, im random\_heavy-Szenario zwischen 100 und 130. Auffällig ist, dass einzelne Modelle in diesem Szenario etwas höhere Werte zeigen, was auch mit einer größeren Streuung einhergeht. In den übrigen Szenarien liefern sie jedoch nahezu identische Ergebnisse zur Fixed-Time-Baseline.
 
@@ -482,7 +481,7 @@ Die trainierten Modelle erzielen Werte, die weitgehend auf dem Niveau der Fixed-
 
 Die Analyse der Durchschnittsgeschwindigkeiten macht deutliche Unterschiede sichtbar. Grundsätzlich gilt: höhere Werte bedeuten einen effizienteren Verkehrsfluss.
 
-Die Fixed-Time-Baseline bewegt sich in allen Szenarien auf einem soliden Niveau von rund 5½ bis 6 m/s und liegt damit klar über der Actuated-Variante. Diese erreicht nur etwa ein halbes m/s und ist damit um eine ganze Größenordnung schlechter.
+Die Fixed-Time-Baseline bewegt sich in allen Szenarien auf einem guten Niveau von rund 5½ bis 6 m/s und liegt damit klar über der Actuated-Variante. Diese erreicht nur etwa ½ m/s und ist damit um eine ganze Größenordnung schlechter.
 
 Die trainierten Modelle übertreffen die Fixed-Time-Baseline deutlich und liegen meist zwischen etwa 6½ und 7¼ m/s. Besonders stabil zeigt sich Modell 2, das in allen Szenarien nahe bei 7 m/s bleibt. Modelle 3 und 4 fallen im stark belasteten random\_heavy-Szenario etwas zurück (teils nur knapp über 5½ m/s), während sie in den übrigen Fällen mit den besten Ergebnissen gleichziehen.
 
@@ -564,7 +563,7 @@ Insgesamt bestätigen die Ergebnisse: die trainierten Modelle steigern die Durch
     \label{fig:realworld-teleports}
 \end{figure}
 
-Die Auswertung der Teleportationen zeigt, dass in nahezu allen Szenarien keine Fahrzeuge teleportiert werden mussten. Dies gilt sowohl für die beiden Baselines als auch für die trainierten Modelle. Eine Ausnahme bildet das Szenario random\_heavy bei Modell 3, in dem vereinzelt Teleportationen auftraten. Dieses Ergebnis steht im Einklang mit den zuvor beobachteten Schwächen desselben Modells in diesem Szenario.
+Die Auswertung der Teleportationen zeigt, dass in nahezu allen Szenarien keine Fahrzeuge teleportiert werden mussten. Dies gilt sowohl für die beiden Baselines als auch für die trainierten Modelle. Eine Ausnahme bildet das Szenario random\_heavy bei Modell 3, in dem insgesammt eine Teleportation innerhalb der 10 Episoden auftrat. Dieses Ergebnis steht im Einklang mit den zuvor beobachteten Schwächen desselben Modells in diesem Szenario.
 
 \subsubsection{Anzahl zurückgehaltener Fahrzeuge}
 \label{sec:realworld-backlogged}
@@ -578,7 +577,7 @@ Die Auswertung der Teleportationen zeigt, dass in nahezu allen Szenarien keine F
                 width=12cm,
                 height=5cm,
                 enlarge x limits=0.15,
-                ylabel={Anzahl zurückgehaltener Zahrzeuge},
+                ylabel={Anzahl zurückgehaltener Fahrzeuge},
                 symbolic x coords={evening_peak,morning_peak,random_heavy,uniform},
                 xtick=data,
                 xticklabels={\text{evening\_peak},\text{morning\_peak},\text{random\_heavy},\text{uniform}},
@@ -638,11 +637,11 @@ Die Auswertung der Teleportationen zeigt, dass in nahezu allen Szenarien keine F
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Anzahl zurückgehaltener Zahrzeuge}
+    \caption{Anzahl zurückgehaltener Fahrzeuge}
     \label{fig:realworld-backlogged}
 \end{figure}
-
-n allen Szenarien zeigen die vier Modelle sowie die Fixed-Time-Baseline keine zurückgehaltenen Fahrzeuge. Lediglich die Actuated-Baseline weist in sämtlichen Szenarien deutliche Werte auf, die mit der insgesamt schwachen Performance dieser Methode konsistent sind. Dieses Ergebnis bestätigt, dass ausschließlich die Actuated-Steuerung Fahrzeuge im Netz blockiert, während alle anderen Verfahren einen stabilen Verkehrsfluss ohne Zurückhalten sicherstellen konnten.
+\newpage
+In allen Szenarien zeigen die vier Modelle sowie die Fixed-Time-Baseline keine zurückgehaltenen Fahrzeuge. Die Actuated-Baseline weist jedoch in sämtlichen Szenarien deutliche Werte auf, die mit der insgesamt schwachen Leistung dieser Methode konsistent sind. Dieses Ergebnis bestätigt, dass ausschließlich die Actuated-Steuerung Fahrzeuge im Netz blockiert, während alle anderen Verfahren einen stabilen Verkehrsfluss ohne Zurückhalten sicherstellen konnten.
 
 \subsubsection{Einstufung}
 \label{sec:realworld-einstufung}

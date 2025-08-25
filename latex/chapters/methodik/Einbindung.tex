@@ -31,7 +31,7 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
     \label{fig:rl_architektur}
 \end{figure}
 
-Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo}  und \gls{supersuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes \gls{api} für Multiagenten-Umgebungen bereit, analog zu \texttt{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist. \cite{PettingZoo, SuperSuit Gymnasium}
+Zur Vereinheitlichung der Multiagentenumgebung kamen die Bibliotheken \texttt{PettingZoo}  und \gls{supersuit} zum Einsatz. \texttt{PettingZoo} stellt ein standardisiertes \gls{api} für Multiagenten-Umgebungen bereit, analog zu \texttt{Gymnasium}, jedoch speziell für Szenarien mit mehreren Agenten. \texttt{SuperSuit} erweitert diese Umgebungen durch eine Vielzahl an Wrappers, beispielsweise zur Vereinheitlichung von Beobachtungs- und Aktionsräumen (z.\,B. durch Padding) oder zur Umwandlung in vektorisierte Formate. Für parallele Ausführung ist die Umgebung mittels \texttt{concat\_vec\_envs\_v1} auf Mehrkernbetrieb vorbereitet (\texttt{num\_cpus = 8}); im vorliegenden Skript (siehe Anhang \ref{app:train_script}) wird eine Instanz (\texttt{num\_vec\_envs = 1}) betrieben, sodass die Skalierung ohne Codeänderungen möglich ist. \cite{PettingZoo,SuperSuit,Gymnasium}
 
 \subsubsection{Agentenzuordnung im Multiagentensystem}
 Jede steuerbare Lichtsignalanlage (TLS) wird einem eindeutigen Agenten zugeordnet.
@@ -193,7 +193,7 @@ TensorBoard diente als zentrales Werkzeug, um den Verlauf relevanter Kennzahlen
 in Echtzeit zu überwachen und Trainingstendenzen (z.\,B. Reward-Stabilität,
 Auswirkungen von Teleports oder Backlog-Aufbau) nachvollziehbar zu machen.
 
-
+\newpage
 \subsubsection{Systemumgebung und Durchführung}
 
 
