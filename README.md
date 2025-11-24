@@ -97,8 +97,12 @@ Use one of the provided repair scripts:
 ```bash
 python scripts/repair_net.py
 python scripts/check_tls_consistency.py
+.
+.
+.
 python scripts/find_valid_tls.py
 ```
+Some networks need manual deletion of railway tls.
 
 ### **2. Train an RL model**
 ```bash
