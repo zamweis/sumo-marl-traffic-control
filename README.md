@@ -63,7 +63,8 @@ SUMO Simulation ↔ TraCI Interface ↔ SUMO-RL Environment ↔ Stable-Baselines
    cd sumo-marl-traffic-control
    pip install -r requirements.txt
    ```
-
+5  **Install sumo-rl**
+clone sumo-rl repository and add to path
 4. **Implement emissions in sumo-rl**
    
     in sumo_rl/environment/env.py modify  _compute_info(self)
