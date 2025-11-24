@@ -119,7 +119,7 @@ python continuetrain.py
 
 ### **4. Evaluate trained models**
 ```bash
-python /evaluate.py
+python evaluate.py
 ```
 
 Evaluation results are saved in JSON and CSV format.
