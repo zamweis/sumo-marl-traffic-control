@@ -7,7 +7,7 @@ Bevor die Probleme beim OSM-Import analysiert werden, ist es hilfreich, den Aufb
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.7\textwidth]{images/junktion.png}
-  \caption{Visualisierung einer TLS-Kreuzung (Quelle netedit\cite{netedit}).}
+  \caption{Visualisierung einer TLS-Kreuzung (Quelle: netedit\cite{netedit}).}
   \label{fig:sumo_karlsruhe}
 \end{figure}
 \vspace{0.5cm}
@@ -68,6 +68,7 @@ Die automatische Ableitung von Ampelsteuerungen aus OSM ist unvollständig und f
 
   \item \textbf{TLS mit nur einer Phase:} Viele der generierten Ampeln besitzen lediglich eine einzige definierte Phase. Dies entspricht keinem realen Verhalten und führt zu Fehlern beim Training mit \texttt{sumo-rl}, da das Framework mindestens zwei steuerbare Phasen voraussetzt. Die betroffenen Knoten müssen daher identifiziert und aus der Simulation ausgeschlossen oder manuell korrigiert werden. \cite{sumo-rl_docs,sumo-doc,Sumo-osm}
 
+  \newpage
   \item \textbf{Unstimmige Phasenlängen:} Jede Phase in SUMO ist ein Zeichenstring (\texttt{state}), dessen Länge der Anzahl der gesteuerten Verbindungen (sogenannte \textit{controlled links}) entsprechen muss. Bei fehlerhafter Generierung ist diese Bedingung oft verletzt, beispielsweise wenn der \texttt{state} zu kurz oder zu lang ist. Dies führt in \texttt{sumo-rl} zu Indexfehlern oder undefiniertem Verhalten. \cite{sumo-rl_docs}
 
   \item \textbf{Fehlerhafte oder überzählige \texttt{<request>}-Einträge:} Jede TLS enthält in der Netzdatei zusätzliche Steuerinformationen über \texttt{request}-Elemente. Diese verweisen auf spezifische Signale mittels eines Index. Häufig verweisen diese Einträge jedoch auf nicht vorhandene Verbindungen, da \texttt{netconvert} Signalverknüpfungen nicht korrekt zuordnet. SUMO ignoriert solche Fehler teilweise still, während \texttt{sumo-rl} hingegen bricht mit Ausnahmen ab. \cite{sumo-rl_docs}
@@ -168,7 +169,7 @@ Die Topologie entspricht der realen Verkehrsführung, wurde jedoch so modelliert
     \includegraphics[width=\textwidth]{junction_after.PNG}
     \caption*{Nachher}
   \end{subfigure}
-  \caption{Vorher-Nachher-Vergleich einer angepassten TLS-Kreuzung (netedit \cite{netedit})}
+  \caption{Vorher-Nachher-Vergleich einer angepassten TLS-Kreuzung (Quelle: netedit \cite{netedit})}
   \label{fig:tls_fix}
 \end{figure}
 

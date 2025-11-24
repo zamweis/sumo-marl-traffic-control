@@ -18,7 +18,7 @@ jeweils über zehn Episoden evaluiert.
 Ein zentrales Ziel der Evaluation bestand darin, nicht nur die absolute Leistungsfähigkeit
 der Modelle zu messen, sondern auch deren \textbf{Robustheit} und \textbf{Replikationsfähigkeit}
 zu bewerten. Unter Robustheit wird hier die Fähigkeit verstanden, auch unter variierenden
-Verkehrsbedingungen (verschiedene Szenarien) und unterschiedlichen Initialisierungen (Seeds)
+Verkehrsbedingungen, durch Durchläufe in verschiedene Szenarien und durch Verwendung verschiedener, festgesetzter Seeds
 konsistente Resultate zu erzielen. Replikationsfähigkeit bezeichnet hingegen die Eigenschaft,
 dass ein Modell mit gleicher Konfiguration über mehrere Trainingsläufe hinweg vergleichbare
 Ergebnisse liefert.
@@ -35,7 +35,7 @@ Die Evaluationsumgebung protokollierte sowohl \textit{mittlere Metriken} (z.\,B.
 Wartezeit, mittlere Geschwindigkeit) als auch \textit{Totals} (z.\,B. Anzahl ankommender Fahrzeuge,
 Gesamtemissionen) pro Episode. Diese Auswertung erlaubte es, systematische Leistungsunterschiede
 von stochastischen Schwankungen zu trennen. Besonders aufschlussreich war dabei die Betrachtung
-der Standardabweichungen: hohe Varianz bei gleicher Reward-Funktion weist auf eine eingeschränkte
+der Standardabweichungen: Hohe Varianz bei gleicher Reward-Funktion weist auf eine eingeschränkte
 Replikationsfähigkeit hin.
 
 \paragraph{Ergebnisse}
@@ -46,12 +46,12 @@ Replikationsfähigkeit hin.
     \item \textbf{Diff-Waiting-Time:} Modelle auf Basis dieser Reward-Funktion waren insgesamt robust, insbesondere
           Modell~1 und Modell~4. Modelle~2 und~3 zeigten dagegen in random\_heavy erhöhte Varianz und teilweise deutliche
           Leistungseinbrüche, was die eingeschränkte Replikationsfähigkeit einzelner Seeds verdeutlicht.
-    \item \textbf{Queue:} Die Queue-basierten Modelle erzielten eine durchgängig hohe Stabilität und reduzierten
+    \item \textbf{Queue:} Die queue-basierten Modelle erzielten eine durchgängig hohe Stabilität und reduzierten
           Wartezeiten und Stopps stark. Lediglich Modell~2 zeigte in random\_heavy und morning\_peak eine geringere Robustheit.
     \item \textbf{Real-World:} Diese Reward-Funktion lieferte in allen Szenarien außer random\_heavy sehr stabile
           und nahe am Optimum liegende Ergebnisse. Unter hoher und unregelmäßiger Last traten jedoch erhöhte
           Standardabweichungen auf, was auf eingeschränkte Robustheit hindeutet.
-    \item \textbf{CO\textsubscript{2}-Emissionen:} Die Emissions-basierten Modelle kombinierten hohe Effizienz mit
+    \item \textbf{CO\textsubscript{2}-Emissionen:} Die emissionsbasierten Modelle kombinierten hohe Effizienz mit
           ökologischer Optimierung und erwiesen sich als besonders stabil. Lediglich in Hochlastszenarien (insb. Modell~2 und~3)
           zeigten sich Replikationsprobleme, die sich jedoch auf ein Niveau im Bereich der Fixed-Time-Baseline einpendelten.
 \end{itemize}

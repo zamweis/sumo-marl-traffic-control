@@ -44,129 +44,6 @@ ROUTE_FILES = [
     "flows_uniform.rou.xml",
 ]
 
-
-# ====== Reward-Funktion: RealWorld-Variante ======
-def realworld_reward(traffic_signal):
-    """
-    Verbesserte Reward-Funktion:
-    - belohnt Outflow stärker
-    - bestraft Queue-Aufbau und häufige Phasenwechsel
-    - EMA-Glättung für stabilere Werte
-    - kleine positive Basis, damit PPO leichter lernt
-    """
-
-    # aktuelle Messwerte lokal zur Kreuzung
-    q = traffic_signal.get_total_queued()
-    f = sum(
-        traffic_signal.sumo.lane.getLastStepVehicleNumber(l)
-        for l in traffic_signal.out_lanes
-    )
-
-    # interne Zustände initialisieren
-    if not hasattr(traffic_signal, "_rw_state") or traffic_signal.env.sim_step == 0:
-        traffic_signal._rw_state = {"prev_q": q, "ema_q": float(q), "ema_f": float(f)}
-        return 0.0
-
-    st = traffic_signal._rw_state
-
-    # Parameter für Normalisierung / Gewichtung
-    max_storage = max(5.0, len(traffic_signal.lanes) * 12)   # etwas großzügiger als *10
-    max_outflow_per_step = max(2.0, len(traffic_signal.out_lanes) * 3)  # großzügiger als *2
-    w_q, w_build, w_flow, w_switch = 1.0, 0.8, 1.0, 0.1      # Flow stärker gewichtet
-    ema, clip = 0.3, 2.0                                     # glatter, engerer Clip
-
-    # Exponentielles Mittel
-    ema_q = (1 - ema) * st["ema_q"] + ema * q
-    ema_f = (1 - ema) * st["ema_f"] + ema * f
-
-    # Aufbau neuer Warteschlangen
-    delta_q = q - st["prev_q"]
-    build = max(0, delta_q)
-
-    # Normierungen
-    q_norm = np.clip(ema_q / max_storage, 0.0, 1.5)
-    b_norm = np.clip(build / (0.2 * max_storage), 0.0, 1.5)
-    f_norm = np.clip(ema_f / max_outflow_per_step, 0.0, 1.5)
-
-    # Phasenwechsel-Bestrafung
-    phase_sw = 1.0 if getattr(traffic_signal, "phase_changed", False) else 0.0
-
-    # Reward-Berechnung
-    r = -w_q * q_norm - w_build * b_norm + w_flow * f_norm - w_switch * phase_sw
-    r = float(np.clip(r, -clip, clip))
-
-    # Kleine positive Basis hinzufügen
-    r += 0.1
-
-    # Update interner Zustände
-    traffic_signal._rw_state = {"prev_q": q, "ema_q": ema_q, "ema_f": ema_f}
-    traffic_signal.phase_changed = False  # Reset Flag nach Verwendung
-
-    return r
-
-# ====== Reward-Funktion: Custom-Variante ([-1, 1] gebunden) ======
-def custom_reward(traffic_signal):
-    """
-    Ausgeglichene Reward-Funktion:
-    Bestraft Stau, Wartezeit, Teleports und Kollisionen,
-    belohnt Durchfluss.
-    Skaliert Werte mit tanh, um Extremwerte abzuflachen.
-    """
-
-    # Initialisierung von vorherigen Zuständen
-    if not hasattr(traffic_signal, "_prev_queue"):
-        traffic_signal._prev_queue = 0
-    if not hasattr(traffic_signal, "_prev_wait_sum"):
-        traffic_signal._prev_wait_sum = 0.0
-
-    # Live-Metriken aus SUMO
-    queue = traffic_signal.get_total_queued()
-    wait_sum_total = float(np.sum(traffic_signal.get_accumulated_waiting_time_per_lane()))
-    sim = traci.simulation
-    arrived = sim.getArrivedNumber()
-    teleports = sim.getStartingTeleportNumber()
-    collisions = sim.getCollidingVehiclesNumber()
-
-    # Änderungen pro Step (Delta)
-    delta_queue = queue - traffic_signal._prev_queue
-    delta_wait = max(0.0, wait_sum_total - traffic_signal._prev_wait_sum)
-
-    # Update der gespeicherten Werte
-    traffic_signal._prev_queue = queue
-    traffic_signal._prev_wait_sum = wait_sum_total
-
-    # Skaliertes, glattes Mapping via tanh()
-    q_term       = -np.tanh(queue / 30.0)
-    dq_term      = -np.tanh(max(0, delta_queue) / 10.0)
-    wait_term    = -np.tanh(delta_wait / 60.0)
-    arrived_term =  np.tanh(arrived / 5.0)
-    tp_term      = -np.tanh(teleports / 1.0)
-    col_term     = -np.tanh(collisions / 1.0)
-
-    # Gewichtung der einzelnen Komponenten
-    w_q, w_dq, w_wait = 0.35, 0.20, 0.45
-    w_arr, w_tp, w_col = 0.40, 0.90, 1.20
-
-    raw = (
-        w_q   * q_term +
-        w_dq  * dq_term +
-        w_wait* wait_term +
-        w_arr * arrived_term +
-        w_tp  * tp_term +
-        w_col * col_term
-    )
-
-    # Härtere Strafen für Teleports/Kollisionen
-    if teleports > 0:
-        raw -= 0.5
-    if collisions > 0:
-        raw -= 0.8
-
-    # Ergebnis in [-1, 1] begrenzen
-    reward = float(np.tanh(raw))
-    return reward
-
-
 # ====== Schedules für Hyperparameter-Anpassung ======
 # (Funktionen, die während des Trainings den Wert z. B. von Lernrate oder Clip-Bereich dynamisch anpassen)
 def adaptive_entropy_schedule(start=0.01):
@@ -303,12 +180,6 @@ class TimeBasedCheckpointCallback(BaseCallback):
 
 # ====== Callback: Metriken aus der Env loggen ======
 class EpisodeMetricsLoggerCallback(BaseCallback):
-    """
-    Loggt Episodenmetriken nach dem gleichen Schema wie rollout_baseline:
-    - system_mean_* → Werte über Episode mitteln
-    - system_total_* → nur letzten gültigen Wert merken
-    - finale Totals (aus final_info/terminal_info) haben Vorrang
-    """
     def __init__(self, prefix="episode", verbose=0):
         super().__init__(verbose)
         self.prefix = prefix
@@ -327,8 +198,8 @@ class EpisodeMetricsLoggerCallback(BaseCallback):
             if not isinstance(info, dict):
                 continue
 
-            # Episode vorbei? Dann evtl. final_info/terminal_info auswerten
             if dones is not None and dones[i]:
+                # --- Episode zu Ende ---
                 fin = info.get("final_info") or info.get("terminal_info")
                 if isinstance(fin, dict):
                     for k, v in fin.items():
@@ -337,31 +208,25 @@ class EpisodeMetricsLoggerCallback(BaseCallback):
                         if k.startswith("system_mean_"):
                             self.sums[k] = self.sums.get(k, 0.0) + float(v)
                             self.counts[k] = self.counts.get(k, 0) + 1
-                    for k, v in fin.items():
-                        if (
-                            k.startswith("system_total_")
-                            and isinstance(v, (int, float))
-                            and np.isfinite(v)
-                        ):
+                        elif k.startswith("system_total_"):
                             self.last_totals[k] = float(v)
+            else:
+                # --- Nur Zwischenschritt, solange Episode noch läuft ---
+                for k, v in info.items():
+                    if not isinstance(v, (int, float)) or not np.isfinite(v):
+                        continue
+                    if k.startswith("system_mean_") or k in [
+                        "system_total_waiting_time",
+                        "system_total_stopped",
+                        "system_total_running",
+                    ]:
+                        self.sums[k] = self.sums.get(k, 0.0) + float(v)
+                        self.counts[k] = self.counts.get(k, 0) + 1
+                    elif k.startswith("system_total_"):
+                        self.last_totals[k] = float(v)
 
-            # Normaler Zwischenschritt
-            for k, v in info.items():
-                if not isinstance(v, (int, float)) or not np.isfinite(v):
-                    continue
-                if k.startswith("system_mean_") or k in [
-                    "system_total_waiting_time",
-                    "system_total_stopped",
-                    "system_total_running",
-                ]:
-                    self.sums[k] = self.sums.get(k, 0.0) + float(v)
-                    self.counts[k] = self.counts.get(k, 0) + 1
-                elif k.startswith("system_total_"):
-                    self.last_totals[k] = float(v)
-
-        # Wenn Episode zu Ende, berechnen + loggen
+        # Episode fertig → loggen
         if dones is not None and any(dones):
-            # Mittelwerte berechnen
             for k, total in self.sums.items():
                 mean_val = total / max(1, self.counts.get(k, 1))
                 short_key = shorten_key(k)
@@ -369,7 +234,6 @@ class EpisodeMetricsLoggerCallback(BaseCallback):
                 if self.verbose:
                     print(f"[EpisodeMetrics] {short_key} (mean) = {mean_val:.3f}")
 
-            # letzte Totals übernehmen
             for k, v in self.last_totals.items():
                 short_key = shorten_key(k)
                 self.logger.record(f"{self.prefix}/{short_key}", v)
@@ -457,7 +321,7 @@ for SEED in SEEDS:
         gamma=0.99,               # Diskontfaktor
         gae_lambda=0.95,          # Lambda für GAE
         device="cpu",             # Training auf CPU
-        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])), # Netzarchitektur
+        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])), # Netzarchitekturgit
     )
 
     # Callback-Liste: Checkpoints, Logging, Best-Model-Speicherung

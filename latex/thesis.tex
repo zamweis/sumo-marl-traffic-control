@@ -130,10 +130,10 @@
 
 	\begin{tikzpicture}[remember picture,overlay]
 		% oben links
-		\node[anchor=north west, inner sep=15pt] 
+		\node[anchor=north west, inner sep=45pt] 
 			at (current page.north west) {\includegraphics[width=5cm]{HKA_IWI_Wortmarke_RGB.jpg}};
 		% oben rechts
-		\node[anchor=north east, inner sep=15pt] 
+		\node[anchor=north east, inner sep=45pt] 
 			at (current page.north east) {\includegraphics[width=3cm]{hka.PNG}};
 	\end{tikzpicture}
 
@@ -207,7 +207,7 @@
 
 \section*{Eigenständigkeitserklärung}
 
-Hiermit erkläre ich, dass ich die vorliegende Bachelorarbeit mit dem Titel 
+Hiermit erkläre ich, Sam Weiler, dass ich die vorliegende Bachelorarbeit mit dem Titel 
 
 \textit{„Multi-Agent Reinforcement Learning für adaptive Ampelsteuerung in SUMO“}
 
@@ -217,19 +217,16 @@ Alle Stellen, die wörtlich oder sinngemäß aus Veröffentlichungen entnommen s
 \vspace{3cm}
 
 Karlsruhe, den \today \hfill
-\begin{tikzpicture}[baseline=(sig.base)]
-  % Signatur-Bild
-  \node[inner sep=0pt] (sig) {\includegraphics[height=1.5cm]{signature.PNG}};
-  % Linie exakt drüber zeichnen
-  \draw[line width=0.4pt] 
-    ([xshift=-3cm,yshift=0.4cm]sig.north) -- ([xshift=3cm,yshift=0.4cm]sig.north);
+\begin{tikzpicture}[baseline]
+  % Linie zeichnen
+  \draw[line width=0.4pt] (0,0) -- (6,0);
+  % Signatur mittig auf der Linie platzieren
+  \node[inner sep=0pt, anchor=south] at (3,0) 
+    {\includegraphics[height=1.5cm]{signatur_trans_blue.png}};
 \end{tikzpicture}
-\\
-\hfill (Unterschrift)
 
 \newpage
 
-\setcounter{tocdepth}{2}
 \tableofcontents
 \newpage
 

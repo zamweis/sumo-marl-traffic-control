@@ -1,7 +1,7 @@
 \newpage
 \subsection{Reward: CO\textsubscript{2}-Emissionen}
 Diese Gruppe zielt auf eine Minimierung der CO\textsubscript{2}-Emissionen, während gleichzeitig versucht wird die Stabilität des Netzwerkes aufrecht zu erhalten.
-Für diese Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-Emission als zentrale Metrik betrachtet.
+Für diese emmisionsbasierten Modelle wird zusätzlich die CO\textsubscript{2}-Emission als zentrale Metrik betrachtet.
 
 
 \subsubsection{CO\textsubscript{2}-Emissionen}
@@ -75,7 +75,7 @@ Für diese Emissions-basierten Modelle wird zusätzlich die CO\textsubscript{2}-
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{CO\textsubscript{2}-Emissionen}
+    \caption{CO\textsubscript{2}-Emissionen (Quelle: eigene Darstellung)}
     \label{fig:emissions-emissions}
 \end{figure}
 
@@ -146,7 +146,7 @@ Konkret bewegen sich die Baselines im Bereich von 1.496 mg/s (Fixed-Time, unifor
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Mittlere Wartezeiten}
+    \caption{Mittlere Wartezeiten (Quelle: eigene Darstellung)}
     \label{fig:emissions-wartezeit}
 \end{figure}
 
@@ -187,7 +187,7 @@ Konkret bewegen sich die Baselines im Bereich von 1.496 mg/s (Fixed-Time, unifor
             \addlegendentry{Baseline Actuated}
         \end{axis}
     \end{tikzpicture}
-    \caption{Mittlere Wartezeiten}
+    \caption{Mittlere Wartezeiten (Quelle: eigene Darstellung)}
     \label{fig:emissions-wartezeit2}
 \end{figure}
 
@@ -195,7 +195,7 @@ Die Analyse der mittleren Wartezeit unterstreicht den deutlichen Vorteil der RL-
 
 Die RL-Modelle zeigen in evening\_peak und uniform hervorragende Ergebnisse: Modell 4 erreicht hier mit 0,4 Sekunden extrem niedrige Werte, während auch Modell 1 mit 1,8 Sekunden (evening\_peak) bzw. 12,7 Sekunden (uniform) deutlich besser als die Baselines performt. Modell 2 und Modell 3 fallen dagegen negativ auf: Beide Modelle weisen in morning\_peak und vor allem in random\_heavy drastisch erhöhte Wartezeiten auf. Mit bis zu 26 745 Sekunden bei Modell 3 im Hochlastszenario überschreiten sie die Baselines deutlich und zeigen starke Instabilität.
 
-Insgesamt lässt sich feststellen, dass die Emissions-basierten Modelle in Szenarien mit normaler Last die Wartezeiten signifikant reduzieren können, in Hochlastsituationen jedoch teilweise versagen und dadurch ihre Vorteile verlieren.
+Insgesamt lässt sich feststellen, dass die emissionsbasierten Modelle in Szenarien mit normaler Last die Wartezeiten signifikant reduzieren können, in Hochlastsituationen jedoch teilweise versagen und dadurch ihre Vorteile verlieren.
 
 \subsubsection{Anzahl stoppender Fahrzeuge}
 \begin{figure}[H]
@@ -260,7 +260,7 @@ Insgesamt lässt sich feststellen, dass die Emissions-basierten Modelle in Szena
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Anzahl stoppender Fahrzeuge}
+    \caption{Anzahl stoppender Fahrzeuge (Quelle: eigene Darstellung)}
     \label{fig:emissions-stopped}
 \end{figure}
 
@@ -303,7 +303,7 @@ Insgesamt lässt sich feststellen, dass die Emissions-basierten Modelle in Szena
             \addlegendentry{Baseline Actuated}
         \end{axis}
     \end{tikzpicture}
-    \caption{Anzahl stoppender Fahrzeuge}
+    \caption{Anzahl stoppender Fahrzeuge (Quelle: eigene Darstellung)}
     \label{fig:emissions-stopped2}
 \end{figure}
 
@@ -385,7 +385,7 @@ Insgesamt zeigt sich, dass die Emissions-basierten Modelle den Verkehrsfluss in 
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Anzahl ankommender Fahrzeuge}
+    \caption{Anzahl ankommender Fahrzeuge (Quelle: eigene Darstellung)}
     \label{fig:emissions-arrived}
 \end{figure}
 
@@ -468,7 +468,7 @@ Insgesamt bestätigt die Metrik, dass die Emissions-basierten Modelle eine hohe 
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Durchschnitt fahrender Fahrzeuge}
+    \caption{Durchschnitt fahrender Fahrzeuge (Quelle: eigene Darstellung)}
     \label{fig:emissions-running}
 \end{figure}
 
@@ -550,7 +550,7 @@ Insgesamt verdeutlicht die Metrik, dass die Emissions-basierten Modelle in norma
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Durchschnittsgeschwindigkeiten}
+    \caption{Durchschnittsgeschwindigkeiten (Quelle: eigene Darstellung)}
     \label{fig:emissions-speed}
 \end{figure}
 
@@ -633,11 +633,11 @@ Insgesamt bestätigen die Ergebnisse, dass die Emissions-basierten Modelle den V
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Anzahl teleportierender Fahrzeuge}
+    \caption{Anzahl teleportierender Fahrzeuge (Quelle: eigene Darstellung)}
     \label{fig:emissions-teleports}
 \end{figure}
 
-In den Evaluationsläufen der Emissions-basierten Modelle traten keinerlei Teleportationen auf. Damit zeigt sich, dass die Steuerung auch unter Belastungsszenarien stabil arbeitet und keine kritischen Netzüberlastungen entstehen, die ein Eingreifen des Simulators erforderlich machen würden. Dieses Ergebnis gilt gleichermaßen für alle Modelle und hebt sie deutlich von der Actuated-Baseline ab, die in anderen Metriken wiederholt Schwächen aufweist.
+In den Evaluationsläufen der emissionsbasierten Modelle traten keinerlei Teleportationen auf. Damit zeigt sich, dass die Steuerung auch unter Belastungsszenarien stabil arbeitet und keine kritischen Netzüberlastungen entstehen, die ein Eingreifen des Simulators erforderlich machen würden. Dieses Ergebnis gilt gleichermaßen für alle Modelle und hebt sie deutlich von der Actuated-Baseline ab, die in anderen Metriken wiederholt Schwächen aufweist.
 
 \subsubsection{Anzahl zurückgehaltener Fahrzeuge}
 \label{sec:emissions-backlogged}
@@ -711,7 +711,7 @@ In den Evaluationsläufen der Emissions-basierten Modelle traten keinerlei Telep
             \addlegendentry{Model 4}
         \end{axis}
     \end{tikzpicture}
-    \caption{Anzahl zurückgehaltener Fahrzeuge}
+    \caption{Anzahl zurückgehaltener Fahrzeuge (Quelle: eigene Darstellung)}
     \label{fig:emissions-backlogged}
 \end{figure}
 \newpage
@@ -725,4 +725,4 @@ Die Systemstabilität bleibt ebenfalls hoch: Es treten weder Teleportationen noc
 
 Auffällig ist allerdings, dass Modell 2 und Modell 3 in den Szenarien random\_heavy sowie teilweise in morning\_peak deutlich schwächere Ergebnisse zeigen. Dort verzeichnen sie teils drastisch erhöhte Wartezeiten und eine erhöhte Anzahl stoppender Fahrzeuge, was ihre Effizienz unter extremer Belastung einschränkt. Dennoch liegen ihre Ergebnisse in diesen Fällen meist noch im Bereich der Fixed-Time-Baseline.
 
-Insgesamt lässt sich festhalten, dass die Emissions-basierten Modelle die gesteckten Ziele weitgehend erfüllen: Sie reduzieren die Gesamtemissionen und verbessern zugleich den Verkehrsfluss in normalen Szenarien erheblich. Lediglich in Hochlastsituationen besteht noch Optimierungspotenzial, insbesondere bei einzelnen Modellvarianten.
+Insgesamt lässt sich festhalten, dass die emissionsbasierten Modelle die gesteckten Ziele weitgehend erfüllen: Sie reduzieren die Gesamtemissionen und verbessern zugleich den Verkehrsfluss in normalen Szenarien erheblich. Lediglich in Hochlastsituationen besteht noch Optimierungspotenzial, insbesondere bei einzelnen Modellvarianten.

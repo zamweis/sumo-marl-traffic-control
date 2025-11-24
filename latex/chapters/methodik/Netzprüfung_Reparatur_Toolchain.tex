@@ -113,6 +113,7 @@ Die folgenden Programme wurden zur strukturellen Korrektur entwickelt:
           \end{algorithmic}
         \end{algorithm}
 
+        \newpage
   \item \textbf{\texttt{repair-net.py}} (siehe Anhang \ref{app:repair_net}) nutzt ein manuell gepflegtes Dictionary mit TLS-IDs und deren erwarteter Phasenlänge (Anzahl kontrollierter Verbindungen). Alle Phasen, deren Länge abweicht, werden automatisch gekürzt oder aufgefüllt.
 
         \begin{algorithm}[H]
@@ -165,6 +166,7 @@ Die folgenden Programme wurden zur strukturellen Korrektur entwickelt:
 
 \end{itemize}
 
+\newpage
 \paragraph{Gültigkeitsprüfung für SUMO-RL}
 
 Zur Vorbereitung des Trainings wurden weitere Programme zur Identifikation funktionaler TLS entwickelt:
@@ -213,6 +215,7 @@ Zur Vorbereitung des Trainings wurden weitere Programme zur Identifikation funkt
 
 Nach mehrfacher Iteration und Debugging wurde ein final bereinigtes Netz erzeugt: \texttt{network.net.xml}. Dieses enthält ausschließlich überprüfte TLS mit konsistenten Phasenlängen und steuerbaren Verbindungen. Es bildet die Grundlage für alle nachfolgenden Reinforcement-Learning-Experimente.
 
+\newpage
 \subsubsection{Vorteil des automatisierten Workflows}
 
 Die entwickelte Toolchain ermöglicht:

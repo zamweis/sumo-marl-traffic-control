@@ -23,6 +23,7 @@ Alternative Verfahren wie \textit{DQN} oder \textit{\gls{a2c}} wurden verworfen,
 \textit{\gls{sac}} gilt zwar als state-of-the-art für kontinuierliche Steuerungsprobleme, erfordert aber große Replay-Puffer und hohe Rechenressourcen.
 PPO stellt somit einen sinnvollen Kompromiss zwischen Stabilität, Implementationsaufwand und empirischer Leistungsfähigkeit dar und integriert sich nahtlos in die bestehende \texttt{sumo-rl}-Umgebung.
 
+\newpage
 \subsubsection{Zustände}
 Der Zustand \(s_t\) beschreibt die Verkehrssituation an einer Kreuzung zum Zeitpunkt \(t\).
 Die Zustandsrepräsentation umfasst: \cite{sumo-doc}
@@ -97,6 +98,7 @@ Die übrigen Varianten (\texttt{diff-waiting-time}, \texttt{queue}, \texttt{emis
 Für PPO wurden neben festen Werten auch dynamische \emph{Schedules} eingesetzt, um Lernrate, Clip-Range oder Entropiekoeffizient während des Trainings anzupassen.
 Implementiert wurden u.\,a. Cosine-Warmup mit anschließendem Absenken, lineare Absenkung und adaptive Entropie-Steuerung.
 
+\newpage
 \paragraph{Motivation der gewählten Schedules}
 Diese Schedules vermeiden typische Probleme wie frühes \gls{overfitting} oder stagnierende Exploration.
 Das Cosine-Warmup erlaubt eine initiale Erkundung bei hoher Lernrate, während der anschließende Cosine-Decay den Lernprozess stabilisiert.

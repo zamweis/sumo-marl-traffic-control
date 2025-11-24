@@ -1,9 +1,0 @@
-python "%SUMO_HOME%\tools\randomTrips.py" ^
- -n "D:/workspace/thesis/reihnholdfrank/karlsruhe.net.xml" ^
- -r karlsruhe_random.rou.xml ^
- -b 0 -e 3600 --period 2.0 ^
- --fringe-factor 10 ^
- --trip-attributes "departLane=\"best\" departSpeed=\"max\""
-
-
-

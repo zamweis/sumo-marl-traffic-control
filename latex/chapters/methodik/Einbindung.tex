@@ -9,7 +9,7 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[node distance=1cm]
+    \begin{tikzpicture}[node distance=0.9cm]
 
         \node[box] (sim) {Verkehrssimulation\\\textbf{SUMO + TraCI}};
         \node[box, below=of sim] (mae) {\gls{mae}\\\texttt{sumo-rl.parallel\_env} + \texttt{reward\_fn}};
@@ -27,7 +27,7 @@ Die Architektur der Lernumgebung ist als verteiltes Multiagentensystem ausgelegt
         \draw[arrow] (cb) -- (log);
 
     \end{tikzpicture}
-    \caption{Architektur der RL-Trainingspipeline mit SUMO, MAE und Stable-Baselines3}
+    \caption{Architektur der RL-Trainingspipeline mit SUMO, MAE und Stable-Baselines3 (Quelle: eigene Darstellung)}
     \label{fig:rl_architektur}
 \end{figure}
 
@@ -179,7 +179,7 @@ TensorBoard diente als zentrales Werkzeug, um den Verlauf relevanter Kennzahlen 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{tensorboard.PNG}
-    \caption{Beispielhafte Lernkurve eines Trainingslaufs, visualisiert mit TensorBoard. Der Reward stabilisiert sich nach einer Explorationsphase.}
+    \caption{Beispielhafte Lernkurve eines Trainingslaufs, visualisiert mit TensorBoard. (Quelle: lokales Tensorboard)}
     \label{fig:tensorboard_example}
 \end{figure}
 
